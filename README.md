@@ -28,7 +28,7 @@ shift scheduling, time tracking, or internal tools.
 1. Clone the repo
    ```bash
    git clone git@github.com:deomiarn/frontend-starter-kit.git
-   cd active-planner-starter
+   cd frontend-starter-kit
    npm install
 
 2. Create .env file
