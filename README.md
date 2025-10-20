@@ -1,41 +1,249 @@
-# 🏋️ Frontend Starter Kit
+# 💰 ExpenseTracker PWA - Gestione Spese Personali
 
-A production-grade React starter kit for admin dashboards with Supabase backend — optimized for multi-tenant apps like
-shift scheduling, time tracking, or internal tools.
+Una Progressive Web App mobile-first per tracciare spese personali e condivise con sincronizzazione intelligente, supporto offline e dark mode.
+
+**[📖 Leggi SETUP →](./SETUP.md)** | **[⚡ Quick Start →](./QUICKSTART.md)** | **[🎯 Nuove Features →](./FEATURES_NEW.md)**
+
+## ✨ Features v1.0
+
+### � Tracking Personale
+
+- ✅ Aggiungere/modificare spese rapidamente
+- ✅ 8 categorie di default + creazione personalizzate inline
+- ✅ Supporto multi-valuta (EUR, USD, GBP)
+- ✅ Dashboard con riepilogo mensile
+- ✅ Statistiche utente complete
+
+### 🔄 Sincronizzazione Intelligente
+
+- ✅ Offline-first con Dexie (IndexedDB)
+- ✅ Auto-sync quando online
+- ✅ Risoluzione conflitti (local wins)
+- ✅ Bidirectional sync con Supabase
+- ✅ Storico ultimi sync
+
+### 🌓 UX & PWA
+
+- ✅ Dark mode + system preference
+- ✅ Installabile su mobile (home screen)
+- ✅ Service Worker + caching
+- ✅ Mobile-first responsive design
+- ✅ TypeScript strict mode
+
+### 🔐 Autenticazione & Profilo
+
+- ✅ Login/Signup con Supabase
+- ✅ Pagina profilo con statistiche
+- ✅ Edit nome utente
+- ✅ Export backup JSON
+- ✅ Elimina dati locali
+- ✅ Session persistence
 
 ---
 
-## 🚀 Stack Overview
+## 🛠️ Tech Stack
 
-| Category     | Tech / Package                                             | Purpose                                          |
-|--------------|------------------------------------------------------------|--------------------------------------------------|
-| **Frontend** | [React 18](https://react.dev/)                             | Component-based UI framework                     |
-|              | [Vite](https://vitejs.dev/)                                | Fast dev server & lightweight bundler            |
-|              | [Tailwind CSS](https://tailwindcss.com)                    | Utility-first CSS styling                        |
-|              | [shadcn/ui](https://ui.shadcn.com)                         | Accessible UI components based on Radix          |
-|              | [lucide-react](https://lucide.dev/)                        | Icon set with Tailwind-friendly sizing           |
-|              | [react-router-dom](https://reactrouter.com/)               | Routing with guards and layouts                  |
-| **Forms**    | [react-hook-form](https://react-hook-form.com/)            | Lightweight forms with validation support        |
-|              | [zod](https://zod.dev/) + `@hookform/resolvers`            | Type-safe schema validation                      |
-| **Data**     | [@tanstack/react-query](https://tanstack.com/query/latest) | Data fetching, caching, mutations                |
-| **i18n**     | [i18next](https://www.i18next.com/) + `react-i18next`      | Internationalization (default: `de-CH`)          |
-| **Backend**  | [Supabase](https://supabase.com/)                          | PostgreSQL + Auth + RLS for secure multi-tenancy |
+| Componente       | Tech            | Ver    |
+| ---------------- | --------------- | ------ |
+| **Frontend**     | React           | 19     |
+| **Build**        | Vite            | 6.4.1  |
+| **Styling**      | Tailwind CSS    | 4.1    |
+| **UI**           | ShadCN          | Latest |
+| **State**        | Zustand         | Latest |
+| **DB Local**     | Dexie           | 4.2.1  |
+| **Auth/Backend** | Supabase        | Latest |
+| **PWA**          | vite-plugin-pwa | 1.1    |
 
 ---
 
-## 🛠 Setup
+## 🚀 5-Minute Start
 
-1. Clone the repo
-   ```bash
-   git clone git@github.com:deomiarn/frontend-starter-kit.git
-   cd frontend-starter-kit
-   npm install
+```bash
+# 1. Setup (2 min)
+git clone https://github.com/deomiarn/frontend-starter-kit.git
+cd frontend-starter-kit
+pnpm install
 
-2. Create .env file
-   ```bash
-    VITE_SUPABASE_URL=https://your-project.supabase.co
-    VITE_SUPABASE_ANON_KEY=your-anon-key
+# 2. Environment (1 min)
+cp .env.example .env.local
+# Aggiungi credenziali Supabase
 
-3. Start the dev server
-   ```bash
-    npm run dev
+# 3. Database (1 min)
+# Supabase SQL Editor → SQL da SETUP.md
+
+# 4. Dev Server (1 min)
+pnpm dev
+# → http://localhost:5173
+
+# 5. Test
+# Signup → Add expense → Toggle dark mode
+# Works offline! ✅
+```
+
+**Leggi la [QUICKSTART.md](./QUICKSTART.md) completa**
+
+---
+
+## 📁 Key Pages
+
+| Route          | Component     | Features                                  |
+| -------------- | ------------- | ----------------------------------------- |
+| `/login`       | LoginPage     | Email/password auth                       |
+| `/signup`      | SignupPage    | New account + 8 default categories        |
+| `/dashboard`   | DashboardPage | Expenses list + summary cards             |
+| `/expense/new` | ExpenseForm   | Add expense + inline category creator     |
+| `/profile`     | ProfilePage   | Edit profile + stats + export/delete data |
+| `/groups`      | GroupsPage    | Coming soon (v2)                          |
+
+---
+
+## ⚡ Key Features
+
+### Expense Form (`v1.1` ✨ NEW)
+
+```tsx
+✅ Back button to dashboard
+✅ Cancel button + success alert
+✅ "+ Nuova" button to create categories inline
+✅ 12 emoji icons to choose from
+✅ Auto-redirect after save
+```
+
+### Profile Page (`v1.1` ✨ NEW)
+
+```tsx
+✅ Edit display name
+✅ View email
+✅ Statistics: total expenses, amount, categories
+✅ Last sync timestamp
+✅ Export data as JSON backup
+✅ Delete all local data with confirmation
+✅ Logout button
+```
+
+### Dashboard
+
+```tsx
+✅ 3 summary cards (expenses, balance, net)
+✅ Recent expenses list (top 10)
+✅ Quick "Aggiungi spesa" button (➕)
+✅ Sync indicator + manual sync
+✅ Dark mode toggle (🌙)
+```
+
+---
+
+## 🔄 How Sync Works
+
+```
+User offline
+  ↓
+Add expense → Saved to Dexie (isSynced: false)
+  ↓
+Goes online → Auto-sync triggers
+  ↓
+SyncService:
+  • Pushes local unsync'd → Supabase
+  • Pulls remote changes → Merges locally
+  • Conflict? Local wins (newer timestamp)
+  ↓
+SyncLog created, UI updates
+✅ Synced!
+```
+
+**Manual Sync**: Click refresh in header  
+**Auto-Sync**: On app start + browser online event
+
+---
+
+## 🌓 Dark Mode
+
+- Respects system preference (matchMedia)
+- Click moon/sun icon to toggle manually
+- Saves to localStorage
+- Uses CSS variables (light/dark)
+- Smooth transitions
+
+---
+
+## 📱 PWA Installation
+
+**Android**: Menu → "Installa app"  
+**iOS**: Share → "Aggiungi alla schermata Home"  
+**Desktop**: Install icon in address bar
+
+Works fully offline! 📴
+
+---
+
+## 📊 Build & Performance
+
+```bash
+# Build
+pnpm build       # 6.5s
+
+# Size
+JS:  670 KB (206 KB gzipped)
+CSS: 86 KB (15 KB gzipped)
+
+# PWA
+Precache: 740 KB
+Service Worker: Auto-generated
+```
+
+---
+
+## 🧪 Commands
+
+```bash
+pnpm dev      # Start dev server (hot reload)
+pnpm build    # Production build
+pnpm lint     # ESLint + TypeScript
+pnpm preview  # Preview production build
+```
+
+---
+
+## 📚 Documentation
+
+| File                                 | Content                   |
+| ------------------------------------ | ------------------------- |
+| [SETUP.md](./SETUP.md)               | Full setup + SQL database |
+| [QUICKSTART.md](./QUICKSTART.md)     | 5-minute guide            |
+| [TECHNICAL.md](./TECHNICAL.md)       | Architecture deep-dive    |
+| [API.md](./API.md)                   | API reference             |
+| [FEATURES_NEW.md](./FEATURES_NEW.md) | v1.1 new features         |
+
+---
+
+## 🗺️ Roadmap
+
+**v1.0** ✅ Personal expenses + PWA + offline  
+**v1.1** ✅ Category editor + Profile page  
+**v2.0** 🚀 Groups + shared expenses + real-time
+
+---
+
+## 🤝 Contributing
+
+```bash
+git checkout -b feature/your-feature
+# Make changes
+pnpm lint && pnpm build
+git commit -m "feat: description"
+git push origin feature/your-feature
+```
+
+---
+
+## 📄 License
+
+MIT - See [LICENSE](./LICENSE)
+
+---
+
+**Made with ❤️ for efficient expense tracking**
+
+Questions? Open an issue | Found a bug? Report it
+
+🚀 Start tracking your expenses now!

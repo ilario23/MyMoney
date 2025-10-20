@@ -1,5 +1,11 @@
 import "./App.css";
+import { AppRoutes } from "@/router";
+import { LanguageProvider } from "@/lib/language";
 
 export function App() {
-  return <div>Hello World</div>;
+  return (
+    <LanguageProvider>
+      <AppRoutes />
+    </LanguageProvider>
+  );
 }
