@@ -139,7 +139,7 @@ export class SyncService {
             .single();
 
           let error = null;
-          
+
           if (existing) {
             // Update
             const result = await supabase
@@ -237,7 +237,7 @@ export class SyncService {
             .single();
 
           let error = null;
-          
+
           if (existing) {
             // Update
             const result = await supabase
@@ -351,7 +351,7 @@ export class SyncService {
             .single();
 
           let error = null;
-          
+
           if (existing) {
             // Update
             const result = await supabase
@@ -394,7 +394,6 @@ export class SyncService {
       // Per ora skippiamo la query complessa dei gruppi remoti
       // (sarebbe necessario solo per la v2.0 con gruppi condivisi)
       // La query .or() con nested select non è supportata correttamente
-      
     } catch (error) {
       console.error("[Sync] Groups error:", error);
       failed++;

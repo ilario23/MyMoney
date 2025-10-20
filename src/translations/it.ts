@@ -37,6 +37,8 @@ export const it = {
   "profile.deleteDescription":
     "Elimina in modo permanente tutti i tuoi dati locali",
   "profile.logout": "Esci",
+  "profile.confirmLogout":
+    "Sei sicuro di voler uscire? Dovrai effettuare nuovamente il login.",
   "profile.language": "Lingua",
   "profile.selectLanguage": "Seleziona la tua lingua preferita",
   "profile.languageUpdated": "Lingua aggiornata con successo!",
@@ -44,6 +46,7 @@ export const it = {
   "profile.nameCannotBeEmpty": "Il nome non può essere vuoto",
   "profile.errorUpdatingProfile": "Errore nel salvataggio del profilo",
   "profile.anErrorOccurred": "Si è verificato un errore",
+  "profile.logoutError": "Errore durante il logout",
   "profile.confirmDeleteAllData":
     "Sei sicuro di voler eliminare TUTTI i tuoi dati? Questa azione non può essere annullata.",
   "profile.deleteConfirmation": "Elimina i miei dati",

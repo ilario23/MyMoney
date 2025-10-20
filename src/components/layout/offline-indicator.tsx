@@ -26,6 +26,11 @@ export function OfflineIndicator() {
       setIsOnline(false);
       setShowOffline(true);
       setShowBackOnline(false);
+      
+      // Nascondi il messaggio "Sei offline" dopo 2 secondi
+      setTimeout(() => {
+        setShowOffline(false);
+      }, 2000);
     };
 
     window.addEventListener('online', handleOnline);

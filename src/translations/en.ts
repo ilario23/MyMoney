@@ -37,13 +37,16 @@ export const en: Record<TranslationKey, string> = {
   "profile.deleteAllData": "🗑️ Delete All Data",
   "profile.deleteDescription": "Permanently delete all your local data",
   "profile.logout": "Logout",
+  "profile.confirmLogout":
+    "Are you sure you want to logout? You will need to login again.",
   "profile.language": "Language",
   "profile.selectLanguage": "Select your preferred language",
   "profile.languageUpdated": "Language updated successfully!",
   "profile.profileUpdated": "Profile updated successfully!",
   "profile.nameCannotBeEmpty": "Name cannot be empty",
-  "profile.errorUpdatingProfile": "Error saving profile",
+  "profile.errorUpdatingProfile": "Error updating profile",
   "profile.anErrorOccurred": "An error occurred",
+  "profile.logoutError": "Error during logout",
   "profile.confirmDeleteAllData":
     "Are you sure you want to delete ALL your data? This action cannot be undone.",
   "profile.deleteConfirmation": "Delete my data",

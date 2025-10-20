@@ -42,6 +42,7 @@ export function ProfilePage() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Load user statistics
   useEffect(() => {
@@ -109,12 +110,28 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     try {
+      // 1. Sign out da Supabase
       await supabase.auth.signOut();
+      
+      // 2. Pulisci IndexedDB (Dexie)
+      if (user) {
+        await db.expenses.where('userId').equals(user.id).delete();
+        await db.categories.where('userId').equals(user.id).delete();
+        await db.syncLogs.where('userId').equals(user.id).delete();
+      }
+      
+      // 3. Pulisci localStorage
+      localStorage.removeItem('app-language');
+      localStorage.removeItem('theme');
+      
+      // 4. Logout dall'auth store
       logout();
+      
+      // 5. Redirect al login
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      setError('Errore durante il logout');
+      setError(t('profile.logoutError') || 'Errore durante il logout');
     }
   };
 
@@ -127,7 +144,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('profile.title')}</h1>
@@ -150,17 +167,56 @@ export function ProfilePage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{t('profile.title')}</CardTitle>
-            {!isEditing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                {t('profile.editProfile')}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  {t('profile.editProfile')}
+                </Button>
+              )}
+              <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    title={t('profile.logout')}
+                    className="w-10 h-10 p-0"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t('profile.logout')}</DialogTitle>
+                    <DialogDescription>
+                      {t('profile.confirmLogout')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowLogoutDialog(false)}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setShowLogoutDialog(false);
+                        handleLogout();
+                      }}
+                    >
+                      {t('profile.logout')}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -427,12 +483,6 @@ export function ProfilePage() {
           </Dialog>
         </CardContent>
       </Card>
-
-      {/* Logout */}
-      <Button onClick={handleLogout} variant="destructive" className="w-full gap-2" size="lg">
-        <LogOut className="w-4 h-4" />
-        {t('profile.logout')}
-      </Button>
     </div>
   );
 }
