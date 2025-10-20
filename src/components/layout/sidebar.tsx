@@ -1,12 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
-import { BarChart3, ShoppingCart, Layers, User } from 'lucide-react';
+import { BarChart3, ShoppingCart, Layers, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { id: 'dashboard', path: '/dashboard', icon: BarChart3, labelKey: 'nav.dashboard' as const },
   { id: 'expenses', path: '/expenses', icon: ShoppingCart, labelKey: 'nav.expenses' as const },
   { id: 'categories', path: '/categories', icon: Layers, labelKey: 'nav.categories' as const },
+  { id: 'groups', path: '/groups', icon: Users, labelKey: 'nav.groups' as const },
+  { id: 'sharedExpenses', path: '/shared-expenses', icon: Users, labelKey: 'nav.sharedExpenses' as const },
   { id: 'profile', path: '/profile', icon: User, labelKey: 'nav.profile' as const },
 ];
 
