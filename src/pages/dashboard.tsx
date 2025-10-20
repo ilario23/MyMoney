@@ -31,14 +31,17 @@ export function DashboardPage() {
         .between([user.id, start], [user.id, end])
         .toArray();
 
-      setExpenses(data);
+      // Filtra solo le spese NON eliminate (deletedAt === undefined)
+      const activeExpenses = data.filter((e) => !e.deletedAt);
+
+      setExpenses(activeExpenses);
 
       // Calcola totali
-      const total = data
+      const total = activeExpenses
         .filter((e) => e.amount > 0)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      const income = data
+      const income = activeExpenses
         .filter((e) => e.amount < 0)
         .reduce((sum, e) => sum + Math.abs(e.amount), 0);
 

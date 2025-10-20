@@ -3,6 +3,7 @@ import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage, type Language } from '@/lib/language';
 import { supabase } from '@/lib/supabase';
 import { db } from '@/lib/dexie';
+import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -47,7 +48,9 @@ export function ProfilePage() {
     const loadStats = async () => {
       if (!user) return;
       try {
-        const expenses = await db.expenses.where('userId').equals(user.id).toArray();
+        const allExpenses = await db.expenses.where('userId').equals(user.id).toArray();
+        // Filtra solo le spese NON eliminate
+        const expenses = allExpenses.filter((e) => !e.deletedAt);
         const categories = await db.categories.where('userId').equals(user.id).toArray();
         const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
 
@@ -387,8 +390,28 @@ export function ProfilePage() {
                 onClick={async () => {
                   if (!user) return;
                   try {
-                    await db.expenses.where('userId').equals(user.id).delete();
+                    // Soft delete: imposta deletedAt invece di eliminare fisicamente
+                    const expenses = await db.expenses.where('userId').equals(user.id).toArray();
+                    for (const expense of expenses) {
+                      await db.expenses.update(expense.id, {
+                        deletedAt: new Date(),
+                        isSynced: false,
+                        updatedAt: new Date(),
+                      });
+                    }
+                    
                     await db.categories.where('userId').equals(user.id).delete();
+                    
+                    // Sync immediato con Supabase per propagare le eliminazioni
+                    if (navigator.onLine) {
+                      try {
+                        await syncService.sync({ userId: user.id, verbose: true });
+                        console.log('✅ Data deletion synced to Supabase');
+                      } catch (syncError) {
+                        console.warn('⚠️ Sync failed, will retry later:', syncError);
+                      }
+                    }
+                    
                     setSuccess(t('profile.dataDeleted'));
                     setTimeout(() => navigate('/dashboard'), 1500);
                   } catch (error) {

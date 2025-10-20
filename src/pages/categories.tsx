@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
 import { db } from '@/lib/dexie';
+import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,6 +98,17 @@ export function CategoriesPage() {
 
       await db.categories.add(newCategory);
       setCategories([...categories, newCategory]);
+      
+      // Sync immediato con Supabase se online
+      if (navigator.onLine && user) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+          console.log('✅ Category synced to Supabase');
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+      
       setSuccess(t('categories.createSuccess'));
       setNewCategoryName('');
       setNewCategoryIcon('📌');
@@ -150,6 +162,17 @@ export function CategoriesPage() {
 
       await db.categories.put(updated);
       setCategories([...categories]);
+      
+      // Sync immediato con Supabase se online
+      if (navigator.onLine && user) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+          console.log('✅ Category update synced to Supabase');
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+      
       setSuccess(t('categories.updateSuccess'));
       setEditingId(null);
 
@@ -183,6 +206,17 @@ export function CategoriesPage() {
 
       await db.categories.delete(categoryId);
       setCategories(categories.filter((c) => c.id !== categoryId));
+      
+      // Sync immediato con Supabase se online
+      if (navigator.onLine && user) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+          console.log('✅ Category delete synced to Supabase');
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+      
       setSuccess(t('categories.deleteSuccess'));
 
       setTimeout(() => setSuccess(''), 3000);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
 import { db } from '@/lib/dexie';
+import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -77,6 +78,16 @@ export function ExpenseForm() {
       };
 
       await db.expenses.add(expense);
+
+      // Sync immediato con Supabase se online
+      if (navigator.onLine) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+          console.log('✅ Expense synced to Supabase');
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
 
       setSuccess(true);
       // Reset form

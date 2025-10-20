@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Navigation } from './navigation';
 import { SyncIndicator } from './sync-indicator';
 import { ThemeToggle } from './theme-toggle';
+import { OfflineIndicator } from './offline-indicator';
 import { useSync } from '@/hooks/useSync';
 
 interface LayoutProps {
@@ -43,6 +44,9 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Mobile Navigation */}
       <Navigation />
+
+      {/* Offline Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }
