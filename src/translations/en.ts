@@ -142,7 +142,8 @@ export const en: Record<TranslationKey, string> = {
   "common.success": "Success",
   "common.warning": "Warning",
   "common.info": "Information",
-  "common.offline": "You're offline. Changes will sync when you're back online.",
+  "common.offline":
+    "You're offline. Changes will sync when you're back online.",
   "common.backOnline": "You're back online! Syncing now...",
 
   // Navigation

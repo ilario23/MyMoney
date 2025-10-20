@@ -144,7 +144,8 @@ export const it = {
   "common.success": "Successo",
   "common.warning": "Attenzione",
   "common.info": "Informazione",
-  "common.offline": "Sei offline. Le modifiche verranno sincronizzate quando tornerai online.",
+  "common.offline":
+    "Sei offline. Le modifiche verranno sincronizzate quando tornerai online.",
   "common.backOnline": "Sei tornato online! Sincronizzazione in corso...",
 
   // Navigation

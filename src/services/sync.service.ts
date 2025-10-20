@@ -131,25 +131,50 @@ export class SyncService {
 
       for (const category of localUnsync) {
         try {
-          const { error } = await supabase.from("categories").upsert(
-            {
+          // Prima controlla se esiste già
+          const { data: existing } = await supabase
+            .from("categories")
+            .select("id")
+            .eq("id", category.id)
+            .single();
+
+          let error = null;
+          
+          if (existing) {
+            // Update
+            const result = await supabase
+              .from("categories")
+              .update({
+                name: category.name,
+                color: category.color,
+                icon: category.icon,
+                updated_at: category.updatedAt.toISOString(),
+              })
+              .eq("id", category.id);
+            error = result.error;
+          } else {
+            // Insert
+            const result = await supabase.from("categories").insert({
               id: category.id,
               user_id: userId,
               name: category.name,
               color: category.color,
               icon: category.icon,
+              created_at: category.createdAt.toISOString(),
               updated_at: category.updatedAt.toISOString(),
-            },
-            { onConflict: "id" }
-          );
+            });
+            error = result.error;
+          }
 
           if (!error) {
             await db.categories.update(category.id, { isSynced: true });
             synced++;
           } else {
+            console.error("[Sync] Category error:", error);
             failed++;
           }
-        } catch {
+        } catch (err) {
+          console.error("[Sync] Category exception:", err);
           failed++;
         }
       }
@@ -174,7 +199,7 @@ export class SyncService {
               color: remote.color,
               icon: remote.icon,
               isSynced: true,
-              createdAt: new Date(remote.created_at),
+              createdAt: new Date(remote.created_at || Date.now()),
               updatedAt: new Date(remote.updated_at),
             });
             synced++;
@@ -204,8 +229,33 @@ export class SyncService {
 
       for (const expense of localUnsync) {
         try {
-          const { error } = await supabase.from("expenses").upsert(
-            {
+          // Prima controlla se esiste già
+          const { data: existing } = await supabase
+            .from("expenses")
+            .select("id")
+            .eq("id", expense.id)
+            .single();
+
+          let error = null;
+          
+          if (existing) {
+            // Update
+            const result = await supabase
+              .from("expenses")
+              .update({
+                amount: expense.amount,
+                currency: expense.currency,
+                category: expense.category,
+                description: expense.description,
+                date: expense.date.toISOString(),
+                deleted_at: expense.deletedAt?.toISOString() || null,
+                updated_at: expense.updatedAt.toISOString(),
+              })
+              .eq("id", expense.id);
+            error = result.error;
+          } else {
+            // Insert
+            const result = await supabase.from("expenses").insert({
               id: expense.id,
               user_id: userId,
               group_id: expense.groupId || null,
@@ -215,18 +265,21 @@ export class SyncService {
               description: expense.description,
               date: expense.date.toISOString(),
               deleted_at: expense.deletedAt?.toISOString() || null,
+              created_at: expense.createdAt.toISOString(),
               updated_at: expense.updatedAt.toISOString(),
-            },
-            { onConflict: "id" }
-          );
+            });
+            error = result.error;
+          }
 
           if (!error) {
             await db.expenses.update(expense.id, { isSynced: true });
             synced++;
           } else {
+            console.error("[Sync] Expense error:", error);
             failed++;
           }
-        } catch {
+        } catch (err) {
+          console.error("[Sync] Expense exception:", err);
           failed++;
         }
       }
@@ -262,7 +315,7 @@ export class SyncService {
               ? new Date(remote.deleted_at)
               : undefined,
             isSynced: true,
-            createdAt: new Date(remote.created_at),
+            createdAt: new Date(remote.created_at || Date.now()),
             updatedAt: remoteDate,
           });
           synced++;
@@ -276,7 +329,7 @@ export class SyncService {
     return { synced, failed, conflicts };
   }
 
-  private async syncGroups(userId: string, lastSync: Date) {
+  private async syncGroups(userId: string, _lastSync: Date) {
     let synced = 0;
     let failed = 0;
 
@@ -290,51 +343,58 @@ export class SyncService {
 
       for (const group of localUnsync) {
         try {
-          const { error } = await supabase.from("groups").upsert(
-            {
+          // Prima controlla se esiste già
+          const { data: existing } = await supabase
+            .from("groups")
+            .select("id")
+            .eq("id", group.id)
+            .single();
+
+          let error = null;
+          
+          if (existing) {
+            // Update
+            const result = await supabase
+              .from("groups")
+              .update({
+                name: group.name,
+                description: group.description || null,
+                color: group.color || null,
+                updated_at: group.updatedAt.toISOString(),
+              })
+              .eq("id", group.id);
+            error = result.error;
+          } else {
+            // Insert
+            const result = await supabase.from("groups").insert({
               id: group.id,
               name: group.name,
               owner_id: userId,
               description: group.description || null,
               color: group.color || null,
+              created_at: group.createdAt.toISOString(),
               updated_at: group.updatedAt.toISOString(),
-            },
-            { onConflict: "id" }
-          );
+            });
+            error = result.error;
+          }
 
           if (!error) {
             await db.groups.update(group.id, { isSynced: true });
             synced++;
           } else {
+            console.error("[Sync] Group error:", error);
             failed++;
           }
-        } catch {
+        } catch (err) {
+          console.error("[Sync] Group exception:", err);
           failed++;
         }
       }
 
-      // Ricevi gruppi di cui sei membro
-      const { data: remoteGroups, error } = await supabase
-        .from("groups")
-        .select("*")
-        .or(`owner_id.eq.${userId},group_members(user_id).eq.${userId}`)
-        .gt("updated_at", lastSync.toISOString());
-
-      if (!error && remoteGroups) {
-        for (const remote of remoteGroups) {
-          await db.groups.put({
-            id: remote.id,
-            name: remote.name,
-            ownerId: remote.owner_id,
-            description: remote.description,
-            color: remote.color,
-            isSynced: true,
-            createdAt: new Date(remote.created_at),
-            updatedAt: new Date(remote.updated_at),
-          });
-          synced++;
-        }
-      }
+      // Per ora skippiamo la query complessa dei gruppi remoti
+      // (sarebbe necessario solo per la v2.0 con gruppi condivisi)
+      // La query .or() con nested select non è supportata correttamente
+      
     } catch (error) {
       console.error("[Sync] Groups error:", error);
       failed++;
