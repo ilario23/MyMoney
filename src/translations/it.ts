@@ -215,7 +215,7 @@ export const it = {
   "groups.groupMembers": "Membri Gruppo",
   "groups.totalMembers": "Membri Totali",
   "groups.removeMember": "Rimuovi Membro",
-  "groups.confirmRemove": 'Rimuovere {name} dal gruppo?',
+  "groups.confirmRemove": "Rimuovere {name} dal gruppo?",
   "groups.memberAdded": "Membro aggiunto con successo!",
   "groups.memberRemoved": "Membro rimosso con successo!",
   "groups.edit": "Modifica",
@@ -236,7 +236,8 @@ export const it = {
   "sharedExpenses.paidBy": "Pagato da",
   "sharedExpenses.participants": "Partecipanti",
   "sharedExpenses.markSettled": "Segna Come Saldato",
-  "sharedExpenses.confirmSettled": "Sei sicuro di voler marcare questa spesa come saldato?",
+  "sharedExpenses.confirmSettled":
+    "Sei sicuro di voler marcare questa spesa come saldato?",
   "sharedExpenses.settledSuccess": "Spesa marcata come saldato!",
   "sharedExpenses.noExpenses": "Nessuna spesa condivisa",
   "sharedExpenses.addToGroup": "Aggiungi spesa al gruppo",
@@ -249,7 +250,6 @@ export const it = {
   "sharedExpenses.youOwe": "Devi",
   "sharedExpenses.owesYou": "Ti deve",
   "sharedExpenses.settled": "Saldato",
-
 } as const;
 
 export type TranslationKey = keyof typeof it;

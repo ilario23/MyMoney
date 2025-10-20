@@ -234,7 +234,8 @@ export const en: Record<TranslationKey, string> = {
   "sharedExpenses.paidBy": "Paid by",
   "sharedExpenses.participants": "Participants",
   "sharedExpenses.markSettled": "Mark as Settled",
-  "sharedExpenses.confirmSettled": "Are you sure you want to mark this expense as settled?",
+  "sharedExpenses.confirmSettled":
+    "Are you sure you want to mark this expense as settled?",
   "sharedExpenses.settledSuccess": "Expense marked as settled!",
   "sharedExpenses.noExpenses": "No shared expenses",
   "sharedExpenses.addToGroup": "Add expense to group",
