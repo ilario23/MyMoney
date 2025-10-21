@@ -133,9 +133,21 @@ export function DashboardPage() {
 
       {/* Recent Expenses */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('dashboard.recentExpenses')}</CardTitle>
-          <CardDescription>{t('dashboard.recentDescription')}</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle>{t('dashboard.recentExpenses')}</CardTitle>
+            <CardDescription>{t('dashboard.recentDescription')}</CardDescription>
+          </div>
+          {expenses.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/expenses')}
+              className="text-primary hover:text-primary"
+            >
+              View All →
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {expenses.length === 0 ? (

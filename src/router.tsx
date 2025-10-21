@@ -11,6 +11,7 @@ import { CategoriesPage } from '@/pages/categories';
 import { GroupsPage } from '@/pages/groups';
 import { SharedExpensesPage } from '@/pages/shared-expenses';
 import { ExpenseForm } from '@/components/expense/expense-form';
+import { ExpensesPage } from '@/pages/expenses';
 
 function NotFound() {
   return <div className="text-center py-12">Pagina non trovata</div>;
@@ -105,6 +106,14 @@ export function AppRoutes() {
               element={
                 <Layout>
                   <ExpenseForm />
+                </Layout>
+              }
+            />
+            <Route
+              path="/expenses"
+              element={
+                <Layout>
+                  <ExpensesPage />
                 </Layout>
               }
             />
