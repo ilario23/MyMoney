@@ -46,6 +46,24 @@ export function ExpenseForm() {
     loadCategories();
   }, [user]);
 
+  // Helper: Build grouped category structure
+  const getGroupedCategories = () => {
+    const topLevel = categories.filter((c) => !c.parentId);
+    const childrenMap = new Map<string, Category[]>();
+    
+    // Group children by parent
+    categories.forEach((cat) => {
+      if (cat.parentId) {
+        if (!childrenMap.has(cat.parentId)) {
+          childrenMap.set(cat.parentId, []);
+        }
+        childrenMap.get(cat.parentId)!.push(cat);
+      }
+    });
+    
+    return { topLevel, childrenMap };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !description || !amount || !categoryId) return;
@@ -211,11 +229,26 @@ export function ExpenseForm() {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.icon} {cat.name}
-                      </SelectItem>
-                    ))}
+                    {(() => {
+                      const { topLevel, childrenMap } = getGroupedCategories();
+                      return topLevel.map((parent) => {
+                        const children = childrenMap.get(parent.id) || [];
+                        return (
+                          <div key={parent.id}>
+                            {/* Parent category */}
+                            <SelectItem value={parent.id}>
+                              {parent.icon} {parent.name}
+                            </SelectItem>
+                            {/* Child categories (indented) */}
+                            {children.map((child) => (
+                              <SelectItem key={child.id} value={child.id} className="pl-8">
+                                {child.icon} {child.name}
+                              </SelectItem>
+                            ))}
+                          </div>
+                        );
+                      });
+                    })()}
                   </SelectContent>
                 </Select>
               )}
