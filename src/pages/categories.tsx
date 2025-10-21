@@ -34,27 +34,27 @@ const CATEGORY_ICONS = [
   // Transportation
   '🚗', '🚕', '🚌', '🚇', '✈️', '🚲', '⛽', '🚁', '🛵',
   // Home & Living
-  '🏠', '🛋️', '🔧', '🔨', '💡', '🚿', '🧹', '🔑', '�',
+  '🏠', '🛋️', '🔧', '🔨', '💡', '🚿', '🧹', '🔑', '🏡',
   // Entertainment
-  '�🎬', '🎮', '🎵', '🎨', '🎭', '🎪', '🎯', '🎲', '🎤', '🎸',
+  '🎬', '🎮', '🎵', '🎨', '🎭', '🎪', '🎯', '🎲', '🎤', '🎸',
   // Health & Wellness
-  '💊', '🏥', '💉', '🧘', '🏋️', '🧴', '�',
+  '💊', '🏥', '💉', '🧘', '🏋️', '🧴', '💆',
   // Shopping & Fashion
-  '�🛍️', '👕', '👗', '👞', '👜', '💄', '👓', '⌚',
+  '🛍️', '👕', '👗', '👞', '👜', '💄', '👓', '⌚',
   // Education & Work
-  '📚', '�', '✏️', '📝', '💼', '🖥️', '📱', '⌨️', '🖨️',
+  '📚', '📖', '✏️', '📝', '💼', '🖥️', '📱', '⌨️', '🖨️',
   // Sports & Fitness
-  '⚽', '�', '🎾', '🏊', '🏃', '⛷️', '🚴', '🏆',
+  '⚽', '🏀', '🎾', '🏊', '🏃', '⛷️', '🚴', '🏆',
   // Travel & Places
-  '�️', '🏖️', '🏔️', '🌍', '🗼', '🏰', '🎡', '🎢',
+  '🗺️', '🏖️', '🏔️', '🌍', '🗼', '🏰', '🎡', '🎢',
   // Finance & Business
-  '💰', '💳', '💵', '📈', '📊', '�', '💸',
+  '💰', '💳', '💵', '📈', '📊', '🏦', '💸',
   // Animals & Nature
   '🐶', '🐱', '🐠', '🌳', '🌺', '🌻', '🐾',
   // Utilities & Services
   '⚡', '📌', '📞', '📧', '🔔', '⏰', '🔒', '🔓',
   // Miscellaneous
-  '🎁', '�', '❤️', '⭐', '�', '🎈', '🌟', '✨', '�'
+  '🎁', '🎉', '❤️', '⭐', '🔥', '🎈', '🌟', '✨', '🎀'
 ];
 const CATEGORY_COLORS = ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#EC4899', '#06B6D4', '#3B82F6', '#6B7280'];
 
@@ -527,12 +527,18 @@ export function CategoriesPage() {
                       <span className="text-2xl">{newCategoryIcon}</span>
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORY_ICONS.map((icon) => (
-                      <SelectItem key={icon} value={icon}>
-                        <span className="text-2xl">{icon}</span>
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="max-h-[400px] w-[300px] md:w-[500px]">
+                    <div className="grid grid-cols-5 md:grid-cols-8 gap-1 p-2">
+                      {CATEGORY_ICONS.map((icon) => (
+                        <SelectItem 
+                          key={icon} 
+                          value={icon}
+                          className="cursor-pointer hover:bg-accent rounded-md justify-center"
+                        >
+                          <span className="text-2xl">{icon}</span>
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
@@ -576,27 +582,29 @@ export function CategoriesPage() {
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('categories.selectGroup')}</label>
-                <Select value={newCategoryGroupId} onValueChange={setNewCategoryGroupId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('categories.personalCategory')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t('categories.personalCategory')}</SelectItem>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {newCategoryGroupId 
-                    ? t('categories.sharedWith') + ' ' + (groups.find(g => g.id === newCategoryGroupId)?.name || '')
-                    : 'Personal category - only visible to you'}
-                </p>
-              </div>
+              {groups.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('categories.selectGroup')}</label>
+                  <Select value={newCategoryGroupId || '__none__'} onValueChange={(val) => setNewCategoryGroupId(val === '__none__' ? '' : val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('categories.personalCategory')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">{t('categories.personalCategory')}</SelectItem>
+                      {groups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {newCategoryGroupId 
+                      ? t('categories.sharedWith') + ' ' + (groups.find(g => g.id === newCategoryGroupId)?.name || '')
+                      : 'Personal category - only visible to you'}
+                  </p>
+                </div>
+              )}
 
               <Button onClick={handleCreateCategory} disabled={isCreating} className="w-full">
                 {isCreating ? t('common.loading') : t('categories.createCategory')}
@@ -643,12 +651,12 @@ export function CategoriesPage() {
           {activeTab === 'group' && groups.length > 0 && (
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('categories.selectGroup')}</label>
-              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+              <Select value={selectedGroupId || '__none__'} onValueChange={(val) => setSelectedGroupId(val === '__none__' ? '' : val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All group categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All group categories</SelectItem>
+                  <SelectItem value="__none__">All group categories</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id}>
                       {group.name}
@@ -732,12 +740,18 @@ export function CategoriesPage() {
                                   <span className="text-2xl">{editIcon}</span>
                                 </SelectValue>
                               </SelectTrigger>
-                              <SelectContent>
-                                {CATEGORY_ICONS.map((icon) => (
-                                  <SelectItem key={icon} value={icon}>
-                                    <span className="text-2xl">{icon}</span>
-                                  </SelectItem>
-                                ))}
+                              <SelectContent className="max-h-[400px] w-[300px] md:w-[500px]">
+                                <div className="grid grid-cols-5 md:grid-cols-8 gap-1 p-2">
+                                  {CATEGORY_ICONS.map((icon) => (
+                                    <SelectItem 
+                                      key={icon} 
+                                      value={icon}
+                                      className="cursor-pointer hover:bg-accent rounded-md justify-center"
+                                    >
+                                      <span className="text-2xl">{icon}</span>
+                                    </SelectItem>
+                                  ))}
+                                </div>
                               </SelectContent>
                             </Select>
                           </div>
