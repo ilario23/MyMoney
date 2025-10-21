@@ -102,10 +102,15 @@ CREATE TABLE public.categories (
   name TEXT NOT NULL,
   color TEXT,
   icon TEXT,
+  parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
 );
+
+-- Create indexes for categories
+CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
 
 -- 4. Expenses table (depends on users and groups)
 CREATE TABLE public.expenses (
@@ -620,7 +625,43 @@ expenses.category → categories.id
 
 This allows category names to change without breaking references. The frontend resolves the ID to name for display.
 
-## 📝 Changelog
+### Hierarchical Categories (v1.7.0+)
+
+Starting from v1.7.0, categories support **parent-child relationships** for better organization:
+
+- **Top-level categories**: `parent_id = NULL` (e.g., "Shopping", "Transportation")
+- **Sub-categories**: `parent_id = <parent-uuid>` (e.g., "Groceries" under "Shopping")
+- **Tree structure**: Unlimited depth (but recommended max 2-3 levels for UX)
+- **Circular reference prevention**: App validates that a category cannot be its own ancestor
+- **Cascade delete**: When parent deleted, children become top-level (`ON DELETE SET NULL`)
+
+**Migration**: If upgrading from v1.6.0 or earlier, run `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` in Supabase SQL Editor.
+
+**Example tree:**
+```
+📌 Shopping (parent_id: null)
+  └─ 🍕 Groceries (parent_id: shopping-uuid)
+  └─ � Clothing (parent_id: shopping-uuid)
+🚗 Transportation (parent_id: null)
+  └─ ⛽ Fuel (parent_id: transportation-uuid)
+  └─ 🚌 Public Transit (parent_id: transportation-uuid)
+```
+
+## �📝 Changelog
+
+### v1.7.0 - Hierarchical Categories & Search
+
+- **NEW**: Hierarchical categories with parent-child relationships
+  - Added `parent_id` field to categories table
+  - Tree view UI with expand/collapse
+  - Grouped dropdown in expense form
+  - Migration SQL script included
+- **NEW**: Search/filter on Categories page
+  - Real-time search by category name
+  - Shows "X of Y categories" when filtering
+- All Expenses page with search functionality
+- Dashboard UI improvements (unified summary card)
+- Version bump to 1.7.0
 
 ### v1.6.0 - Category ID Refactor & Validation
 

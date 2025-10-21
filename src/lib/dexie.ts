@@ -30,6 +30,7 @@ export interface Category {
   name: string;
   color: string;
   icon: string;
+  parentId?: string; // uuid - hierarchical categories (null = top-level)
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -90,10 +91,10 @@ export class ExpenseTrackerDB extends Dexie {
 
   constructor() {
     super("ExpenseTrackerDB");
-    this.version(1).stores({
+    this.version(2).stores({
       users: "id, email",
       expenses: "id, userId, [userId+date], groupId, isSynced",
-      categories: "id, userId",
+      categories: "id, userId, parentId",
       groups: "id, ownerId",
       groupMembers: "[groupId+userId], groupId",
       sharedExpenses: "id, groupId, creatorId",
