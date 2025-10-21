@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db } from '@/lib/dexie';
+import { db, type Category } from '@/lib/dexie';
 import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 export function ExpenseForm() {
   const { user } = useAuthStore();
@@ -24,11 +24,11 @@ export function ExpenseForm() {
   const navigate = useNavigate();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [currency, setCurrency] = useState('EUR');
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,8 +38,7 @@ export function ExpenseForm() {
       if (!user) return;
       try {
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
-        const categoryNames = userCategories.map((c) => c.name);
-        setCategories(categoryNames);
+        setCategories(userCategories);
       } catch (error) {
         console.error('Error loading categories:', error);
       }
@@ -49,7 +48,7 @@ export function ExpenseForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !description || !amount) return;
+    if (!user || !description || !amount || !categoryId) return;
 
     setIsLoading(true);
     setError('');
@@ -60,7 +59,7 @@ export function ExpenseForm() {
         userId: user.id,
         amount: parseFloat(amount),
         currency,
-        category,
+        category: categoryId,  // Save category ID, not name
         description,
         date: new Date(date),
         isSynced: false,
@@ -94,7 +93,7 @@ export function ExpenseForm() {
       // Reset form
       setDescription('');
       setAmount('');
-      setCategory('');
+      setCategoryId('');
       setDate(new Date().toISOString().split('T')[0]);
 
       // Redirect after 2s (give time to read any error message)
@@ -190,18 +189,36 @@ export function ExpenseForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('expense.category')}</label>
-              <Select value={category} onValueChange={setCategory} disabled={isLoading || success}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {categories.length === 0 ? (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800 flex items-center justify-between">
+                    <span>No categories yet. Create one first!</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/categories')}
+                      className="ml-2"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Create Category
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Select value={categoryId} onValueChange={setCategoryId} disabled={isLoading || success}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.icon} {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <p className="text-xs text-muted-foreground">
                 {t('expense.addHint')}
               </p>
