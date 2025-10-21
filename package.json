@@ -1,7 +1,7 @@
 {
-  "name": "active-fitness-planner",
+  "name": "spendix",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

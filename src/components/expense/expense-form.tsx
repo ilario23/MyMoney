@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db } from '@/lib/dexie';
+import { db, type Category, type Group } from '@/lib/dexie';
 import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,18 +16,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft } from 'lucide-react';
-
-const DEFAULT_CATEGORIES = [
-  'Cibo',
-  'Trasporti',
-  'Alloggio',
-  'Intrattenimento',
-  'Shopping',
-  'Salute',
-  'Utilità',
-  'Altro',
-];
+import { ArrowLeft, Plus } from 'lucide-react';
 
 export function ExpenseForm() {
   const { user } = useAuthStore();
@@ -35,41 +24,92 @@ export function ExpenseForm() {
   const navigate = useNavigate();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Altro');
+  const [categoryId, setCategoryId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [currency, setCurrency] = useState('EUR');
+  const [groupId, setGroupId] = useState<string>('personal'); // 'personal' or group UUID
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
-  // Load custom categories from Dexie
+  // Load custom categories and groups from Dexie
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       if (!user) return;
       try {
+        // Load categories
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
-        const categoryNames = userCategories.map((c) => c.name);
-        setCategories([...DEFAULT_CATEGORIES, ...categoryNames]);
+        setCategories(userCategories);
+
+        // Load groups where user is owner or member
+        const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+        const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
+        const memberGroupIds = memberships.map(m => m.groupId);
+        const memberGroups = memberGroupIds.length > 0 
+          ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
+          : [];
+        
+        // Combine and deduplicate
+        const allGroups = [...ownedGroups];
+        memberGroups.forEach(group => {
+          if (!allGroups.find(g => g.id === group.id)) {
+            allGroups.push(group);
+          }
+        });
+        
+        setGroups(allGroups);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading data:', error);
       }
     };
-    loadCategories();
+    loadData();
   }, [user]);
+
+  // Helper: Build grouped category structure (only active categories)
+  // Filter by selected group: personal categories for personal expenses, group categories for group expenses
+  const getGroupedCategories = () => {
+    let activeCategories = categories.filter((c) => c.isActive !== false); // Show only active
+    
+    // Filter by expense type
+    if (groupId === 'personal') {
+      // Personal expense: show only personal categories (no groupId)
+      activeCategories = activeCategories.filter(c => !c.groupId);
+    } else {
+      // Group expense: show both personal and that group's categories
+      activeCategories = activeCategories.filter(c => !c.groupId || c.groupId === groupId);
+    }
+    
+    const topLevel = activeCategories.filter((c) => !c.parentId);
+    const childrenMap = new Map<string, Category[]>();
+    
+    // Group children by parent
+    activeCategories.forEach((cat) => {
+      if (cat.parentId) {
+        if (!childrenMap.has(cat.parentId)) {
+          childrenMap.set(cat.parentId, []);
+        }
+        childrenMap.get(cat.parentId)!.push(cat);
+      }
+    });
+    
+    return { topLevel, childrenMap };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !description || !amount) return;
+    if (!user || !description || !amount || !categoryId) return;
 
     setIsLoading(true);
+    setError('');
 
     try {
       const expense = {
         id: uuidv4(),
         userId: user.id,
+        groupId: groupId === 'personal' ? undefined : groupId,
         amount: parseFloat(amount),
-        currency,
-        category,
+        category: categoryId,  // Save category ID, not name
         description,
         date: new Date(date),
         isSynced: false,
@@ -82,27 +122,39 @@ export function ExpenseForm() {
       // Sync immediato con Supabase se online
       if (navigator.onLine) {
         try {
-          await syncService.sync({ userId: user.id, verbose: true });
-          console.log('✅ Expense synced to Supabase');
+          const syncResult = await syncService.sync({ userId: user.id, verbose: true });
+          
+          if (syncResult.success) {
+            console.log('✅ Expense synced to Supabase');
+          } else {
+            console.warn(`⚠️ Sync completed with issues: ${syncResult.failed} failed, ${syncResult.conflicts} conflicts`);
+            setError(`Sync error: ${syncResult.failed} failed, will retry later`);
+          }
         } catch (syncError) {
-          console.warn('⚠️ Sync failed, will retry later:', syncError);
+          console.error('❌ Sync error:', syncError);
+          setError('Sync failed - changes saved locally, will sync when online');
         }
+      } else {
+        console.log('📡 Offline - expense saved locally, will sync when online');
+        setError('You are offline - expense will sync when back online');
       }
 
       setSuccess(true);
       // Reset form
       setDescription('');
       setAmount('');
-      setCategory('Altro');
+      setCategoryId('');
+      setGroupId('personal');
       setDate(new Date().toISOString().split('T')[0]);
 
-      // Redirect after 1.5s
+      // Redirect after 2s (give time to read any error message)
       setTimeout(() => {
         navigate('/dashboard');
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error('Error adding expense:', error);
-      alert(t('expense.addError'));
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Error: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +183,14 @@ export function ExpenseForm() {
         </Alert>
       )}
 
+      {error && (
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <AlertDescription className="text-yellow-800">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{t('expense.newTransaction')}</CardTitle>
@@ -149,49 +209,88 @@ export function ExpenseForm() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('expense.amount')}</label>
-                <Input
-                  type="number"
-                  placeholder={t('expense.amountPlaceholder')}
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={isLoading || success}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('expense.currency')}</label>
-                <Select value={currency} onValueChange={setCurrency} disabled={isLoading || success}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EUR">€ EUR</SelectItem>
-                    <SelectItem value="USD">$ USD</SelectItem>
-                    <SelectItem value="GBP">£ GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('expense.amount')}</label>
+              <Input
+                type="number"
+                placeholder={t('expense.amountPlaceholder')}
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isLoading || success}
+                required
+              />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('expense.category')}</label>
-              <Select value={category} onValueChange={setCategory} disabled={isLoading || success}>
+              <label className="text-sm font-medium">{t('expense.group')}</label>
+              <Select value={groupId} onValueChange={setGroupId} disabled={isLoading || success}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t('expense.personalExpense')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                  <SelectItem value="personal">{t('expense.personalExpense')}</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {groups.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No groups yet. Create one in Groups page.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('expense.category')}</label>
+              {categories.length === 0 ? (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800 flex items-center justify-between">
+                    <span>No categories yet. Create one first!</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/categories')}
+                      className="ml-2"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Create Category
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Select value={categoryId} onValueChange={setCategoryId} disabled={isLoading || success}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(() => {
+                      const { topLevel, childrenMap } = getGroupedCategories();
+                      return topLevel.map((parent) => {
+                        const children = childrenMap.get(parent.id) || [];
+                        return (
+                          <div key={parent.id}>
+                            {/* Parent category */}
+                            <SelectItem value={parent.id}>
+                              {parent.icon} {parent.name}
+                            </SelectItem>
+                            {/* Child categories (indented) */}
+                            {children.map((child) => (
+                              <SelectItem key={child.id} value={child.id} className="pl-8">
+                                {child.icon} {child.name}
+                              </SelectItem>
+                            ))}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </SelectContent>
+                </Select>
+              )}
               <p className="text-xs text-muted-foreground">
                 {t('expense.addHint')}
               </p>

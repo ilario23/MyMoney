@@ -14,7 +14,6 @@ export interface Expense {
   userId: string; // chi ha creato la spesa
   groupId?: string; // se condivisa, altrimenti undefined
   amount: number;
-  currency: string;
   category: string;
   description: string;
   date: Date;
@@ -27,9 +26,12 @@ export interface Expense {
 export interface Category {
   id: string; // uuid
   userId: string;
+  groupId?: string; // If set, this is a group category (shared with all members)
   name: string;
   color: string;
   icon: string;
+  parentId?: string; // uuid - hierarchical categories (null = top-level)
+  isActive: boolean; // false = hidden from expense form (but visible in hierarchy)
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +43,10 @@ export interface Group {
   ownerId: string;
   description?: string;
   color?: string;
+  inviteCode?: string; // Reusable invite code (v1.10)
+  allowNewMembers: boolean; // Owner can allow/disallow new members (v1.10)
+  usedByUserId?: string; // DEPRECATED - kept for backwards compatibility
+  usedAt?: Date; // DEPRECATED - kept for backwards compatibility
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -90,12 +96,14 @@ export class ExpenseTrackerDB extends Dexie {
 
   constructor() {
     super("ExpenseTrackerDB");
+
+    // Single version schema - no migrations needed
     this.version(1).stores({
       users: "id, email",
       expenses: "id, userId, [userId+date], groupId, isSynced",
-      categories: "id, userId",
-      groups: "id, ownerId",
-      groupMembers: "[groupId+userId], groupId",
+      categories: "id, userId, groupId, parentId, isActive",
+      groups: "id, ownerId, inviteCode",
+      groupMembers: "[groupId+userId], groupId, userId",
       sharedExpenses: "id, groupId, creatorId",
       syncLogs: "++id, userId, lastSyncTime",
     });

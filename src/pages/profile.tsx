@@ -42,6 +42,7 @@ export function ProfilePage() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Load user statistics
   useEffect(() => {
@@ -109,12 +110,75 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     try {
+      console.log('🚪 Starting logout process...');
+      
+      // 1. Sign out da Supabase
       await supabase.auth.signOut();
+      console.log('✅ Supabase logout complete');
+      
+      // 2. Pulisci completamente IndexedDB
+      try {
+        // Chiudi il database Dexie
+        await db.close();
+        console.log('✅ Dexie database closed');
+        
+        // Elimina tutti i database IndexedDB
+        if (window.indexedDB) {
+          const databases = await window.indexedDB.databases();
+          for (const dbInfo of databases) {
+            if (dbInfo.name) {
+              await new Promise<void>((resolve, reject) => {
+                const deleteRequest = window.indexedDB.deleteDatabase(dbInfo.name!);
+                deleteRequest.onsuccess = () => {
+                  console.log(`✅ Deleted IndexedDB: ${dbInfo.name}`);
+                  resolve();
+                };
+                deleteRequest.onerror = () => reject(deleteRequest.error);
+              });
+            }
+          }
+        }
+      } catch (dbError) {
+        console.warn('⚠️ Error cleaning IndexedDB:', dbError);
+      }
+      
+      // 3. Pulisci localStorage
+      try {
+        localStorage.clear();
+        console.log('✅ localStorage cleared');
+      } catch (lsError) {
+        console.warn('⚠️ Error clearing localStorage:', lsError);
+      }
+      
+      // 4. Pulisci sessionStorage
+      try {
+        sessionStorage.clear();
+        console.log('✅ sessionStorage cleared');
+      } catch (ssError) {
+        console.warn('⚠️ Error clearing sessionStorage:', ssError);
+      }
+      
+      // 5. Pulisci Cache API (Service Worker caches)
+      try {
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+          console.log(`✅ Cleared ${cacheNames.length} cache(s)`);
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Error clearing caches:', cacheError);
+      }
+      
+      // 6. Logout dall'auth store (Zustand)
       logout();
+      console.log('✅ Auth store cleared');
+      
+      // 7. Redirect al login
+      console.log('🎉 Logout complete, redirecting to login...');
       navigate('/login');
     } catch (error) {
-      console.error('Logout error:', error);
-      setError('Errore durante il logout');
+      console.error('❌ Logout error:', error);
+      setError(t('profile.logoutError') || 'Errore durante il logout');
     }
   };
 
@@ -127,7 +191,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('profile.title')}</h1>
@@ -150,17 +214,56 @@ export function ProfilePage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{t('profile.title')}</CardTitle>
-            {!isEditing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                {t('profile.editProfile')}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  {t('profile.editProfile')}
+                </Button>
+              )}
+              <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    title={t('profile.logout')}
+                    className="w-10 h-10 p-0"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t('profile.logout')}</DialogTitle>
+                    <DialogDescription>
+                      {t('profile.confirmLogout')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowLogoutDialog(false)}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setShowLogoutDialog(false);
+                        handleLogout();
+                      }}
+                    >
+                      {t('profile.logout')}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -427,12 +530,6 @@ export function ProfilePage() {
           </Dialog>
         </CardContent>
       </Card>
-
-      {/* Logout */}
-      <Button onClick={handleLogout} variant="destructive" className="w-full gap-2" size="lg">
-        <LogOut className="w-4 h-4" />
-        {t('profile.logout')}
-      </Button>
     </div>
   );
 }

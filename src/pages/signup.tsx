@@ -91,36 +91,31 @@ export function SignupPage() {
         updatedAt: new Date(),
       });
 
-      // 3. Crea le categorie di default
-      const defaultCategories = [
-        { name: 'Cibo', color: '#EF4444', icon: '🍕' },
-        { name: 'Trasporto', color: '#F97316', icon: '🚗' },
-        { name: 'Casa', color: '#EAB308', icon: '🏠' },
-        { name: 'Intrattenimento', color: '#8B5CF6', icon: '🎬' },
-        { name: 'Salute', color: '#EC4899', icon: '💊' },
-        { name: 'Shopping', color: '#06B6D4', icon: '🛍️' },
-        { name: 'Utilità', color: '#3B82F6', icon: '⚡' },
-        { name: 'Altro', color: '#6B7280', icon: '📌' },
-      ];
+      // 2b. Crea l'utente anche in Supabase per evitare foreign key errors
+      console.log('📝 Attempting to create user in Supabase...');
+      const { error: userError, data: userData } = await supabase.from('users').insert({
+        id: userId,
+        email: userEmail,
+        display_name: displayName,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-      await Promise.all(
-        defaultCategories.map((cat) =>
-          db.categories.add({
-            id: crypto.randomUUID(),
-            userId,
-            name: cat.name,
-            color: cat.color,
-            icon: cat.icon,
-            isSynced: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-        )
-      );
+      if (userError) {
+        console.error('❌ Error creating user in Supabase:', userError);
+        console.error('Error code:', userError.code);
+        console.error('Error details:', userError.details);
+        console.error('Error message:', userError.message);
+        setError(`Failed to create user in database: ${userError.message}. Code: ${userError.code}`);
+        return;
+        // Interrompiamo il signup se il user non viene creato
+      }
+
+      console.log('✅ User created successfully in Supabase', userData);
 
       setSuccess(true);
 
-      // 4. Login automatico
+      // 3. Login automatico
       setTimeout(() => {
         setUser({
           id: userId,

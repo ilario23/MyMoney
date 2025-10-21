@@ -132,14 +132,19 @@ export class SyncService {
       for (const category of localUnsync) {
         try {
           // Prima controlla se esiste già
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("categories")
-            .select("id")
+            .select("*")
             .eq("id", category.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
-          
+
+          if (checkError && checkError.code !== "PGRST116") {
+            // PGRST116 è "not found" - è normal se non esiste
+            throw checkError;
+          }
+
           if (existing) {
             // Update
             const result = await supabase
@@ -148,6 +153,9 @@ export class SyncService {
                 name: category.name,
                 color: category.color,
                 icon: category.icon,
+                group_id: category.groupId || null,
+                parent_id: category.parentId || null,
+                is_active: category.isActive !== false, // Default true if undefined
                 updated_at: category.updatedAt.toISOString(),
               })
               .eq("id", category.id);
@@ -157,9 +165,12 @@ export class SyncService {
             const result = await supabase.from("categories").insert({
               id: category.id,
               user_id: userId,
+              group_id: category.groupId || null,
               name: category.name,
               color: category.color,
               icon: category.icon,
+              parent_id: category.parentId || null,
+              is_active: category.isActive !== false, // Default true if undefined
               created_at: category.createdAt.toISOString(),
               updated_at: category.updatedAt.toISOString(),
             });
@@ -195,9 +206,12 @@ export class SyncService {
             await db.categories.put({
               id: remote.id,
               userId,
+              groupId: remote.group_id || undefined,
               name: remote.name,
               color: remote.color,
               icon: remote.icon,
+              parentId: remote.parent_id || undefined,
+              isActive: remote.is_active !== false, // Default true if null/undefined
               isSynced: true,
               createdAt: new Date(remote.created_at || Date.now()),
               updatedAt: new Date(remote.updated_at),
@@ -230,21 +244,26 @@ export class SyncService {
       for (const expense of localUnsync) {
         try {
           // Prima controlla se esiste già
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("expenses")
-            .select("id")
+            .select("*")
             .eq("id", expense.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
-          
+
+          if (checkError && checkError.code !== "PGRST116") {
+            // PGRST116 è "not found" - è normal se non esiste
+            // Se c'è un errore diverso, lo registriamo
+            throw checkError;
+          }
+
           if (existing) {
             // Update
             const result = await supabase
               .from("expenses")
               .update({
                 amount: expense.amount,
-                currency: expense.currency,
                 category: expense.category,
                 description: expense.description,
                 date: expense.date.toISOString(),
@@ -260,7 +279,6 @@ export class SyncService {
               user_id: userId,
               group_id: expense.groupId || null,
               amount: expense.amount,
-              currency: expense.currency,
               category: expense.category,
               description: expense.description,
               date: expense.date.toISOString(),
@@ -307,7 +325,6 @@ export class SyncService {
             userId: remote.user_id,
             groupId: remote.group_id,
             amount: remote.amount,
-            currency: remote.currency,
             category: remote.category,
             description: remote.description,
             date: new Date(remote.date),
@@ -329,12 +346,13 @@ export class SyncService {
     return { synced, failed, conflicts };
   }
 
-  private async syncGroups(userId: string, _lastSync: Date) {
+  private async syncGroups(userId: string, lastSync: Date) {
     let synced = 0;
     let failed = 0;
+    let conflicts = 0;
 
     try {
-      // Invia gruppi non sincronizzati
+      // 1. INVIA: Sincronizza gruppi locali non sincronizzati
       const localUnsync = await db.groups
         .where("ownerId")
         .equals(userId)
@@ -343,35 +361,52 @@ export class SyncService {
 
       for (const group of localUnsync) {
         try {
-          // Prima controlla se esiste già
-          const { data: existing } = await supabase
+          // Check if exists
+          const { data: existing, error: checkError } = await supabase
             .from("groups")
-            .select("id")
+            .select("*")
             .eq("id", group.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
-          
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
+
           if (existing) {
-            // Update
-            const result = await supabase
-              .from("groups")
-              .update({
-                name: group.name,
-                description: group.description || null,
-                color: group.color || null,
-                updated_at: group.updatedAt.toISOString(),
-              })
-              .eq("id", group.id);
-            error = result.error;
+            // Se esiste, controlla chi è più recente
+            const remoteUpdated = new Date(existing.updated_at);
+            if (group.updatedAt > remoteUpdated) {
+              // Local è più recente, aggiorna remote
+              const result = await supabase
+                .from("groups")
+                .update({
+                  name: group.name,
+                  description: group.description || null,
+                  color: group.color || null,
+                  invite_code: group.inviteCode || null,
+                  used_by_user_id: group.usedByUserId || null,
+                  used_at: group.usedAt ? group.usedAt.toISOString() : null,
+                  updated_at: group.updatedAt.toISOString(),
+                })
+                .eq("id", group.id);
+              error = result.error;
+            } else {
+              // Remote è più recente, conflitto risolto (remote wins per questo caso)
+              conflicts++;
+            }
           } else {
-            // Insert
+            // Non esiste, inserisci
             const result = await supabase.from("groups").insert({
               id: group.id,
               name: group.name,
               owner_id: userId,
               description: group.description || null,
               color: group.color || null,
+              invite_code: group.inviteCode || null,
+              used_by_user_id: group.usedByUserId || null,
+              used_at: group.usedAt ? group.usedAt.toISOString() : null,
               created_at: group.createdAt.toISOString(),
               updated_at: group.updatedAt.toISOString(),
             });
@@ -382,7 +417,7 @@ export class SyncService {
             await db.groups.update(group.id, { isSynced: true });
             synced++;
           } else {
-            console.error("[Sync] Group error:", error);
+            console.error("[Sync] Group sync error:", error);
             failed++;
           }
         } catch (err) {
@@ -391,47 +426,217 @@ export class SyncService {
         }
       }
 
-      // Per ora skippiamo la query complessa dei gruppi remoti
-      // (sarebbe necessario solo per la v2.0 con gruppi condivisi)
-      // La query .or() con nested select non è supportata correttamente
-      
+      // 2. RICEVI: Sincronizza gruppi remoti modificati di cui sei owner
+      try {
+        const ownedGroupIds = await db.groups
+          .where("ownerId")
+          .equals(userId)
+          .primaryKeys();
+
+        if (ownedGroupIds.length > 0) {
+          const { data: remoteGroups, error } = await supabase
+            .from("groups")
+            .select("*")
+            .in("id", ownedGroupIds as string[])
+            .gt("updated_at", lastSync.toISOString());
+
+          if (!error && remoteGroups) {
+            for (const remote of remoteGroups) {
+              const localGroup = await db.groups.get(remote.id);
+
+              // Se non esiste localmente o se remote è più recente
+              if (
+                !localGroup ||
+                new Date(remote.updated_at) > localGroup.updatedAt
+              ) {
+                await db.groups.put({
+                  id: remote.id,
+                  name: remote.name,
+                  ownerId: remote.owner_id,
+                  description: remote.description,
+                  color: remote.color,
+                  inviteCode: remote.invite_code || undefined,
+                  allowNewMembers: remote.allow_new_members ?? true,
+                  usedByUserId: remote.used_by_user_id || undefined,
+                  usedAt: remote.used_at ? new Date(remote.used_at) : undefined,
+                  isSynced: true,
+                  createdAt: new Date(remote.created_at),
+                  updatedAt: new Date(remote.updated_at),
+                });
+                synced++;
+              } else {
+                // Local è più recente, skip
+                conflicts++;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[Sync] Fetch remote owned groups error:", err);
+      }
+
+      // 3. RICEVI: Sincronizza gruppi di cui sei membro (joined via invite)
+      try {
+        // Get group IDs where user is member from Supabase
+        const { data: memberGroups, error: memberError } = await supabase
+          .from("group_members")
+          .select("group_id")
+          .eq("user_id", userId);
+
+        if (!memberError && memberGroups && memberGroups.length > 0) {
+          const memberGroupIds = memberGroups.map((m) => m.group_id);
+
+          // Fetch those groups from Supabase
+          const { data: remoteGroups, error } = await supabase
+            .from("groups")
+            .select("*")
+            .in("id", memberGroupIds);
+
+          if (!error && remoteGroups) {
+            for (const remote of remoteGroups) {
+              const localGroup = await db.groups.get(remote.id);
+
+              // Add/update if not exists or remote is newer
+              if (
+                !localGroup ||
+                new Date(remote.updated_at) > localGroup.updatedAt
+              ) {
+                await db.groups.put({
+                  id: remote.id,
+                  name: remote.name,
+                  ownerId: remote.owner_id,
+                  description: remote.description,
+                  color: remote.color,
+                  inviteCode: remote.invite_code || undefined,
+                  allowNewMembers: remote.allow_new_members ?? true,
+                  usedByUserId: remote.used_by_user_id || undefined,
+                  usedAt: remote.used_at ? new Date(remote.used_at) : undefined,
+                  isSynced: true,
+                  createdAt: new Date(remote.created_at),
+                  updatedAt: new Date(remote.updated_at),
+                });
+                synced++;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[Sync] Fetch remote member groups error:", err);
+      }
     } catch (error) {
       console.error("[Sync] Groups error:", error);
       failed++;
     }
 
-    return { synced, failed };
+    return { synced, failed, conflicts };
   }
 
   private async syncGroupMembers(userId: string, lastSync: Date) {
     let synced = 0;
     let failed = 0;
+    let conflicts = 0;
 
     try {
-      // Ricevi membri di gruppi di cui sei owner
-      const { data: remoteMembers, error } = await supabase
-        .from("group_members")
-        .select("*")
-        .in(
-          "group_id",
-          (await db.groups
-            .where("ownerId")
-            .equals(userId)
-            .primaryKeys()) as string[]
-        )
-        .gt("created_at", lastSync.toISOString());
+      // 1. INVIA: Sincronizza membri locali non sincronizzati
+      const localUnsync = await db.groupMembers.toArray();
+      const unsynced = localUnsync.filter((m) => !m.isSynced);
 
-      if (!error && remoteMembers) {
-        for (const remote of remoteMembers) {
-          await db.groupMembers.put({
-            id: remote.id,
-            groupId: remote.group_id,
-            userId: remote.user_id,
-            role: remote.role,
-            joinedAt: new Date(remote.created_at),
-            isSynced: true,
-          });
-          synced++;
+      // Filtra solo i membri dei gruppi di cui siamo owner
+      const ownedGroupIds = await db.groups
+        .where("ownerId")
+        .equals(userId)
+        .primaryKeys();
+
+      for (const member of unsynced) {
+        if (!ownedGroupIds.includes(member.groupId)) continue; // Solo i nostri gruppi
+
+        try {
+          // Check if exists
+          const { data: existing, error: checkError } = await supabase
+            .from("group_members")
+            .select("*")
+            .eq("id", member.id)
+            .maybeSingle();
+
+          let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
+
+          if (existing) {
+            // Update
+            const result = await supabase
+              .from("group_members")
+              .update({
+                group_id: member.groupId,
+                user_id: member.userId,
+                role: member.role,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", member.id);
+            error = result.error;
+          } else {
+            // Insert
+            const result = await supabase.from("group_members").insert({
+              id: member.id,
+              group_id: member.groupId,
+              user_id: member.userId,
+              role: member.role,
+              created_at: member.joinedAt.toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+            error = result.error;
+          }
+
+          if (!error) {
+            await db.groupMembers.update(member.id, { isSynced: true });
+            synced++;
+          } else {
+            console.error("[Sync] Group member sync error:", error);
+            failed++;
+          }
+        } catch (err) {
+          console.error("[Sync] Group member exception:", err);
+          failed++;
+        }
+      }
+
+      // 2. RICEVI: Sincronizza membri remoti modificati
+      if (ownedGroupIds.length > 0) {
+        try {
+          const { data: remoteMembers, error } = await supabase
+            .from("group_members")
+            .select("*")
+            .in("group_id", ownedGroupIds as string[])
+            .gt("updated_at", lastSync.toISOString());
+
+          if (!error && remoteMembers) {
+            for (const remote of remoteMembers) {
+              const localMember = await db.groupMembers.get(remote.id);
+
+              // Se non esiste localmente o se remote è più recente
+              if (
+                !localMember ||
+                new Date(remote.updated_at) > localMember.joinedAt
+              ) {
+                await db.groupMembers.put({
+                  id: remote.id,
+                  groupId: remote.group_id,
+                  userId: remote.user_id,
+                  role: remote.role,
+                  joinedAt: new Date(remote.created_at),
+                  isSynced: true,
+                });
+                synced++;
+              } else {
+                // Local è più recente, skip
+                conflicts++;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[Sync] Fetch remote group members error:", err);
         }
       }
     } catch (error) {
@@ -439,43 +644,132 @@ export class SyncService {
       failed++;
     }
 
-    return { synced, failed };
+    return { synced, failed, conflicts };
   }
 
-  private async syncSharedExpenses(_userId: string, lastSync: Date) {
+  private async syncSharedExpenses(userId: string, lastSync: Date) {
     let synced = 0;
     let failed = 0;
+    let conflicts = 0;
 
     try {
-      // Ricevi spese condivise modificate
-      const { data: remoteShared, error } = await supabase
-        .from("shared_expenses")
-        .select("*")
-        .gt("updated_at", lastSync.toISOString());
+      // 1. INVIA: Sincronizza spese condivise locali non sincronizzate
+      const localUnsync = await db.sharedExpenses
+        .where("creatorId")
+        .equals(userId)
+        .and((se) => !se.isSynced)
+        .toArray();
 
-      if (!error && remoteShared) {
-        for (const remote of remoteShared) {
-          await db.sharedExpenses.put({
-            id: remote.id,
-            groupId: remote.group_id,
-            expenseId: remote.expense_id,
-            creatorId: remote.creator_id,
-            participants: remote.participants,
-            isRecurring: remote.is_recurring,
-            recurringRule: remote.recurring_rule,
-            isSynced: true,
-            createdAt: new Date(remote.created_at),
-            updatedAt: new Date(remote.updated_at),
-          });
-          synced++;
+      for (const sharedExp of localUnsync) {
+        try {
+          // Check if exists
+          const { data: existing, error: checkError } = await supabase
+            .from("shared_expenses")
+            .select("*")
+            .eq("id", sharedExp.id)
+            .maybeSingle();
+
+          let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
+
+          if (existing) {
+            // Se esiste, controlla chi è più recente
+            const remoteUpdated = new Date(existing.updated_at);
+            if (sharedExp.updatedAt > remoteUpdated) {
+              // Local è più recente, aggiorna remote
+              const result = await supabase
+                .from("shared_expenses")
+                .update({
+                  group_id: sharedExp.groupId,
+                  expense_id: sharedExp.expenseId,
+                  creator_id: sharedExp.creatorId,
+                  participants: sharedExp.participants,
+                  is_recurring: sharedExp.isRecurring,
+                  recurring_rule: sharedExp.recurringRule || null,
+                  updated_at: sharedExp.updatedAt.toISOString(),
+                })
+                .eq("id", sharedExp.id);
+              error = result.error;
+            } else {
+              // Remote è più recente, conflitto
+              conflicts++;
+            }
+          } else {
+            // Non esiste, inserisci
+            const result = await supabase.from("shared_expenses").insert({
+              id: sharedExp.id,
+              group_id: sharedExp.groupId,
+              expense_id: sharedExp.expenseId,
+              creator_id: sharedExp.creatorId,
+              participants: sharedExp.participants,
+              is_recurring: sharedExp.isRecurring,
+              recurring_rule: sharedExp.recurringRule || null,
+              created_at: sharedExp.createdAt.toISOString(),
+              updated_at: sharedExp.updatedAt.toISOString(),
+            });
+            error = result.error;
+          }
+
+          if (!error) {
+            await db.sharedExpenses.update(sharedExp.id, { isSynced: true });
+            synced++;
+          } else {
+            console.error("[Sync] Shared expense sync error:", error);
+            failed++;
+          }
+        } catch (err) {
+          console.error("[Sync] Shared expense exception:", err);
+          failed++;
         }
+      }
+
+      // 2. RICEVI: Sincronizza spese condivise remote modificate
+      try {
+        const { data: remoteShared, error } = await supabase
+          .from("shared_expenses")
+          .select("*")
+          .gt("updated_at", lastSync.toISOString());
+
+        if (!error && remoteShared) {
+          for (const remote of remoteShared) {
+            const localShared = await db.sharedExpenses.get(remote.id);
+
+            // Se non esiste localmente o se remote è più recente
+            if (
+              !localShared ||
+              new Date(remote.updated_at) > localShared.updatedAt
+            ) {
+              await db.sharedExpenses.put({
+                id: remote.id,
+                groupId: remote.group_id,
+                expenseId: remote.expense_id,
+                creatorId: remote.creator_id,
+                participants: remote.participants,
+                isRecurring: remote.is_recurring,
+                recurringRule: remote.recurring_rule,
+                isSynced: true,
+                createdAt: new Date(remote.created_at),
+                updatedAt: new Date(remote.updated_at),
+              });
+              synced++;
+            } else {
+              // Local è più recente, skip
+              conflicts++;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[Sync] Fetch remote shared expenses error:", err);
       }
     } catch (error) {
       console.error("[Sync] Shared expenses error:", error);
       failed++;
     }
 
-    return { synced, failed };
+    return { synced, failed, conflicts };
   }
 
   async uploadOfflineChanges(userId: string): Promise<boolean> {

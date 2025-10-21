@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db } from '@/lib/dexie';
-import type { Expense } from '@/lib/dexie';
+import { db, type Expense, type Category } from '@/lib/dexie';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -15,24 +14,66 @@ export function DashboardPage() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categories, setCategories] = useState<Map<string, Category>>(new Map());
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
 
   useEffect(() => {
     if (!user) return;
 
-    const loadExpenses = async () => {
+    const loadExpensesAndCategories = async () => {
+      // Load categories
+      const userCategories = await db.categories.where('userId').equals(user.id).toArray();
+      const categoryMap = new Map(userCategories.map(c => [c.id, c]));
+      setCategories(categoryMap);
+
+      // Load groups where user is owner or member
+      const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+      const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
+      const memberGroupIds = memberships.map(m => m.groupId);
+      const memberGroups = memberGroupIds.length > 0 
+        ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
+        : [];
+      
+      // Combine and deduplicate
+      const allGroups = [...ownedGroups];
+      memberGroups.forEach(group => {
+        if (!allGroups.find(g => g.id === group.id)) {
+          allGroups.push(group);
+        }
+      });
+      const groupIds = allGroups.map(g => g.id);
+
+      // Load expenses for current month
       const now = new Date();
       const start = startOfMonth(now);
       const end = endOfMonth(now);
 
-      const data = await db.expenses
+      // Load personal expenses
+      const personalExpenses = await db.expenses
         .where('[userId+date]')
         .between([user.id, start], [user.id, end])
         .toArray();
 
+      // Load group expenses
+      const groupExpenses = groupIds.length > 0
+        ? await db.expenses
+            .where('groupId')
+            .anyOf(groupIds)
+            .and((e) => e.date >= start && e.date <= end && !e.deletedAt)
+            .toArray()
+        : [];
+
+      // Combine expenses and deduplicate
+      const allExpenses = [...personalExpenses];
+      groupExpenses.forEach(expense => {
+        if (!allExpenses.find(e => e.id === expense.id)) {
+          allExpenses.push(expense);
+        }
+      });
+
       // Filtra solo le spese NON eliminate (deletedAt === undefined)
-      const activeExpenses = data.filter((e) => !e.deletedAt);
+      const activeExpenses = allExpenses.filter((e) => !e.deletedAt);
 
       setExpenses(activeExpenses);
 
@@ -49,7 +90,7 @@ export function DashboardPage() {
       setMonthlyIncome(income);
     };
 
-    loadExpenses();
+    loadExpensesAndCategories();
   }, [user]);
 
   if (!user) {
@@ -76,55 +117,72 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.expensesThisMonth')}</CardTitle>
-            <TrendingDown className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount > 0).length))}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.incomeThisMonth')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{monthlyIncome.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount < 0).length))}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.netBalance')}</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €{(monthlyIncome - monthlyTotal).toFixed(2)}
+      {/* Summary Card - Combined */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('dashboard.monthlySummary')}</CardTitle>
+          <CardDescription>{format(new Date(), 'MMMM yyyy', { locale: dateLocale })}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Expenses */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingDown className="h-4 w-4 text-destructive" />
+                <span>{t('dashboard.expensesThisMonth')}</span>
+              </div>
+              <div className="text-3xl font-bold text-destructive">€{monthlyTotal.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount > 0).length))}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.totalTransactions').replace('{count}', String(expenses.length))}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Income */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span>{t('dashboard.incomeThisMonth')}</span>
+              </div>
+              <div className="text-3xl font-bold text-green-600">€{monthlyIncome.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount < 0).length))}
+              </p>
+            </div>
+
+            {/* Net Balance */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <span>{t('dashboard.netBalance')}</span>
+              </div>
+              <div className={`text-3xl font-bold ${(monthlyIncome - monthlyTotal) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                €{(monthlyIncome - monthlyTotal).toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.totalTransactions').replace('{count}', String(expenses.length))}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Expenses */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('dashboard.recentExpenses')}</CardTitle>
-          <CardDescription>{t('dashboard.recentDescription')}</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle>{t('dashboard.recentExpenses')}</CardTitle>
+            <CardDescription>{t('dashboard.recentDescription')}</CardDescription>
+          </div>
+          {expenses.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/expenses')}
+              className="text-primary hover:text-primary"
+            >
+              View All →
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {expenses.length === 0 ? (
@@ -140,26 +198,31 @@ export function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {expenses.slice(0, 10).map((expense) => (
-                <div
-                  key={expense.id}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => navigate(`/expense/${expense.id}`)}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{expense.description}</p>
-                    <p className="text-sm text-muted-foreground">{expense.category}</p>
+              {expenses.slice(0, 10).map((expense) => {
+                const categoryObj = categories.get(expense.category);
+                return (
+                  <div
+                    key={expense.id}
+                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                    onClick={() => navigate(`/expense/${expense.id}`)}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{expense.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {categoryObj ? `${categoryObj.icon} ${categoryObj.name}` : 'Unknown category'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                        {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(expense.date, 'd MMM', { locale: dateLocale })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                      {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(expense.date, 'd MMM', { locale: dateLocale })}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

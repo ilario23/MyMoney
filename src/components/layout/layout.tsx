@@ -5,6 +5,7 @@ import { SyncIndicator } from './sync-indicator';
 import { ThemeToggle } from './theme-toggle';
 import { OfflineIndicator } from './offline-indicator';
 import { useSync } from '@/hooks/useSync';
+import { Sidebar } from './sidebar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -35,12 +36,18 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="container max-w-screen-2xl px-4 py-6">
-          {children}
-        </div>
-      </main>
+      {/* Main Content with Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="container max-w-screen-2xl px-4 py-6">
+            {children}
+          </div>
+        </main>
+      </div>
 
       {/* Mobile Navigation */}
       <Navigation />

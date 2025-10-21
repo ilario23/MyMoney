@@ -8,12 +8,10 @@ import { SignupPage } from '@/pages/signup';
 import { DashboardPage } from '@/pages/dashboard';
 import { ProfilePage } from '@/pages/profile';
 import { CategoriesPage } from '@/pages/categories';
+import { GroupsPage } from '@/pages/groups';
+import { SharedExpensesPage } from '@/pages/shared-expenses';
 import { ExpenseForm } from '@/components/expense/expense-form';
-
-// Placeholder pages
-function GroupsPage() {
-  return <div className="text-center py-12">Pagina Gruppi - Coming Soon</div>;
-}
+import { ExpensesPage } from '@/pages/expenses';
 
 function NotFound() {
   return <div className="text-center py-12">Pagina non trovata</div>;
@@ -112,10 +110,26 @@ export function AppRoutes() {
               }
             />
             <Route
+              path="/expenses"
+              element={
+                <Layout>
+                  <ExpensesPage />
+                </Layout>
+              }
+            />
+            <Route
               path="/groups"
               element={
                 <Layout>
                   <GroupsPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/shared-expenses"
+              element={
+                <Layout>
+                  <SharedExpensesPage />
                 </Layout>
               }
             />
