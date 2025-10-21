@@ -186,16 +186,18 @@ ON public.users
 FOR SELECT
 USING (auth.uid() = id);
 
--- Users can insert their own record
+-- Users can insert their own record (NEW USERS at signup)
 CREATE POLICY "Users can insert their own record"
 ON public.users
 FOR INSERT
+TO authenticated
 WITH CHECK (auth.uid() = id);
 
 -- Users can update own record
 CREATE POLICY "Users can update own record"
 ON public.users
 FOR UPDATE
+TO authenticated
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
@@ -259,7 +261,7 @@ CREATE POLICY "Users can read groups"
 ON public.groups
 FOR SELECT
 USING (
-  auth.uid() = owner_id OR 
+  auth.uid() = owner_id OR
   id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
 );
 
@@ -288,7 +290,7 @@ CREATE POLICY "Members can read group members"
 ON public.group_members
 FOR SELECT
 USING (
-  user_id = auth.uid() OR 
+  user_id = auth.uid() OR
   group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
 );
 
@@ -396,11 +398,20 @@ RLS ensures users can only access their own data. The policies above implement:
 - **group_members table**: Can read members of their groups
 - **shared_expenses table**: Can read/create expenses in member groups
 
+### Important Notes on RLS Policies
+
+**⚠️ Common Mistakes:**
+
+1. **Forgetting `TO authenticated`** - This is the main cause of 42501 errors at signup
+2. **RLS not enabled** - Policies do nothing if RLS is disabled on the table
+3. **Copy-paste errors** - Even small syntax mistakes will break policies
+
 ### Troubleshooting RLS
 
 If you get foreign key constraint errors during sync:
 
 1. **Verify user exists in Supabase**:
+
    ```sql
    SELECT * FROM public.users WHERE id = 'your-user-id';
    ```
@@ -412,6 +423,58 @@ If you get foreign key constraint errors during sync:
    - Check browser console for error messages
    - Verify RLS policies allow INSERT on users table
    - Ensure auth.uid() matches the user ID being inserted
+
+### RLS Policy Error: 42501 "violates row-level security policy"
+
+If you get error **42501** during signup when creating user:
+
+**Problem**: The INSERT policy is rejecting the new user record.
+
+**Solution**: Make sure the policy includes `TO authenticated`:
+
+```sql
+-- WRONG - will cause 42501 error
+CREATE POLICY "Users can insert"
+ON public.users
+FOR INSERT
+WITH CHECK (auth.uid() = id);
+
+-- CORRECT - allows authenticated users to insert
+CREATE POLICY "Users can insert"
+ON public.users
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = id);
+```
+
+**To fix it**:
+
+1. Go to **Supabase Dashboard → Table Editor**
+2. Select `users` table → Click "Policies" tab
+3. Find the INSERT policy that causes the error
+4. Click the policy name and verify it has `TO authenticated`
+5. If not, delete it and recreate with:
+   ```sql
+   DROP POLICY "Users can insert their own record" ON public.users;
+   
+   CREATE POLICY "Users can insert their own record"
+   ON public.users
+   FOR INSERT
+   TO authenticated
+   WITH CHECK (auth.uid() = id);
+   ```
+
+**Alternative**: If policies keep failing, temporarily disable RLS to test:
+
+```sql
+ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
+```
+
+Then test signup. If it works, re-enable RLS and debug the policy:
+
+```sql
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+```
 
 ## 🌍 Multi-Language Support
 
@@ -445,10 +508,12 @@ Toggle via button in header.
 ### PWA Installation
 
 **iOS**:
+
 1. Open app in Safari
 2. Tap Share → Add to Home Screen
 
 **Android**:
+
 1. Open app in Chrome
 2. Tap menu (⋮) → Install app
 
@@ -480,30 +545,36 @@ const result = await syncService.sync({
 ```
 
 Monitor browser console for:
+
 - `[Sync]` logs from sync service
 - `[ServiceWorker]` logs from service worker
 
 ### Common Issues
 
 #### Service Worker not registering
+
 - Ensure app is served over HTTPS in production
 - Check browser DevTools → Application → Service Workers
 
 #### Dexie not persisting
+
 - Verify IndexedDB is enabled in browser
 - Check DevTools → Application → IndexedDB
 
 #### Supabase auth failing
+
 - Verify environment variables are correct
 - Check Supabase project URL and anon key
 - Ensure CORS is configured correctly
 
 #### Foreign key constraint errors
+
 - User must exist in `public.users` table
 - Verify user is created at signup (check console logs)
 - Confirm RLS policies allow INSERT on users table
 
 #### RLS policy errors
+
 - Ensure `auth.uid()` matches the inserted user ID
 - Check that RLS is enabled on the table
 - Verify policies are created correctly (see Step 3b)
@@ -511,21 +582,25 @@ Monitor browser console for:
 ## � Changelog
 
 ### v1.5.0 - Enhanced FK Constraint Handling
+
 - Added detailed logging for user creation
 - Improved error messages and diagnostics
 - Fixed query issues in sync service
 - Added comprehensive RLS policy documentation
 
 ### v1.4.2 - Offline Indicator
+
 - Added offline/online status indicator
 - Improved sync state monitoring
 
 ### v1.4 - Multi-Language Support
+
 - Full English and Italian translations
 - Language selector in profile
 - i18n infrastructure
 
 ### v1.0 - Beta Release
+
 - Core expense tracking
 - Personal expense management
 - Offline-first sync
