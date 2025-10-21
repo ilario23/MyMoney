@@ -103,6 +103,7 @@ CREATE TABLE public.categories (
   color TEXT,
   icon TEXT,
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,  -- Hide from expense form (v1.8.1)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
@@ -111,6 +112,7 @@ CREATE TABLE public.categories (
 -- Create indexes for categories
 CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
 CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
+CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
 
 -- 4. Expenses table (depends on users and groups)
 CREATE TABLE public.expenses (
