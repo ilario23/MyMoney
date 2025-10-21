@@ -222,27 +222,24 @@ export function ExpenseForm() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('expense.group')}</label>
-              <Select value={groupId} onValueChange={setGroupId} disabled={isLoading || success}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('expense.personalExpense')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="personal">{t('expense.personalExpense')}</SelectItem>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
-                      {group.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {groups.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  No groups yet. Create one in Groups page.
-                </p>
-              )}
-            </div>
+            {groups.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('expense.group')}</label>
+                <Select value={groupId} onValueChange={setGroupId} disabled={isLoading || success}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('expense.personalExpense')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="personal">{t('expense.personalExpense')}</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('expense.category')}</label>
