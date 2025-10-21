@@ -120,6 +120,19 @@ export const it = {
   "dashboard.recentDescription": "Le ultime transazioni di questo mese",
   "dashboard.monthlySummary": "Riepilogo Mensile",
   "dashboard.newExpense": "Nuova spesa",
+  "dashboard.topCategories": "Top Categorie",
+  "dashboard.topCategoriesDesc": "Dove spendi di più",
+  "dashboard.overallStats": "Statistiche Generali",
+  "dashboard.overallStatsDesc": "Tutte le tue spese",
+  "dashboard.avgExpense": "Media per Spesa",
+  "dashboard.vsLastMonth": "vs Mese Scorso",
+  "dashboard.tapForStats": "Tap per statistiche complete",
+  "dashboard.expense": "spesa",
+  "dashboard.expenses": "spese",
+
+  // Statistics Page
+  "statistics.title": "Statistiche",
+  "statistics.subtitle": "Analisi dettagliata delle tue spese",
   "dashboard.addFirstExpense": "Aggiungi la prima spesa",
 
   // Expense Form

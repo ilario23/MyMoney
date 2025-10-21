@@ -69,10 +69,6 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncExpenses() {
-  try {
-    // This will be handled by the app itself
-    console.log('[ServiceWorker] Background sync triggered');
-  } catch (error) {
-    console.error('[ServiceWorker] Sync error:', error);
-  }
+  // Sync handled by the app itself
+  // Logs removed for production
 }

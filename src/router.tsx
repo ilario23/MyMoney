@@ -10,6 +10,7 @@ import { ProfilePage } from '@/pages/profile';
 import { CategoriesPage } from '@/pages/categories';
 import { GroupsPage } from '@/pages/groups';
 import { SharedExpensesPage } from '@/pages/shared-expenses';
+import { StatisticsPage } from '@/pages/statistics';
 import { ExpenseForm } from '@/components/expense/expense-form';
 import { ExpensesPage } from '@/pages/expenses';
 
@@ -146,6 +147,14 @@ export function AppRoutes() {
               element={
                 <Layout>
                   <CategoriesPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/statistics"
+              element={
+                <Layout>
+                  <StatisticsPage />
                 </Layout>
               }
             />
