@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 import { BarChart3, ShoppingCart, Layers, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import packageJson from '../../../package.json';
 
 const navItems = [
   { id: 'dashboard', path: '/dashboard', icon: BarChart3, labelKey: 'nav.dashboard' as const },
@@ -46,7 +47,7 @@ export function Sidebar() {
 
         {/* Sidebar Footer */}
         <div className="pt-4 border-t border-border text-xs text-muted-foreground">
-          <p>ExpenseTracker v1.0</p>
+          <p>Spendix v{packageJson.version}</p>
           <p className="mt-1">PWA • Offline Ready</p>
         </div>
       </aside>

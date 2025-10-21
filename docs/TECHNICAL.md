@@ -1,4 +1,4 @@
-# ExpenseTracker - Guida Tecnica Dettagliata
+# Spendix - Guida Tecnica Dettagliata
 
 ## 🏗️ Architettura
 

@@ -1,4 +1,4 @@
-# 🎉 IMPLEMENTATION SUMMARY - ExpenseTracker PWA v1.1.0
+# 🎉 IMPLEMENTATION SUMMARY - Spendix PWA v1.1.0
 
 ## 🎯 Mission Accomplished
 

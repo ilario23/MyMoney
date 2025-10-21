@@ -47,8 +47,8 @@ export default defineConfig(({ command }) => ({
               clientsClaim: true,
             },
             manifest: {
-              name: "ExpenseTracker - Gestione Spese",
-              short_name: "ExpenseTracker",
+              name: "Spendix - Gestione Spese",
+              short_name: "Spendix",
               description:
                 "Gestisci le tue spese personali e condivise con facilità",
               theme_color: "#3b82f6",

@@ -1,5 +1,5 @@
-// Service Worker for ExpenseTracker PWA
-const CACHE_NAME = 'expensetracker-v1';
+// Service Worker for Spendix PWA
+const CACHE_NAME = 'spendix-v1';
 const urlsToCache = [
   '/',
   '/index.html',

@@ -136,7 +136,7 @@ Apri la console del browser (`F12` → Console) per vedere i log:
 
 ### DevTools - IndexedDB
 
-1. `F12` → Application → Storage → IndexedDB → ExpenseTrackerDB
+1. `F12` → Application → Storage → IndexedDB → SpendixDB
 2. Controlla la tabella `expenses` o `categories`
 3. Verifica il campo `isSynced`:
    - `true` = sincronizzato con successo
@@ -218,7 +218,7 @@ F12 → Console → Cerca "Sync failed" o "error"
 **Soluzione 2**: Verifica `isSynced` in IndexedDB
 
 ```
-F12 → Application → IndexedDB → ExpenseTrackerDB → expenses
+F12 → Application → IndexedDB → SpendixDB → expenses
 ```
 
 Se `isSynced: false`, significa che il sync è fallito.

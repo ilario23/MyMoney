@@ -289,8 +289,8 @@ export const en: Record<TranslationKey, string> = {
   "pwa.newVersionAvailable": "New version available",
   "pwa.offlineReady": "App ready for offline use",
   "pwa.updateDescription":
-    "A new version of ExpenseTracker is available. Update now to get the latest features and improvements.",
-  "pwa.offlineDescription": "ExpenseTracker is now ready to work offline.",
+    "A new version of Spendix is available. Update now to get the latest features and improvements.",
+  "pwa.offlineDescription": "Spendix is now ready to work offline.",
   "pwa.lastChecked": "Last checked",
   "pwa.updateNow": "Update Now",
   "pwa.retry": "Retry",

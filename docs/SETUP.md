@@ -1,4 +1,4 @@
-# ExpenseTracker PWA - Setup Guide
+# Spendix PWA - Setup Guide
 
 A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
 

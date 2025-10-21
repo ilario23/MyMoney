@@ -2,7 +2,7 @@
 
 ## 📱 Panoramica
 
-ExpenseTracker è configurato come una Progressive Web App (PWA) completa, che consente agli utenti di installare l'app sul proprio dispositivo e utilizzarla offline.
+Spendix è configurato come una Progressive Web App (PWA) completa, che consente agli utenti di installare l'app sul proprio dispositivo e utilizzarla offline.
 
 ## 🎯 Funzionalità Principali
 
@@ -149,8 +149,8 @@ Componente UI per notificare l'utente:
 
 ```json
 {
-  "name": "ExpenseTracker - Gestione Spese",
-  "short_name": "ExpenseTracker",
+  "name": "Spendix - Gestione Spese",
+  "short_name": "Spendix",
   "description": "Gestisci le tue spese personali e condivise con facilità",
   "theme_color": "#3b82f6",
   "background_color": "#ffffff",
@@ -190,7 +190,7 @@ pnpm run preview
 ### Test Installazione
 
 1. Apri l'app in Chrome/Edge
-2. Vai su Menu → "Installa ExpenseTracker"
+2. Vai su Menu → "Installa Spendix"
 3. L'app si aprirà come app standalone
 4. Icona aggiunta alla home screen / desktop
 

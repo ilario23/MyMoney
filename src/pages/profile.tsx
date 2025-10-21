@@ -4,6 +4,7 @@ import { useLanguage, type Language } from '@/lib/language';
 import { supabase } from '@/lib/supabase';
 import { db } from '@/lib/dexie';
 import { syncService } from '@/services/sync.service';
+import { getUserExpenseSummary } from '@/lib/database-views';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit2, Save, X } from 'lucide-react';
+import packageJson from '../../package.json';
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -49,8 +51,26 @@ export function ProfilePage() {
     const loadStats = async () => {
       if (!user) return;
       try {
+        // 🚀 Usa Database View ottimizzata invece di calcolare nel frontend
+        if (navigator.onLine) {
+          const summary = await getUserExpenseSummary(user.id);
+          if (summary) {
+            const categories = await db.categories.where('userId').equals(user.id).toArray();
+            const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
+            const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
+
+            setStats({
+              totalExpenses: summary.total_expenses || 0,
+              totalAmount: summary.total_amount || 0,
+              categories: categories.length,
+              lastSyncDate: lastSync,
+            });
+            return;
+          }
+        }
+
+        // Fallback: calcolo locale se offline o view non disponibile
         const allExpenses = await db.expenses.where('userId').equals(user.id).toArray();
-        // Filtra solo le spese NON eliminate
         const expenses = allExpenses.filter((e) => !e.deletedAt);
         const categories = await db.categories.where('userId').equals(user.id).toArray();
         const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
@@ -415,7 +435,7 @@ export function ProfilePage() {
           <div className="space-y-3">
             <div>
               <h3 className="font-medium mb-2">{t('profile.appVersion')}</h3>
-              <Badge variant="outline">v1.0.0 - PWA</Badge>
+              <Badge variant="outline">v{packageJson.version} - PWA</Badge>
             </div>
 
             <div>

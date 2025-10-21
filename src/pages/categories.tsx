@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
 import { db } from '@/lib/dexie';

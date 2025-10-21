@@ -291,9 +291,8 @@ export const it = {
   "pwa.newVersionAvailable": "Nuova versione disponibile",
   "pwa.offlineReady": "App pronta per l'uso offline",
   "pwa.updateDescription":
-    "È disponibile una nuova versione di ExpenseTracker. Aggiorna ora per ottenere le ultime funzionalità e miglioramenti.",
-  "pwa.offlineDescription":
-    "ExpenseTracker è ora pronta per funzionare offline.",
+    "È disponibile una nuova versione di Spendix. Aggiorna ora per ottenere le ultime funzionalità e miglioramenti.",
+  "pwa.offlineDescription": "Spendix è ora pronta per funzionare offline.",
   "pwa.lastChecked": "Ultimo controllo",
   "pwa.updateNow": "Aggiorna Ora",
   "pwa.retry": "Riprova",

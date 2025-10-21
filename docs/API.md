@@ -354,7 +354,7 @@ USING (
 ### Schema
 
 ```typescript
-const db = new Dexie("ExpenseTrackerDB");
+const db = new Dexie("SpendixDB");
 
 db.version(1).stores({
   expenses: "id, userId, [userId+date], groupId, isSynced",

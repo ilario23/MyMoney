@@ -1,4 +1,4 @@
-# 📋 ExpenseTracker PWA - Implementazione Completata
+# 📋 Spendix PWA - Implementazione Completata
 
 ## ✅ Cosa è Stato Realizzato
 

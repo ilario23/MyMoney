@@ -144,7 +144,7 @@ Le chiamate API dovrebbero funzionare automaticamente, ma se hai problemi:
    - ✅ Manifest caricato
    - ✅ Icone presenti
 5. Clicca sull'icona di installazione nella barra URL
-6. "Install ExpenseTracker"
+6. "Install Spendix"
 7. L'app si apre in una finestra standalone
 
 ### Test su Mobile
@@ -178,7 +178,7 @@ Le chiamate API dovrebbero funzionare automaticamente, ma se hai problemi:
 6. Dopo ~30 secondi appare la notifica:
    ```
    📥 Nuova versione disponibile
-   ExpenseTracker ha un aggiornamento disponibile.
+   Spendix ha un aggiornamento disponibile.
    Clicca "Aggiorna Ora" per installarlo.
    ```
 7. Clicca "Aggiorna Ora"
@@ -316,4 +316,4 @@ La tua app è ora:
 
 ---
 
-**Made with ❤️ by ExpenseTracker Team**
+**Made with ❤️ by Spendix Team**
