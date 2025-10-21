@@ -4,6 +4,7 @@ import { useLanguage, type Language } from '@/lib/language';
 import { supabase } from '@/lib/supabase';
 import { db } from '@/lib/dexie';
 import { syncService } from '@/services/sync.service';
+import { getUserExpenseSummary } from '@/lib/database-views';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit2, Save, X } from 'lucide-react';
+import packageJson from '../../package.json';
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -49,8 +51,26 @@ export function ProfilePage() {
     const loadStats = async () => {
       if (!user) return;
       try {
+        // 🚀 Usa Database View ottimizzata invece di calcolare nel frontend
+        if (navigator.onLine) {
+          const summary = await getUserExpenseSummary(user.id);
+          if (summary) {
+            const categories = await db.categories.where('userId').equals(user.id).toArray();
+            const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
+            const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
+
+            setStats({
+              totalExpenses: summary.total_expenses || 0,
+              totalAmount: summary.total_amount || 0,
+              categories: categories.length,
+              lastSyncDate: lastSync,
+            });
+            return;
+          }
+        }
+
+        // Fallback: calcolo locale se offline o view non disponibile
         const allExpenses = await db.expenses.where('userId').equals(user.id).toArray();
-        // Filtra solo le spese NON eliminate
         const expenses = allExpenses.filter((e) => !e.deletedAt);
         const categories = await db.categories.where('userId').equals(user.id).toArray();
         const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
@@ -111,17 +131,17 @@ export function ProfilePage() {
   const handleLogout = async () => {
     try {
       console.log('🚪 Starting logout process...');
-      
+
       // 1. Sign out da Supabase
       await supabase.auth.signOut();
       console.log('✅ Supabase logout complete');
-      
+
       // 2. Pulisci completamente IndexedDB
       try {
         // Chiudi il database Dexie
         await db.close();
         console.log('✅ Dexie database closed');
-        
+
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
           const databases = await window.indexedDB.databases();
@@ -141,7 +161,7 @@ export function ProfilePage() {
       } catch (dbError) {
         console.warn('⚠️ Error cleaning IndexedDB:', dbError);
       }
-      
+
       // 3. Pulisci localStorage
       try {
         localStorage.clear();
@@ -149,7 +169,7 @@ export function ProfilePage() {
       } catch (lsError) {
         console.warn('⚠️ Error clearing localStorage:', lsError);
       }
-      
+
       // 4. Pulisci sessionStorage
       try {
         sessionStorage.clear();
@@ -157,7 +177,7 @@ export function ProfilePage() {
       } catch (ssError) {
         console.warn('⚠️ Error clearing sessionStorage:', ssError);
       }
-      
+
       // 5. Pulisci Cache API (Service Worker caches)
       try {
         if ('caches' in window) {
@@ -168,11 +188,11 @@ export function ProfilePage() {
       } catch (cacheError) {
         console.warn('⚠️ Error clearing caches:', cacheError);
       }
-      
+
       // 6. Logout dall'auth store (Zustand)
       logout();
       console.log('✅ Auth store cleared');
-      
+
       // 7. Redirect al login
       console.log('🎉 Logout complete, redirecting to login...');
       navigate('/login');
@@ -363,8 +383,8 @@ export function ProfilePage() {
           <CardDescription>{t('profile.manageCategoriesDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            onClick={() => navigate('/categories')} 
+          <Button
+            onClick={() => navigate('/categories')}
             className="w-full"
             variant="outline"
           >
@@ -385,8 +405,8 @@ export function ProfilePage() {
         <CardContent>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('profile.language')}</label>
-            <Select 
-              value={language} 
+            <Select
+              value={language}
               onValueChange={(value) => {
                 setLanguage(value as Language);
                 setSuccess(t('profile.languageUpdated'));
@@ -415,7 +435,7 @@ export function ProfilePage() {
           <div className="space-y-3">
             <div>
               <h3 className="font-medium mb-2">{t('profile.appVersion')}</h3>
-              <Badge variant="outline">v1.0.0 - PWA</Badge>
+              <Badge variant="outline">v{packageJson.version} - PWA</Badge>
             </div>
 
             <div>
@@ -502,9 +522,9 @@ export function ProfilePage() {
                         updatedAt: new Date(),
                       });
                     }
-                    
+
                     await db.categories.where('userId').equals(user.id).delete();
-                    
+
                     // Sync immediato con Supabase per propagare le eliminazioni
                     if (navigator.onLine) {
                       try {
@@ -514,7 +534,7 @@ export function ProfilePage() {
                         console.warn('⚠️ Sync failed, will retry later:', syncError);
                       }
                     }
-                    
+
                     setSuccess(t('profile.dataDeleted'));
                     setTimeout(() => navigate('/dashboard'), 1500);
                   } catch (error) {

@@ -1,4 +1,4 @@
-# 🚀 ExpenseTracker PWA - Quick Start Guide
+# 🚀 Spendix PWA - Quick Start Guide
 
 ## 5 Minuti per Iniziare
 
@@ -128,7 +128,7 @@ localStorage.setItem("DEBUG", "true");
 ### Ispezionare IndexedDB
 
 1. DevTools > **Application** > **IndexedDB**
-2. Espandi `ExpenseTrackerDB`
+2. Espandi `SpendixDB`
 3. Visualizza dati in `expenses`, `categories`, etc.
 
 ### Controllare Service Worker

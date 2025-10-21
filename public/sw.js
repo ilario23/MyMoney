@@ -1,5 +1,5 @@
-// Service Worker for ExpenseTracker PWA
-const CACHE_NAME = 'expensetracker-v1';
+// Service Worker for Spendix PWA
+const CACHE_NAME = 'spendix-v1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -69,10 +69,6 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncExpenses() {
-  try {
-    // This will be handled by the app itself
-    console.log('[ServiceWorker] Background sync triggered');
-  } catch (error) {
-    console.error('[ServiceWorker] Sync error:', error);
-  }
+  // Sync handled by the app itself
+  // Logs removed for production
 }

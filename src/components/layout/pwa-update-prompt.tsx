@@ -63,8 +63,8 @@ export const PWAUpdatePrompt = () => {
                 ? error
                 : needRefresh
                   ? t('pwa.updateDescription') ||
-                    'A new version of ExpenseTracker is available. Update now to get the latest features and improvements.'
-                  : t('pwa.offlineDescription') || 'ExpenseTracker is now ready to work offline.'}
+                    'A new version of Spendix is available. Update now to get the latest features and improvements.'
+                  : t('pwa.offlineDescription') || 'Spendix is now ready to work offline.'}
             </p>
             {lastChecked && (
               <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">

@@ -256,7 +256,7 @@ setError(signUpError.message);
 5. Check:
    - No errors → Success alert shows
    - After 1.5s → Redirect to dashboard
-   - Open DevTools > Storage > IndexedDB > ExpenseTrackerDB
+   - Open DevTools > Storage > IndexedDB > SpendixDB
    - Verify: 1 user + 8 categories created
 
 ### To Test Validation

@@ -120,6 +120,19 @@ export const it = {
   "dashboard.recentDescription": "Le ultime transazioni di questo mese",
   "dashboard.monthlySummary": "Riepilogo Mensile",
   "dashboard.newExpense": "Nuova spesa",
+  "dashboard.topCategories": "Top Categorie",
+  "dashboard.topCategoriesDesc": "Dove spendi di più",
+  "dashboard.overallStats": "Statistiche Generali",
+  "dashboard.overallStatsDesc": "Tutte le tue spese",
+  "dashboard.avgExpense": "Media per Spesa",
+  "dashboard.vsLastMonth": "vs Mese Scorso",
+  "dashboard.tapForStats": "Tap per statistiche complete",
+  "dashboard.expense": "spesa",
+  "dashboard.expenses": "spese",
+
+  // Statistics Page
+  "statistics.title": "Statistiche",
+  "statistics.subtitle": "Analisi dettagliata delle tue spese",
   "dashboard.addFirstExpense": "Aggiungi la prima spesa",
 
   // Expense Form
@@ -291,9 +304,8 @@ export const it = {
   "pwa.newVersionAvailable": "Nuova versione disponibile",
   "pwa.offlineReady": "App pronta per l'uso offline",
   "pwa.updateDescription":
-    "È disponibile una nuova versione di ExpenseTracker. Aggiorna ora per ottenere le ultime funzionalità e miglioramenti.",
-  "pwa.offlineDescription":
-    "ExpenseTracker è ora pronta per funzionare offline.",
+    "È disponibile una nuova versione di Spendix. Aggiorna ora per ottenere le ultime funzionalità e miglioramenti.",
+  "pwa.offlineDescription": "Spendix è ora pronta per funzionare offline.",
   "pwa.lastChecked": "Ultimo controllo",
   "pwa.updateNow": "Aggiorna Ora",
   "pwa.retry": "Riprova",

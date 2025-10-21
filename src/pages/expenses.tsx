@@ -3,6 +3,7 @@ import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
 import { db, type Expense, type Category, type Group } from '@/lib/dexie';
 import { supabase } from '@/lib/supabase';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -255,6 +256,7 @@ export function ExpensesPage() {
             {filteredExpenses.length} of {expenses.length} expenses
           </p>
         </div>
+        <FloatingActionButton href="/expense/new" label="Add expense" />
       </div>
 
       {/* Search & Filters */}

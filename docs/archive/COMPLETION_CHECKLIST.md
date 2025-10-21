@@ -1,4 +1,4 @@
-# ✅ ExpenseTracker PWA - Final Checklist
+# ✅ Spendix PWA - Final Checklist
 
 ## 🎯 Project Completion Status: **COMPLETE** ✅
 
@@ -350,7 +350,7 @@ localStorage.setItem("DEBUG", "true");
 
 ### Inspect Local Data
 
-DevTools > Application > IndexedDB > ExpenseTrackerDB
+DevTools > Application > IndexedDB > SpendixDB
 
 ### Check Service Worker
 
@@ -360,7 +360,7 @@ DevTools > Application > Service Workers
 
 ## 🎉 Summary
 
-**ExpenseTracker PWA** is a production-ready, offline-capable expense tracking application built with modern best practices.
+**Spendix PWA** is a production-ready, offline-capable expense tracking application built with modern best practices.
 
 **Status**: ✅ **READY FOR DEVELOPMENT**
 

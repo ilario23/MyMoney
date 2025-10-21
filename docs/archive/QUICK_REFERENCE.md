@@ -1,4 +1,4 @@
-# 📱 ExpenseTracker PWA - Quick Reference Card
+# 📱 Spendix PWA - Quick Reference Card
 
 ## 🚀 Start Here (5 Minutes)
 
@@ -267,6 +267,6 @@ pnpm build
 
 ## 🎊 You're All Set!
 
-Your ExpenseTracker PWA is ready to build upon. Happy coding! 🚀
+Your Spendix PWA is ready to build upon. Happy coding! 🚀
 
 _Last Updated: October 2024_

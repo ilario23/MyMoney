@@ -85,7 +85,7 @@ export interface SyncLog {
   syncedRecords: number;
 }
 
-export class ExpenseTrackerDB extends Dexie {
+export class SpendixDB extends Dexie {
   users!: Table<User>;
   expenses!: Table<Expense>;
   categories!: Table<Category>;
@@ -95,7 +95,7 @@ export class ExpenseTrackerDB extends Dexie {
   syncLogs!: Table<SyncLog>;
 
   constructor() {
-    super("ExpenseTrackerDB");
+    super("SpendixDB");
 
     // Single version schema - no migrations needed
     this.version(1).stores({
@@ -110,4 +110,4 @@ export class ExpenseTrackerDB extends Dexie {
   }
 }
 
-export const db = new ExpenseTrackerDB();
+export const db = new SpendixDB();

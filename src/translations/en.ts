@@ -119,6 +119,19 @@ export const en: Record<TranslationKey, string> = {
   "dashboard.recentDescription": "Latest transactions this month",
   "dashboard.monthlySummary": "Monthly Summary",
   "dashboard.newExpense": "New expense",
+  "dashboard.topCategories": "Top Categories",
+  "dashboard.topCategoriesDesc": "Where you spend the most",
+  "dashboard.overallStats": "Overall Statistics",
+  "dashboard.overallStatsDesc": "All your expenses",
+  "dashboard.avgExpense": "Average per Expense",
+  "dashboard.vsLastMonth": "vs Last Month",
+  "dashboard.tapForStats": "Tap for full statistics",
+  "dashboard.expense": "expense",
+  "dashboard.expenses": "expenses",
+
+  // Statistics Page
+  "statistics.title": "Statistics",
+  "statistics.subtitle": "Detailed analysis of your expenses",
   "dashboard.addFirstExpense": "Add first expense",
 
   // Expense Form
@@ -289,8 +302,8 @@ export const en: Record<TranslationKey, string> = {
   "pwa.newVersionAvailable": "New version available",
   "pwa.offlineReady": "App ready for offline use",
   "pwa.updateDescription":
-    "A new version of ExpenseTracker is available. Update now to get the latest features and improvements.",
-  "pwa.offlineDescription": "ExpenseTracker is now ready to work offline.",
+    "A new version of Spendix is available. Update now to get the latest features and improvements.",
+  "pwa.offlineDescription": "Spendix is now ready to work offline.",
   "pwa.lastChecked": "Last checked",
   "pwa.updateNow": "Update Now",
   "pwa.retry": "Retry",

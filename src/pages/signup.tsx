@@ -140,7 +140,7 @@ export function SignupPage() {
         <div className="flex justify-center">
           <div className="flex items-center gap-2 text-3xl font-bold">
             <Wallet className="w-8 h-8 text-primary" />
-            <span>ExpenseTracker</span>
+            <span>Spendix</span>
           </div>
         </div>
 
