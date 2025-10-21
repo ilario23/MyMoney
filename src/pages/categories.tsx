@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Search } from 'lucide-react';
 import type { Category } from '@/lib/dexie';
 
 const CATEGORY_ICONS = ['🍕', '🚗', '🏠', '🎬', '💊', '🛍️', '⚡', '📌', '🎮', '📚', '✈️', '🎵', '⚽', '🎨', '📖', '🍎'];
@@ -27,6 +27,8 @@ export function CategoriesPage() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -53,6 +55,7 @@ export function CategoriesPage() {
         setIsLoading(true);
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
         setCategories(userCategories);
+        setFilteredCategories(userCategories);
       } catch (err) {
         console.error('Error loading categories:', err);
         setError(t('categories.usedError'));
@@ -62,6 +65,20 @@ export function CategoriesPage() {
     };
     loadCategories();
   }, [user]);
+
+  // Filter categories based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredCategories(categories);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = categories.filter((category) =>
+      category.name.toLowerCase().includes(query)
+    );
+    setFilteredCategories(filtered);
+  }, [searchQuery, categories]);
 
   const handleCreateCategory = async () => {
     const trimmedName = newCategoryName.trim();
@@ -334,6 +351,26 @@ export function CategoriesPage() {
         </Alert>
       )}
 
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('categories.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Showing {filteredCategories.length} of {categories.length} categories
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Stats */}
       <Card>
         <CardContent className="pt-6">
@@ -355,18 +392,20 @@ export function CategoriesPage() {
         <div className="text-center py-8">
           <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
-      ) : categories.length === 0 ? (
+      ) : filteredCategories.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">{t('categories.title')}</p>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery ? 'No categories found matching your search' : t('categories.title')}
+            </p>
             <p className="text-sm text-muted-foreground">
-              {t('categories.description')}
+              {searchQuery ? 'Try a different search term' : t('categories.description')}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {categories.map((category) => (
+          {filteredCategories.map((category) => (
             <Card key={category.id} className="relative">
               <CardContent className="pt-6">
                 {editingId === category.id ? (

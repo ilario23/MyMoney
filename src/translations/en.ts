@@ -57,6 +57,7 @@ export const en: Record<TranslationKey, string> = {
   // Categories Page
   "categories.title": "Categories",
   "categories.description": "Manage your expense categories",
+  "categories.searchPlaceholder": "Search categories...",
   "categories.newCategory": "New Category",
   "categories.createCategory": "Create Category",
   "categories.categoryName": "Category Name",

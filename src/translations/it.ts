@@ -57,6 +57,7 @@ export const it = {
   // Categories Page
   "categories.title": "Categorie",
   "categories.description": "Gestisci le tue categorie di spese",
+  "categories.searchPlaceholder": "Cerca categorie...",
   "categories.newCategory": "Nuova Categoria",
   "categories.createCategory": "Crea Categoria",
   "categories.categoryName": "Nome Categoria",
