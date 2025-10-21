@@ -46,13 +46,14 @@ export function ExpenseForm() {
     loadCategories();
   }, [user]);
 
-  // Helper: Build grouped category structure
+  // Helper: Build grouped category structure (only active categories)
   const getGroupedCategories = () => {
-    const topLevel = categories.filter((c) => !c.parentId);
+    const activeCategories = categories.filter((c) => c.isActive !== false); // Show only active (isActive true or undefined for old data)
+    const topLevel = activeCategories.filter((c) => !c.parentId);
     const childrenMap = new Map<string, Category[]>();
     
     // Group children by parent
-    categories.forEach((cat) => {
+    activeCategories.forEach((cat) => {
       if (cat.parentId) {
         if (!childrenMap.has(cat.parentId)) {
           childrenMap.set(cat.parentId, []);

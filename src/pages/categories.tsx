@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Edit2, Save, X, Search, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Search, ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { Category, Expense } from '@/lib/dexie';
 
 const CATEGORY_ICONS = ['🍕', '🚗', '🏠', '🎬', '💊', '🛍️', '⚡', '📌', '🎮', '📚', '✈️', '🎵', '⚽', '🎨', '📖', '🍎'];
@@ -59,6 +59,11 @@ export function CategoriesPage() {
   // Tree view states
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expenseStats, setExpenseStats] = useState<Map<string, {count: number; total: number}>>(new Map());
+
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [deleteWarnings, setDeleteWarnings] = useState<{hasChildren: boolean; hasExpenses: boolean; childCount: number; expenseCount: number}>({ hasChildren: false, hasExpenses: false, childCount: 0, expenseCount: 0 });
 
   // Load categories
   useEffect(() => {
@@ -157,7 +162,121 @@ export function CategoriesPage() {
     });
   };
 
-  const handleCreateCategory = async () => {
+  // Helper: Toggle isActive
+  const toggleActive = async (categoryId: string) => {
+    try {
+      const category = categories.find((c) => c.id === categoryId);
+      if (!category) return;
+
+      const updated = { ...category, isActive: !category.isActive, isSynced: false, updatedAt: new Date() };
+      await db.categories.put(updated);
+      setCategories(categories.map((c) => (c.id === categoryId ? updated : c)));
+
+      // Sync
+      if (navigator.onLine && user) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+
+      setSuccess(updated.isActive ? 'Category activated' : 'Category deactivated');
+      setTimeout(() => setSuccess(''), 2000);
+    } catch (err) {
+      console.error('Error toggling active:', err);
+      setError(t('common.error'));
+    }
+  };
+
+  // Helper: Prepare delete with validation
+  const prepareDelete = async (category: Category) => {
+    try {
+      // Check children
+      const children = categories.filter((c) => c.parentId === category.id);
+      const hasChildren = children.length > 0;
+
+      // Check expenses
+      const expenses = await db.expenses.where('userId').equals(user?.id || '').toArray();
+      const categoryExpenses = expenses.filter((e) => e.category === category.id);
+      const hasExpenses = categoryExpenses.length > 0;
+
+      setDeleteWarnings({
+        hasChildren,
+        hasExpenses,
+        childCount: children.length,
+        expenseCount: categoryExpenses.length,
+      });
+
+      setCategoryToDelete(category);
+      setDeleteDialogOpen(true);
+    } catch (err) {
+      console.error('Error preparing delete:', err);
+      setError(t('common.error'));
+    }
+  };
+
+  // Helper: Confirm delete with reassignment
+  const confirmDelete = async (reassignToParent: boolean) => {
+    if (!categoryToDelete) return;
+
+    try {
+      const categoryId = categoryToDelete.id;
+      const parentId = categoryToDelete.parentId;
+
+      // 1. Reassign children (to grandparent if exists)
+      if (deleteWarnings.hasChildren && parentId && reassignToParent) {
+        const children = categories.filter((c) => c.parentId === categoryId);
+        for (const child of children) {
+          const updated = { ...child, parentId, isSynced: false, updatedAt: new Date() };
+          await db.categories.put(updated);
+        }
+        setCategories(categories.map((c) => (c.parentId === categoryId ? { ...c, parentId } : c)));
+      } else if (deleteWarnings.hasChildren && !reassignToParent) {
+        // Cancel - don't delete
+        setDeleteDialogOpen(false);
+        setCategoryToDelete(null);
+        return;
+      }
+
+      // 2. Reassign expenses (to parent if exists)
+      if (deleteWarnings.hasExpenses && parentId && reassignToParent) {
+        const expenses = await db.expenses.where('category').equals(categoryId).toArray();
+        for (const expense of expenses) {
+          const updated = { ...expense, category: parentId, isSynced: false, updatedAt: new Date() };
+          await db.expenses.put(updated);
+        }
+      } else if (deleteWarnings.hasExpenses && !reassignToParent) {
+        // Cancel - don't delete
+        setDeleteDialogOpen(false);
+        setCategoryToDelete(null);
+        return;
+      }
+
+      // 3. Delete category
+      await db.categories.delete(categoryId);
+      setCategories(categories.filter((c) => c.id !== categoryId));
+
+      // Sync
+      if (navigator.onLine && user) {
+        try {
+          await syncService.sync({ userId: user.id, verbose: true });
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+
+      setSuccess(t('categories.deleteSuccess'));
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      setError(t('common.error'));
+    }
+  };
+
+  const handleCreateCategory = async () {
     const trimmedName = newCategoryName.trim();
     
     if (!trimmedName) {
@@ -189,6 +308,7 @@ export function CategoriesPage() {
         icon: newCategoryIcon,
         color: newCategoryColor,
         parentId: newCategoryParentId || undefined,  // Support hierarchical
+        isActive: true,  // New categories are active by default
         isSynced: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -292,47 +412,6 @@ export function CategoriesPage() {
       setError(t('common.error'));
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleDeleteCategory = async (categoryId: string) => {
-    setError('');
-    try {
-      // Check if category is used
-      const expenses = await db.expenses
-        .where('userId')
-        .equals(user?.id || '')
-        .toArray();
-
-      const isUsed = expenses.some((e) => {
-        const cat = categories.find((c) => c.id === categoryId);
-        return e.category === cat?.name;
-      });
-
-      if (isUsed) {
-        setError(t('categories.usedError'));
-        return;
-      }
-
-      await db.categories.delete(categoryId);
-      setCategories(categories.filter((c) => c.id !== categoryId));
-      
-      // Sync immediato con Supabase se online
-      if (navigator.onLine && user) {
-        try {
-          await syncService.sync({ userId: user.id, verbose: true });
-          console.log('✅ Category delete synced to Supabase');
-        } catch (syncError) {
-          console.warn('⚠️ Sync failed, will retry later:', syncError);
-        }
-      }
-      
-      setSuccess(t('categories.deleteSuccess'));
-
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      console.error('Error deleting category:', err);
-      setError(t('common.error'));
     }
   };
 
@@ -646,9 +725,19 @@ export function CategoriesPage() {
                           <div className="flex gap-2">
                             {!category.isSynced && <Badge variant="outline">{t('categories.notSynced')}</Badge>}
                             {category.isSynced && <Badge variant="secondary">{t('categories.synced')}</Badge>}
+                            {!category.isActive && <Badge variant="destructive">Inactive</Badge>}
                           </div>
 
                           <div className="flex gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => toggleActive(category.id)}
+                              title={category.isActive ? 'Hide from expense form' : 'Show in expense form'}
+                            >
+                              {category.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -658,29 +747,15 @@ export function CategoriesPage() {
                               <Edit2 className="w-4 h-4" />
                               {t('categories.edit')}
                             </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="destructive" className="flex-1 gap-2">
-                                  <Trash2 className="w-4 h-4" />
-                                  {t('categories.delete')}
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>{t('categories.deleteCategory')}</DialogTitle>
-                                  <DialogDescription>
-                                    {t('categories.confirmDelete').replace('{name}', category.name)}
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <Button
-                                  variant="destructive"
-                                  className="w-full"
-                                  onClick={() => handleDeleteCategory(category.id)}
-                                >
-                                  {t('categories.deleteConfirmation')}
-                                </Button>
-                              </DialogContent>
-                            </Dialog>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="flex-1 gap-2"
+                              onClick={() => prepareDelete(category)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {t('categories.delete')}
+                            </Button>
                           </div>
                         </>
                       )}
@@ -713,6 +788,86 @@ export function CategoriesPage() {
           <p>• <strong>{t('categories.usedWarning')}</strong></p>
         </CardContent>
       </Card>
+
+      {/* Smart Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Category: {categoryToDelete?.name}</DialogTitle>
+            <DialogDescription>
+              {deleteWarnings.hasChildren || deleteWarnings.hasExpenses
+                ? 'This category has dependencies. Choose an action:'
+                : 'Are you sure you want to delete this category?'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Warnings */}
+            {deleteWarnings.hasChildren && (
+              <Alert>
+                <AlertDescription>
+                  ⚠️ <strong>{deleteWarnings.childCount} subcategories</strong> depend on this category.
+                </AlertDescription>
+              </Alert>
+            )}
+            {deleteWarnings.hasExpenses && (
+              <Alert>
+                <AlertDescription>
+                  ⚠️ <strong>{deleteWarnings.expenseCount} expenses</strong> are linked to this category.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              {(deleteWarnings.hasChildren || deleteWarnings.hasExpenses) && categoryToDelete?.parentId && (
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={() => confirmDelete(true)}
+                >
+                  Reassign to Parent &amp; Delete
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {deleteWarnings.hasChildren && `Move ${deleteWarnings.childCount} subcategories to grandparent. `}
+                    {deleteWarnings.hasExpenses && `Move ${deleteWarnings.expenseCount} expenses to parent.`}
+                  </p>
+                </Button>
+              )}
+              
+              {!(deleteWarnings.hasChildren || deleteWarnings.hasExpenses) && (
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => confirmDelete(false)}
+                >
+                  Delete Category
+                </Button>
+              )}
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setCategoryToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+
+            {/* Info Message */}
+            {(deleteWarnings.hasChildren || deleteWarnings.hasExpenses) && !categoryToDelete?.parentId && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Cannot delete: This category has no parent to reassign dependencies to.
+                  Please reassign subcategories and expenses manually first.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

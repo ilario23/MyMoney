@@ -31,6 +31,7 @@ export interface Category {
   color: string;
   icon: string;
   parentId?: string; // uuid - hierarchical categories (null = top-level)
+  isActive: boolean; // false = hidden from expense form (but visible in hierarchy)
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -100,6 +101,27 @@ export class ExpenseTrackerDB extends Dexie {
       sharedExpenses: "id, groupId, creatorId",
       syncLogs: "++id, userId, lastSyncTime",
     });
+
+    // v3: Add isActive field to categories
+    this.version(3)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, parentId, isActive",
+        groups: "id, ownerId",
+        groupMembers: "[groupId+userId], groupId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade((tx) => {
+        // Set isActive = true for all existing categories
+        return tx
+          .table("categories")
+          .toCollection()
+          .modify((category) => {
+            category.isActive = true;
+          });
+      });
   }
 }
 

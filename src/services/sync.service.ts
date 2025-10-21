@@ -153,6 +153,8 @@ export class SyncService {
                 name: category.name,
                 color: category.color,
                 icon: category.icon,
+                parent_id: category.parentId || null,
+                is_active: category.isActive !== false, // Default true if undefined
                 updated_at: category.updatedAt.toISOString(),
               })
               .eq("id", category.id);
@@ -165,6 +167,8 @@ export class SyncService {
               name: category.name,
               color: category.color,
               icon: category.icon,
+              parent_id: category.parentId || null,
+              is_active: category.isActive !== false, // Default true if undefined
               created_at: category.createdAt.toISOString(),
               updated_at: category.updatedAt.toISOString(),
             });
@@ -203,6 +207,8 @@ export class SyncService {
               name: remote.name,
               color: remote.color,
               icon: remote.icon,
+              parentId: remote.parent_id || undefined,
+              isActive: remote.is_active !== false, // Default true if null/undefined
               isSynced: true,
               createdAt: new Date(remote.created_at || Date.now()),
               updatedAt: new Date(remote.updated_at),

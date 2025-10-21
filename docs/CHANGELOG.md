@@ -16,6 +16,7 @@ A major UX release focusing on hierarchical category visualization and powerful 
 #### Added
 
 **Category Management:**
+
 - ✅ Tree view with expand/collapse for hierarchical categories
 - ✅ Visual indentation for subcategories (8px per level depth)
 - ✅ Chevron icons (ChevronDown/ChevronRight) for expand/collapse state
@@ -28,6 +29,7 @@ A major UX release focusing on hierarchical category visualization and powerful 
 - ✅ `toggleExpand()` with Set-based state for O(1) performance
 
 **Expense Filtering:**
+
 - ✅ Advanced filter panel with collapse/expand toggle
 - ✅ Category dropdown filter (all categories)
 - ✅ Date range filter (from/to date pickers)
@@ -40,12 +42,14 @@ A major UX release focusing on hierarchical category visualization and powerful 
 - ✅ Active filter state highlighting
 
 #### Changed
+
 - **Categories Page**: Replaced flat grid with recursive tree structure
 - **Expenses Page**: Enhanced search bar with collapsible advanced filters
 - **Category Edit Mode**: Added parent selector dropdown (top-level only)
 - **Expense Loading**: Merged with statistics aggregation for efficiency
 
 #### Technical
+
 - New state variables: `expandedCategories`, `expenseStats`, `editParentId`
 - New filter states: `selectedCategory`, `dateFrom`, `dateTo`, `amountMin`, `amountMax`, `sortBy`, `sortOrder`
 - Recursive `renderCategory(category, depth)` with React.ReactElement return type
@@ -53,6 +57,7 @@ A major UX release focusing on hierarchical category visualization and powerful 
 - Graph traversal with visited Set for circular reference detection
 
 #### Files Changed
+
 - `src/pages/categories.tsx` (+280 lines)
 - `src/pages/expenses.tsx` (+250 lines)
 - `docs/v1.8.0_RELEASE.md` (new)
