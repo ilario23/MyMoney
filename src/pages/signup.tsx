@@ -113,36 +113,9 @@ export function SignupPage() {
 
       console.log('✅ User created successfully in Supabase', userData);
 
-      // 3. Crea le categorie di default
-      const defaultCategories = [
-        { name: 'Cibo', color: '#EF4444', icon: '🍕' },
-        { name: 'Trasporto', color: '#F97316', icon: '🚗' },
-        { name: 'Casa', color: '#EAB308', icon: '🏠' },
-        { name: 'Intrattenimento', color: '#8B5CF6', icon: '🎬' },
-        { name: 'Salute', color: '#EC4899', icon: '💊' },
-        { name: 'Shopping', color: '#06B6D4', icon: '🛍️' },
-        { name: 'Utilità', color: '#3B82F6', icon: '⚡' },
-        { name: 'Altro', color: '#6B7280', icon: '📌' },
-      ];
-
-      await Promise.all(
-        defaultCategories.map((cat) =>
-          db.categories.add({
-            id: crypto.randomUUID(),
-            userId,
-            name: cat.name,
-            color: cat.color,
-            icon: cat.icon,
-            isSynced: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-        )
-      );
-
       setSuccess(true);
 
-      // 4. Login automatico
+      // 3. Login automatico
       setTimeout(() => {
         setUser({
           id: userId,
