@@ -109,6 +109,7 @@ export const it = {
   "dashboard.transactions": "{count} transazioni",
   "dashboard.totalTransactions": "{count} transazioni totali",
   "dashboard.recentDescription": "Le ultime transazioni di questo mese",
+  "dashboard.monthlySummary": "Riepilogo Mensile",
   "dashboard.newExpense": "Nuova spesa",
   "dashboard.addFirstExpense": "Aggiungi la prima spesa",
 

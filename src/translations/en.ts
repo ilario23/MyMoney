@@ -108,6 +108,7 @@ export const en: Record<TranslationKey, string> = {
   "dashboard.transactions": "{count} transactions",
   "dashboard.totalTransactions": "{count} total transactions",
   "dashboard.recentDescription": "Latest transactions this month",
+  "dashboard.monthlySummary": "Monthly Summary",
   "dashboard.newExpense": "New expense",
   "dashboard.addFirstExpense": "Add first expense",
 

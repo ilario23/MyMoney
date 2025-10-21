@@ -82,49 +82,54 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.expensesThisMonth')}</CardTitle>
-            <TrendingDown className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount > 0).length))}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.incomeThisMonth')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{monthlyIncome.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount < 0).length))}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.netBalance')}</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €{(monthlyIncome - monthlyTotal).toFixed(2)}
+      {/* Summary Card - Combined */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('dashboard.monthlySummary')}</CardTitle>
+          <CardDescription>{format(new Date(), 'MMMM yyyy', { locale: dateLocale })}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Expenses */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingDown className="h-4 w-4 text-destructive" />
+                <span>{t('dashboard.expensesThisMonth')}</span>
+              </div>
+              <div className="text-3xl font-bold text-destructive">€{monthlyTotal.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount > 0).length))}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.totalTransactions').replace('{count}', String(expenses.length))}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Income */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span>{t('dashboard.incomeThisMonth')}</span>
+              </div>
+              <div className="text-3xl font-bold text-green-600">€{monthlyIncome.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.transactions').replace('{count}', String(expenses.filter(e => e.amount < 0).length))}
+              </p>
+            </div>
+
+            {/* Net Balance */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <span>{t('dashboard.netBalance')}</span>
+              </div>
+              <div className={`text-3xl font-bold ${(monthlyIncome - monthlyTotal) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                €{(monthlyIncome - monthlyTotal).toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('dashboard.totalTransactions').replace('{count}', String(expenses.length))}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Expenses */}
       <Card>

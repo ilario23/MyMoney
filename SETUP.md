@@ -591,8 +591,6 @@ Monitor browser console for:
 - Check that RLS is enabled on the table
 - Verify policies are created correctly (see Step 3b)
 
-
-
 ### Category Unique Constraint
 
 Categories are unique per user by name. The database enforces:
@@ -602,11 +600,13 @@ UNIQUE(user_id, name)  -- One category name per user
 ```
 
 **Important**: The app must:
+
 1. **Trim whitespace** before INSERT/UPDATE: `.trim()`
 2. **Case-sensitive comparison** - "Food" and "food" are different
 3. **Check for duplicates** before INSERT (for better UX) and rely on DB constraint as safety net
 
 When a duplicate is detected:
+
 - **App Level**: Show error message "Category already exists" immediately (better UX)
 - **DB Level**: PostgreSQL will reject with constraint violation (safety net)
 
