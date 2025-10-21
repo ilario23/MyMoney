@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0] - October 21, 2025 🌳
+
+### Tree View Categories & Advanced Expense Filters
+
+A major UX release focusing on hierarchical category visualization and powerful filtering capabilities.
+
+#### Added
+
+**Category Management:**
+- ✅ Tree view with expand/collapse for hierarchical categories
+- ✅ Visual indentation for subcategories (8px per level depth)
+- ✅ Chevron icons (ChevronDown/ChevronRight) for expand/collapse state
+- ✅ Edit parent category support with dropdown selector
+- ✅ Circular reference validation with graph traversal algorithm
+- ✅ Category statistics badge (expense count + total amount)
+- ✅ Recursive rendering function for tree structure
+- ✅ `buildCategoryTree()` helper to separate top-level from children
+- ✅ `wouldCreateCircularRef()` validation to prevent infinite loops
+- ✅ `toggleExpand()` with Set-based state for O(1) performance
+
+**Expense Filtering:**
+- ✅ Advanced filter panel with collapse/expand toggle
+- ✅ Category dropdown filter (all categories)
+- ✅ Date range filter (from/to date pickers)
+- ✅ Amount range filter (min/max inputs in EUR)
+- ✅ Sort by: Date, Amount, or Category
+- ✅ Sort order: Ascending or Descending
+- ✅ Clear filters button (X icon) with active indicator
+- ✅ Multi-criteria filtering with useEffect dependencies
+- ✅ Filter toggle button (SlidersHorizontal icon)
+- ✅ Active filter state highlighting
+
+#### Changed
+- **Categories Page**: Replaced flat grid with recursive tree structure
+- **Expenses Page**: Enhanced search bar with collapsible advanced filters
+- **Category Edit Mode**: Added parent selector dropdown (top-level only)
+- **Expense Loading**: Merged with statistics aggregation for efficiency
+
+#### Technical
+- New state variables: `expandedCategories`, `expenseStats`, `editParentId`
+- New filter states: `selectedCategory`, `dateFrom`, `dateTo`, `amountMin`, `amountMax`, `sortBy`, `sortOrder`
+- Recursive `renderCategory(category, depth)` with React.ReactElement return type
+- Complex filtering logic with sequential application: search → category → date → amount → sort
+- Graph traversal with visited Set for circular reference detection
+
+#### Files Changed
+- `src/pages/categories.tsx` (+280 lines)
+- `src/pages/expenses.tsx` (+250 lines)
+- `docs/v1.8.0_RELEASE.md` (new)
+- `docs/CHANGELOG.md` (this file)
+
+---
+
 ## [2.0.0] - October 2025 🚀
 
 ### COMPLETE - Version 2.0 Release
