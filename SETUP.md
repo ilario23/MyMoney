@@ -510,6 +510,41 @@ pnpm install -g netlify-cli
 netlify deploy --prod --dir=dist
 ```
 
+## 🎯 Best Practices
+
+### Categories
+
+1. **Category names must be unique per user**
+   - The database enforces this with `UNIQUE(user_id, name)`
+   - Try to create a duplicate category → PostgreSQL rejects
+
+2. **Always trim whitespace**
+   - ✅ User enters "Food " → Stored as "Food"
+   - ✅ User enters " Food" → Stored as "Food"
+   - ✅ Prevents hidden duplicates
+
+3. **Case-sensitive comparison**
+   - ✅ "Food" and "Food" → Duplicate (error)
+   - ✅ "Food" and "food" → Different (allowed)
+   - This is intentional - users can have "Breakfast" and "breakfast" if they want
+
+4. **Category ID as FK in Expenses**
+   - Expenses store `category` field as UUID (FK to `categories.id`)
+   - Allows category names to change without breaking expense references
+   - Example: Rename "Food" to "Groceries" → All expenses still linked correctly
+
+### Sync & Offline
+
+1. **Bidirectional sync**
+   - Local changes upload when online
+   - Remote changes download to local DB
+   - Conflicts: Local wins if newer
+
+2. **Offline mode**
+   - Create expenses offline → Marked as `isSynced = false`
+   - When online → Auto-sync to Supabase
+   - No data loss
+
 ## 📊 Development & Debugging
 
 ### Verbose Sync Logging
@@ -556,7 +591,7 @@ Monitor browser console for:
 - Check that RLS is enabled on the table
 - Verify policies are created correctly (see Step 3b)
 
-## 📊 Data Model & Validation
+
 
 ### Category Unique Constraint
 
@@ -586,6 +621,17 @@ expenses.category → categories.id
 This allows category names to change without breaking references. The frontend resolves the ID to name for display.
 
 ## 📝 Changelog
+
+### v1.6.0 - Category ID Refactor & Validation
+
+- **BREAKING**: Expenses now store category ID (UUID) instead of name
+  - Allows category names to change without breaking references
+  - Dashboard resolves category ID to name for display
+- Category names are now trimmed before insert/update
+- Case-sensitive duplicate detection for categories
+- Updated expense form with empty state when no categories
+- Fixed 406 errors by changing .single() → .maybeSingle() in sync queries
+- Added comprehensive Data Model documentation
 
 ### v1.5.0 - Enhanced FK Constraint Handling
 
