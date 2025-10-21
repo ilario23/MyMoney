@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useAuthStore } from '@/lib/auth.store';
-import { realtimeService, type TableName } from '@/services/realtime.service';
+import { useEffect, useState, useCallback } from "react";
+import { useAuthStore } from "@/lib/auth.store";
+import { realtimeService, type TableName } from "@/services/realtime.service";
 
 interface UseRealtime {
   isActive: boolean;
@@ -35,16 +35,16 @@ export function useRealtime(): UseRealtime {
           setSyncCount((prev) => prev + 1);
         },
         onError: (err: Error) => {
-          console.error('❌ [Realtime] Error:', err);
+          console.error("❌ [Realtime] Error:", err);
           setError(err);
         },
       });
 
       setIsActive(true);
       setError(null);
-      console.log('✅ [Realtime] Subscriptions started');
+      console.log("✅ [Realtime] Subscriptions started");
     } catch (err) {
-      console.error('❌ [Realtime] Failed to start:', err);
+      console.error("❌ [Realtime] Failed to start:", err);
       setError(err as Error);
     }
   }, [user, isActive]);
@@ -53,9 +53,9 @@ export function useRealtime(): UseRealtime {
     try {
       await realtimeService.stop();
       setIsActive(false);
-      console.log('🛑 [Realtime] Subscriptions stopped');
+      console.log("🛑 [Realtime] Subscriptions stopped");
     } catch (err) {
-      console.error('❌ [Realtime] Failed to stop:', err);
+      console.error("❌ [Realtime] Failed to stop:", err);
       setError(err as Error);
     }
   }, []);
@@ -66,35 +66,36 @@ export function useRealtime(): UseRealtime {
       void start();
     }
 
+    // Cleanup solo quando l'utente cambia (logout)
     return () => {
-      if (isActive) {
+      if (isActive && !user) {
         void stop();
       }
     };
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, isActive, start, stop]);
 
   // Riavvia quando torna online
   useEffect(() => {
     const handleOnline = () => {
       if (user && !isActive) {
-        console.log('🌐 [Realtime] Back online, restarting subscriptions');
+        console.log("🌐 [Realtime] Back online, restarting subscriptions");
         void start();
       }
     };
 
     const handleOffline = () => {
       if (isActive) {
-        console.log('📴 [Realtime] Going offline, stopping subscriptions');
+        console.log("📴 [Realtime] Going offline, stopping subscriptions");
         void stop();
       }
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, [user, isActive, start, stop]);
 

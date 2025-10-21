@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 /**
  * Utility per accedere alle Database Views ottimizzate
@@ -78,15 +78,17 @@ export interface CategoryUsageStats {
 /**
  * Ottieni riepilogo spese utente
  */
-export async function getUserExpenseSummary(userId: string): Promise<UserExpenseSummary | null> {
+export async function getUserExpenseSummary(
+  userId: string
+): Promise<UserExpenseSummary | null> {
   const { data, error } = await supabase
-    .from('user_expense_summary')
-    .select('*')
-    .eq('user_id', userId)
+    .from("user_expense_summary")
+    .select("*")
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
-    console.error('[Views] Error fetching user summary:', error);
+    console.error("[Views] Error fetching user summary:", error);
     return null;
   }
 
@@ -96,15 +98,17 @@ export async function getUserExpenseSummary(userId: string): Promise<UserExpense
 /**
  * Ottieni statistiche per categoria
  */
-export async function getUserCategoryStats(userId: string): Promise<UserCategoryStats[]> {
+export async function getUserCategoryStats(
+  userId: string
+): Promise<UserCategoryStats[]> {
   const { data, error } = await supabase
-    .from('user_category_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .order('total_amount', { ascending: false });
+    .from("user_category_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .order("total_amount", { ascending: false });
 
   if (error) {
-    console.error('[Views] Error fetching category stats:', error);
+    console.error("[Views] Error fetching category stats:", error);
     return [];
   }
 
@@ -119,10 +123,10 @@ export async function getMonthlyExpenseSummary(
   months?: number
 ): Promise<MonthlyExpenseSummary[]> {
   let query = supabase
-    .from('monthly_expense_summary')
-    .select('*')
-    .eq('user_id', userId)
-    .order('month', { ascending: false });
+    .from("monthly_expense_summary")
+    .select("*")
+    .eq("user_id", userId)
+    .order("month", { ascending: false });
 
   if (months) {
     query = query.limit(months);
@@ -131,7 +135,7 @@ export async function getMonthlyExpenseSummary(
   const { data, error } = await query;
 
   if (error) {
-    console.error('[Views] Error fetching monthly summary:', error);
+    console.error("[Views] Error fetching monthly summary:", error);
     return [];
   }
 
@@ -141,15 +145,17 @@ export async function getMonthlyExpenseSummary(
 /**
  * Ottieni statistiche gruppo
  */
-export async function getGroupExpenseSummary(groupId: string): Promise<GroupExpenseSummary | null> {
+export async function getGroupExpenseSummary(
+  groupId: string
+): Promise<GroupExpenseSummary | null> {
   const { data, error } = await supabase
-    .from('group_expense_summary')
-    .select('*')
-    .eq('group_id', groupId)
+    .from("group_expense_summary")
+    .select("*")
+    .eq("group_id", groupId)
     .maybeSingle();
 
   if (error) {
-    console.error('[Views] Error fetching group summary:', error);
+    console.error("[Views] Error fetching group summary:", error);
     return null;
   }
 
@@ -159,15 +165,17 @@ export async function getGroupExpenseSummary(groupId: string): Promise<GroupExpe
 /**
  * Ottieni tutte le statistiche dei gruppi dell'utente
  */
-export async function getUserGroupsSummary(userId: string): Promise<GroupExpenseSummary[]> {
+export async function getUserGroupsSummary(
+  userId: string
+): Promise<GroupExpenseSummary[]> {
   const { data, error } = await supabase
-    .from('group_expense_summary')
-    .select('*')
-    .eq('owner_id', userId)
-    .order('total_amount', { ascending: false });
+    .from("group_expense_summary")
+    .select("*")
+    .eq("owner_id", userId)
+    .order("total_amount", { ascending: false });
 
   if (error) {
-    console.error('[Views] Error fetching user groups summary:', error);
+    console.error("[Views] Error fetching user groups summary:", error);
     return [];
   }
 
@@ -177,15 +185,17 @@ export async function getUserGroupsSummary(userId: string): Promise<GroupExpense
 /**
  * Ottieni dettagli spese condivise
  */
-export async function getSharedExpenseDetails(groupId: string): Promise<SharedExpenseDetails[]> {
+export async function getSharedExpenseDetails(
+  groupId: string
+): Promise<SharedExpenseDetails[]> {
   const { data, error } = await supabase
-    .from('shared_expense_details')
-    .select('*')
-    .eq('group_id', groupId)
-    .order('date', { ascending: false });
+    .from("shared_expense_details")
+    .select("*")
+    .eq("group_id", groupId)
+    .order("date", { ascending: false });
 
   if (error) {
-    console.error('[Views] Error fetching shared expense details:', error);
+    console.error("[Views] Error fetching shared expense details:", error);
     return [];
   }
 
@@ -200,20 +210,20 @@ export async function getCategoryUsageStats(
   includeInactive = false
 ): Promise<CategoryUsageStats[]> {
   let query = supabase
-    .from('category_usage_stats')
-    .select('*')
-    .eq('user_id', userId);
+    .from("category_usage_stats")
+    .select("*")
+    .eq("user_id", userId);
 
   if (!includeInactive) {
-    query = query.eq('is_active', true);
+    query = query.eq("is_active", true);
   }
 
-  query = query.order('usage_count', { ascending: false });
+  query = query.order("usage_count", { ascending: false });
 
   const { data, error } = await query;
 
   if (error) {
-    console.error('[Views] Error fetching category usage stats:', error);
+    console.error("[Views] Error fetching category usage stats:", error);
     return [];
   }
 
@@ -228,15 +238,15 @@ export async function getTopCategoriesByAmount(
   limit = 5
 ): Promise<CategoryUsageStats[]> {
   const { data, error } = await supabase
-    .from('category_usage_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .order('total_amount', { ascending: false })
+    .from("category_usage_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .order("total_amount", { ascending: false })
     .limit(limit);
 
   if (error) {
-    console.error('[Views] Error fetching top categories:', error);
+    console.error("[Views] Error fetching top categories:", error);
     return [];
   }
 
@@ -251,15 +261,15 @@ export async function getMostUsedCategories(
   limit = 5
 ): Promise<CategoryUsageStats[]> {
   const { data, error } = await supabase
-    .from('category_usage_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .order('usage_count', { ascending: false })
+    .from("category_usage_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .order("usage_count", { ascending: false })
     .limit(limit);
 
   if (error) {
-    console.error('[Views] Error fetching most used categories:', error);
+    console.error("[Views] Error fetching most used categories:", error);
     return [];
   }
 

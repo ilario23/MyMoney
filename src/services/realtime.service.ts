@@ -1,8 +1,16 @@
-import { supabase } from '@/lib/supabase';
-import { db } from '@/lib/dexie';
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/dexie";
+import type {
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+} from "@supabase/supabase-js";
 
-export type TableName = 'expenses' | 'categories' | 'groups' | 'group_members' | 'shared_expenses';
+export type TableName =
+  | "expenses"
+  | "categories"
+  | "groups"
+  | "group_members"
+  | "shared_expenses";
 
 export interface RealtimeOptions {
   userId: string;
@@ -26,7 +34,10 @@ export class RealtimeService {
     this.options = options;
 
     if (this.options.verbose) {
-      console.log('[Realtime] Starting subscriptions for user:', options.userId);
+      console.log(
+        "[Realtime] Starting subscriptions for user:",
+        options.userId
+      );
     }
 
     // Subscribe a tutte le tabelle
@@ -46,7 +57,7 @@ export class RealtimeService {
    */
   async stop(): Promise<void> {
     if (this.options?.verbose) {
-      console.log('[Realtime] Stopping all subscriptions...');
+      console.log("[Realtime] Stopping all subscriptions...");
     }
 
     for (const [name, channel] of this.channels.entries()) {
@@ -64,11 +75,11 @@ export class RealtimeService {
     const channel = supabase
       .channel(`expenses:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'expenses',
+          event: "*", // INSERT, UPDATE, DELETE
+          schema: "public",
+          table: "expenses",
           filter: `user_id=eq.${userId}`,
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
@@ -81,7 +92,7 @@ export class RealtimeService {
         }
       });
 
-    this.channels.set('expenses', channel);
+    this.channels.set("expenses", channel);
   }
 
   /**
@@ -91,11 +102,11 @@ export class RealtimeService {
     const channel = supabase
       .channel(`categories:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'categories',
+          event: "*",
+          schema: "public",
+          table: "categories",
           filter: `user_id=eq.${userId}`,
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
@@ -108,7 +119,7 @@ export class RealtimeService {
         }
       });
 
-    this.channels.set('categories', channel);
+    this.channels.set("categories", channel);
   }
 
   /**
@@ -118,11 +129,11 @@ export class RealtimeService {
     const channel = supabase
       .channel(`groups:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'groups',
+          event: "*",
+          schema: "public",
+          table: "groups",
           filter: `owner_id=eq.${userId}`,
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
@@ -135,7 +146,7 @@ export class RealtimeService {
         }
       });
 
-    this.channels.set('groups', channel);
+    this.channels.set("groups", channel);
   }
 
   /**
@@ -143,22 +154,26 @@ export class RealtimeService {
    */
   private async subscribeToGroupMembers(userId: string): Promise<void> {
     // Get group IDs where user is owner or member
-    const ownedGroups = await db.groups.where('ownerId').equals(userId).primaryKeys();
+    const ownedGroups = await db.groups
+      .where("ownerId")
+      .equals(userId)
+      .primaryKeys();
 
     if (ownedGroups.length === 0) return;
 
     const channel = supabase
       .channel(`group_members:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'group_members',
+          event: "*",
+          schema: "public",
+          table: "group_members",
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
           // Filter only for our groups
-          const groupId = (payload.new as any)?.group_id || (payload.old as any)?.group_id;
+          const groupId =
+            (payload.new as any)?.group_id || (payload.old as any)?.group_id;
           if (groupId && ownedGroups.includes(groupId)) {
             await this.handleGroupMemberChange(payload);
           }
@@ -170,7 +185,7 @@ export class RealtimeService {
         }
       });
 
-    this.channels.set('group_members', channel);
+    this.channels.set("group_members", channel);
   }
 
   /**
@@ -180,11 +195,11 @@ export class RealtimeService {
     const channel = supabase
       .channel(`shared_expenses:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'shared_expenses',
+          event: "*",
+          schema: "public",
+          table: "shared_expenses",
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
           await this.handleSharedExpenseChange(payload);
@@ -192,17 +207,22 @@ export class RealtimeService {
       )
       .subscribe((status) => {
         if (this.options?.verbose) {
-          console.log(`[Realtime] Shared expenses subscription status:`, status);
+          console.log(
+            `[Realtime] Shared expenses subscription status:`,
+            status
+          );
         }
       });
 
-    this.channels.set('shared_expenses', channel);
+    this.channels.set("shared_expenses", channel);
   }
 
   /**
    * Handler per cambiamenti nelle spese
    */
-  private async handleExpenseChange(payload: RealtimePostgresChangesPayload<any>): Promise<void> {
+  private async handleExpenseChange(
+    payload: RealtimePostgresChangesPayload<any>
+  ): Promise<void> {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
@@ -211,8 +231,8 @@ export class RealtimeService {
       }
 
       switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
+        case "INSERT":
+        case "UPDATE":
           if (newRecord) {
             // Controlla se è più recente di quello locale
             const local = await db.expenses.get(newRecord.id);
@@ -227,26 +247,28 @@ export class RealtimeService {
                 category: newRecord.category,
                 description: newRecord.description,
                 date: new Date(newRecord.date),
-                deletedAt: newRecord.deleted_at ? new Date(newRecord.deleted_at) : undefined,
+                deletedAt: newRecord.deleted_at
+                  ? new Date(newRecord.deleted_at)
+                  : undefined,
                 isSynced: true,
                 createdAt: new Date(newRecord.created_at),
                 updatedAt: remoteUpdated,
               });
 
-              this.options?.onSync?.('expenses', eventType);
+              this.options?.onSync?.("expenses", eventType);
             }
           }
           break;
 
-        case 'DELETE':
+        case "DELETE":
           if (oldRecord) {
             await db.expenses.delete(oldRecord.id);
-            this.options?.onSync?.('expenses', eventType);
+            this.options?.onSync?.("expenses", eventType);
           }
           break;
       }
     } catch (error) {
-      console.error('[Realtime] Error handling expense change:', error);
+      console.error("[Realtime] Error handling expense change:", error);
       this.options?.onError?.(error as Error);
     }
   }
@@ -254,17 +276,22 @@ export class RealtimeService {
   /**
    * Handler per cambiamenti nelle categorie
    */
-  private async handleCategoryChange(payload: RealtimePostgresChangesPayload<any>): Promise<void> {
+  private async handleCategoryChange(
+    payload: RealtimePostgresChangesPayload<any>
+  ): Promise<void> {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
       if (this.options?.verbose) {
-        console.log(`[Realtime] Category ${eventType}:`, newRecord || oldRecord);
+        console.log(
+          `[Realtime] Category ${eventType}:`,
+          newRecord || oldRecord
+        );
       }
 
       switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
+        case "INSERT":
+        case "UPDATE":
           if (newRecord) {
             const local = await db.categories.get(newRecord.id);
             const remoteUpdated = new Date(newRecord.updated_at);
@@ -284,20 +311,20 @@ export class RealtimeService {
                 updatedAt: remoteUpdated,
               });
 
-              this.options?.onSync?.('categories', eventType);
+              this.options?.onSync?.("categories", eventType);
             }
           }
           break;
 
-        case 'DELETE':
+        case "DELETE":
           if (oldRecord) {
             await db.categories.delete(oldRecord.id);
-            this.options?.onSync?.('categories', eventType);
+            this.options?.onSync?.("categories", eventType);
           }
           break;
       }
     } catch (error) {
-      console.error('[Realtime] Error handling category change:', error);
+      console.error("[Realtime] Error handling category change:", error);
       this.options?.onError?.(error as Error);
     }
   }
@@ -305,7 +332,9 @@ export class RealtimeService {
   /**
    * Handler per cambiamenti nei gruppi
    */
-  private async handleGroupChange(payload: RealtimePostgresChangesPayload<any>): Promise<void> {
+  private async handleGroupChange(
+    payload: RealtimePostgresChangesPayload<any>
+  ): Promise<void> {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
@@ -314,8 +343,8 @@ export class RealtimeService {
       }
 
       switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
+        case "INSERT":
+        case "UPDATE":
           if (newRecord) {
             const local = await db.groups.get(newRecord.id);
             const remoteUpdated = new Date(newRecord.updated_at);
@@ -330,26 +359,28 @@ export class RealtimeService {
                 inviteCode: newRecord.invite_code || undefined,
                 allowNewMembers: newRecord.allow_new_members ?? true,
                 usedByUserId: newRecord.used_by_user_id || undefined,
-                usedAt: newRecord.used_at ? new Date(newRecord.used_at) : undefined,
+                usedAt: newRecord.used_at
+                  ? new Date(newRecord.used_at)
+                  : undefined,
                 isSynced: true,
                 createdAt: new Date(newRecord.created_at),
                 updatedAt: remoteUpdated,
               });
 
-              this.options?.onSync?.('groups', eventType);
+              this.options?.onSync?.("groups", eventType);
             }
           }
           break;
 
-        case 'DELETE':
+        case "DELETE":
           if (oldRecord) {
             await db.groups.delete(oldRecord.id);
-            this.options?.onSync?.('groups', eventType);
+            this.options?.onSync?.("groups", eventType);
           }
           break;
       }
     } catch (error) {
-      console.error('[Realtime] Error handling group change:', error);
+      console.error("[Realtime] Error handling group change:", error);
       this.options?.onError?.(error as Error);
     }
   }
@@ -357,17 +388,22 @@ export class RealtimeService {
   /**
    * Handler per cambiamenti nei membri gruppo
    */
-  private async handleGroupMemberChange(payload: RealtimePostgresChangesPayload<any>): Promise<void> {
+  private async handleGroupMemberChange(
+    payload: RealtimePostgresChangesPayload<any>
+  ): Promise<void> {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
       if (this.options?.verbose) {
-        console.log(`[Realtime] Group member ${eventType}:`, newRecord || oldRecord);
+        console.log(
+          `[Realtime] Group member ${eventType}:`,
+          newRecord || oldRecord
+        );
       }
 
       switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
+        case "INSERT":
+        case "UPDATE":
           if (newRecord) {
             await db.groupMembers.put({
               id: newRecord.id,
@@ -378,19 +414,19 @@ export class RealtimeService {
               isSynced: true,
             });
 
-            this.options?.onSync?.('group_members', eventType);
+            this.options?.onSync?.("group_members", eventType);
           }
           break;
 
-        case 'DELETE':
+        case "DELETE":
           if (oldRecord) {
             await db.groupMembers.delete(oldRecord.id);
-            this.options?.onSync?.('group_members', eventType);
+            this.options?.onSync?.("group_members", eventType);
           }
           break;
       }
     } catch (error) {
-      console.error('[Realtime] Error handling group member change:', error);
+      console.error("[Realtime] Error handling group member change:", error);
       this.options?.onError?.(error as Error);
     }
   }
@@ -398,17 +434,22 @@ export class RealtimeService {
   /**
    * Handler per cambiamenti nelle spese condivise
    */
-  private async handleSharedExpenseChange(payload: RealtimePostgresChangesPayload<any>): Promise<void> {
+  private async handleSharedExpenseChange(
+    payload: RealtimePostgresChangesPayload<any>
+  ): Promise<void> {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
       if (this.options?.verbose) {
-        console.log(`[Realtime] Shared expense ${eventType}:`, newRecord || oldRecord);
+        console.log(
+          `[Realtime] Shared expense ${eventType}:`,
+          newRecord || oldRecord
+        );
       }
 
       switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
+        case "INSERT":
+        case "UPDATE":
           if (newRecord) {
             const local = await db.sharedExpenses.get(newRecord.id);
             const remoteUpdated = new Date(newRecord.updated_at);
@@ -427,20 +468,20 @@ export class RealtimeService {
                 updatedAt: remoteUpdated,
               });
 
-              this.options?.onSync?.('shared_expenses', eventType);
+              this.options?.onSync?.("shared_expenses", eventType);
             }
           }
           break;
 
-        case 'DELETE':
+        case "DELETE":
           if (oldRecord) {
             await db.sharedExpenses.delete(oldRecord.id);
-            this.options?.onSync?.('shared_expenses', eventType);
+            this.options?.onSync?.("shared_expenses", eventType);
           }
           break;
       }
     } catch (error) {
-      console.error('[Realtime] Error handling shared expense change:', error);
+      console.error("[Realtime] Error handling shared expense change:", error);
       this.options?.onError?.(error as Error);
     }
   }

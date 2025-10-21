@@ -131,17 +131,17 @@ export function ProfilePage() {
   const handleLogout = async () => {
     try {
       console.log('🚪 Starting logout process...');
-      
+
       // 1. Sign out da Supabase
       await supabase.auth.signOut();
       console.log('✅ Supabase logout complete');
-      
+
       // 2. Pulisci completamente IndexedDB
       try {
         // Chiudi il database Dexie
         await db.close();
         console.log('✅ Dexie database closed');
-        
+
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
           const databases = await window.indexedDB.databases();
@@ -161,7 +161,7 @@ export function ProfilePage() {
       } catch (dbError) {
         console.warn('⚠️ Error cleaning IndexedDB:', dbError);
       }
-      
+
       // 3. Pulisci localStorage
       try {
         localStorage.clear();
@@ -169,7 +169,7 @@ export function ProfilePage() {
       } catch (lsError) {
         console.warn('⚠️ Error clearing localStorage:', lsError);
       }
-      
+
       // 4. Pulisci sessionStorage
       try {
         sessionStorage.clear();
@@ -177,7 +177,7 @@ export function ProfilePage() {
       } catch (ssError) {
         console.warn('⚠️ Error clearing sessionStorage:', ssError);
       }
-      
+
       // 5. Pulisci Cache API (Service Worker caches)
       try {
         if ('caches' in window) {
@@ -188,11 +188,11 @@ export function ProfilePage() {
       } catch (cacheError) {
         console.warn('⚠️ Error clearing caches:', cacheError);
       }
-      
+
       // 6. Logout dall'auth store (Zustand)
       logout();
       console.log('✅ Auth store cleared');
-      
+
       // 7. Redirect al login
       console.log('🎉 Logout complete, redirecting to login...');
       navigate('/login');
@@ -383,8 +383,8 @@ export function ProfilePage() {
           <CardDescription>{t('profile.manageCategoriesDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            onClick={() => navigate('/categories')} 
+          <Button
+            onClick={() => navigate('/categories')}
             className="w-full"
             variant="outline"
           >
@@ -405,8 +405,8 @@ export function ProfilePage() {
         <CardContent>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('profile.language')}</label>
-            <Select 
-              value={language} 
+            <Select
+              value={language}
               onValueChange={(value) => {
                 setLanguage(value as Language);
                 setSuccess(t('profile.languageUpdated'));
@@ -522,9 +522,9 @@ export function ProfilePage() {
                         updatedAt: new Date(),
                       });
                     }
-                    
+
                     await db.categories.where('userId').equals(user.id).delete();
-                    
+
                     // Sync immediato con Supabase per propagare le eliminazioni
                     if (navigator.onLine) {
                       try {
@@ -534,7 +534,7 @@ export function ProfilePage() {
                         console.warn('⚠️ Sync failed, will retry later:', syncError);
                       }
                     }
-                    
+
                     setSuccess(t('profile.dataDeleted'));
                     setTimeout(() => navigate('/dashboard'), 1500);
                   } catch (error) {

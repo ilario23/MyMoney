@@ -26,7 +26,7 @@ export function Sidebar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <button
                 key={item.id}

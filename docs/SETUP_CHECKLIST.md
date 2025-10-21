@@ -12,15 +12,17 @@ Vai su **Supabase Dashboard → SQL Editor**:
 4. Verifica output: dovrebbero apparire 6 views
 
 **Verifica creazione:**
+
 ```sql
-SELECT table_name, table_type 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name, table_type
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_type = 'VIEW'
 ORDER BY table_name;
 ```
 
 Dovresti vedere:
+
 - ✅ `user_expense_summary`
 - ✅ `user_category_stats`
 - ✅ `monthly_expense_summary`
@@ -35,6 +37,7 @@ Dovresti vedere:
 Vai su **Supabase Dashboard → Database → Replication**:
 
 Abilita **Realtime** per queste tabelle:
+
 - ✅ `expenses`
 - ✅ `categories`
 - ✅ `groups`
@@ -42,6 +45,7 @@ Abilita **Realtime** per queste tabelle:
 - ✅ `shared_expenses`
 
 **Come fare:**
+
 1. Trova la tabella nella lista
 2. Toggle **Enable Realtime** → ON
 3. Ripeti per tutte e 5 le tabelle
@@ -59,6 +63,7 @@ Abilita **Realtime** per queste tabelle:
    - Device B: Dovrebbe apparire **istantaneamente** (< 1 secondo)
 
 3. **Verifica console:**
+
    ```bash
    # Su Device B dovresti vedere:
    ✅ [Realtime] Subscriptions started
@@ -81,6 +86,7 @@ Abilita **Realtime** per queste tabelle:
    ```
 
 **Se vedi errori:**
+
 - ❌ `relation "user_expense_summary" does not exist`
 - ➡️ Torna allo Step 1 e esegui la migration SQL
 
@@ -89,22 +95,26 @@ Abilita **Realtime** per queste tabelle:
 ## 🧪 Functional Tests
 
 ### **Test 1: Multi-device Sync**
+
 - [ ] Crea spesa su Device A → Appare su Device B
 - [ ] Modifica categoria su Device B → Aggiorna su Device A
 - [ ] Elimina spesa su Device A → Scompare da Device B
 
 ### **Test 2: Offline/Online**
+
 - [ ] Vai offline su Device A
 - [ ] Crea 3 spese offline
 - [ ] Torna online → Spese si sincronizzano automaticamente
 - [ ] Device B riceve tutte e 3 le spese
 
 ### **Test 3: Conflict Resolution**
+
 - [ ] Modifica stessa spesa su entrambi i devices
 - [ ] La versione più recente vince
 - [ ] Nessun errore o duplicati
 
 ### **Test 4: Database Views**
+
 - [ ] Profile stats caricano velocemente
 - [ ] Totali corretti
 - [ ] Medie calcolate correttamente
@@ -118,6 +128,7 @@ Abilita **Realtime** per queste tabelle:
 **Problema**: Modifiche non appaiono su altri devices
 
 **Soluzioni:**
+
 1. Verifica Realtime abilitato su tutte le 5 tabelle
 2. Check console per errori di subscription:
    ```bash
@@ -133,6 +144,7 @@ Abilita **Realtime** per queste tabelle:
 **Problema**: Errore `relation "user_expense_summary" does not exist`
 
 **Soluzioni:**
+
 1. Esegui migration SQL (Step 1)
 2. Verifica permissions:
    ```sql
@@ -150,6 +162,7 @@ Abilita **Realtime** per queste tabelle:
 **Problema**: Cambiamenti impiegano >5 secondi
 
 **Soluzioni:**
+
 1. Check connessione internet
 2. Verifica Supabase non in manutenzione
 3. Console: cerca errori di network
@@ -166,6 +179,7 @@ Abilita **Realtime** per queste tabelle:
 **Problema**: Troppi log di debug
 
 **Soluzione**: Disabilita verbose mode:
+
 ```typescript
 // In src/hooks/useRealtime.ts
 await realtimeService.start({
@@ -184,14 +198,17 @@ await realtimeService.start({
 Misura performance aprendo **DevTools → Network**:
 
 **Profile Page Load:**
+
 - ❌ Prima: ~500ms (calcoli frontend)
 - ✅ Dopo: ~200ms (database view)
 
 **Multi-device Sync:**
+
 - ❌ Prima: 30s (polling)
 - ✅ Dopo: <1s (realtime)
 
 **Dashboard Stats:**
+
 - ❌ Prima: Multiple queries + calculations
 - ✅ Dopo: Single view query
 
@@ -206,7 +223,7 @@ Quando tutto funziona, dovresti avere:
 ✅ Profile stats veloci (<200ms)  
 ✅ Nessun errore in console  
 ✅ Offline/online transitions smooth  
-✅ Conflict resolution automatica  
+✅ Conflict resolution automatica
 
 ---
 

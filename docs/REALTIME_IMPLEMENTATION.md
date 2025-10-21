@@ -9,17 +9,20 @@ Implementato sistema di sincronizzazione **real-time bidirezionale** tra Supabas
 ## ✨ Features Implementate
 
 ### 1. **Real-time Subscriptions** 🔴 LIVE
+
 - ✅ Sync automatico multi-device
 - ✅ Aggiornamenti istantanei senza polling
 - ✅ Gestione conflitti con Last-Write-Wins
 - ✅ Reconnect automatico online/offline
 
 ### 2. **Database Views** 📊 OTTIMIZZATE
+
 - ✅ Query pre-calcolate su Supabase
 - ✅ Performance migliorate (no calcoli frontend)
 - ✅ 6 viste disponibili
 
 ### 3. **Aggregations API** 🎯 EFFICIENTI
+
 - ✅ Utility functions per query complesse
 - ✅ Fallback locale se offline
 
@@ -96,6 +99,7 @@ Implementato sistema di sincronizzazione **real-time bidirezionale** tra Supabas
 ## 🗄️ Database Views Disponibili
 
 ### 1. **user_expense_summary**
+
 Riepilogo spese per utente (totali, medie, conteggi)
 
 ```typescript
@@ -109,6 +113,7 @@ const summary = await getUserExpenseSummary(userId);
 ```
 
 ### 2. **user_category_stats**
+
 Statistiche per categoria
 
 ```typescript
@@ -120,6 +125,7 @@ const stats = await getUserCategoryStats(userId);
 ```
 
 ### 3. **monthly_expense_summary**
+
 Spese aggregate per mese
 
 ```typescript
@@ -128,6 +134,7 @@ const monthly = await getMonthlyExpenseSummary(userId, 6);
 ```
 
 ### 4. **group_expense_summary**
+
 Totali per gruppo
 
 ```typescript
@@ -135,6 +142,7 @@ const groupStats = await getGroupExpenseSummary(groupId);
 ```
 
 ### 5. **shared_expense_details**
+
 Dettagli spese condivise
 
 ```typescript
@@ -142,6 +150,7 @@ const shared = await getSharedExpenseDetails(groupId);
 ```
 
 ### 6. **category_usage_stats**
+
 Utilizzo categorie con conteggi
 
 ```typescript
@@ -156,11 +165,11 @@ const mostUsed = await getMostUsedCategories(userId, 5);
 ### **1. Monitor Real-time Status**
 
 ```tsx
-import { useRealtime } from '@/hooks/useRealtime';
+import { useRealtime } from "@/hooks/useRealtime";
 
 function MyComponent() {
   const { isActive, syncCount, lastSync } = useRealtime();
-  
+
   return (
     <div>
       {isActive && <span>🟢 Real-time Active</span>}
@@ -174,12 +183,12 @@ function MyComponent() {
 ### **2. Use Database Views**
 
 ```tsx
-import { getUserExpenseSummary } from '@/lib/database-views';
+import { getUserExpenseSummary } from "@/lib/database-views";
 
 async function loadStats() {
   // Fast query - pre-calculated on database
   const summary = await getUserExpenseSummary(userId);
-  
+
   console.log(`Total: €${summary.total_amount}`);
   console.log(`Average: €${summary.avg_expense}`);
 }
@@ -215,6 +224,7 @@ docs/MIGRATION_v1.8_DATABASE_VIEWS.sql
 In Supabase Dashboard > **Database > Replication**:
 
 ✅ Abilita Realtime per le tabelle:
+
 - `expenses`
 - `categories`
 - `groups`
@@ -233,11 +243,13 @@ In Supabase Dashboard > **Database > Replication**:
 ## 📊 Performance Benefits
 
 ### **Prima (Solo Sync Manuale)**
+
 - ❌ Polling ogni 30 secondi
 - ❌ Calcoli pesanti nel frontend
 - ❌ Latenza 30s tra devices
 
 ### **Dopo (Realtime + Views)**
+
 - ✅ Sync istantaneo (<100ms)
 - ✅ Calcoli pre-calcolati nel DB
 - ✅ Latenza <1s tra devices
@@ -248,14 +260,15 @@ In Supabase Dashboard > **Database > Replication**:
 
 ```typescript
 // ❌ PRIMA: Calcolo frontend (lento)
-const expenses = await db.expenses.where('userId').equals(userId).toArray();
+const expenses = await db.expenses.where("userId").equals(userId).toArray();
 const total = expenses.reduce((sum, e) => sum + e.amount, 0); // Loop nel browser
 
 // ✅ DOPO: Database View (veloce)
 const { total_amount } = await getUserExpenseSummary(userId); // Pre-calcolato
 ```
 
-**Risultato**: 
+**Risultato**:
+
 - Risparmio: ~200ms per query
 - Meno CPU usage nel browser
 - Migliore user experience
@@ -302,10 +315,10 @@ if (!local || remoteUpdated > local.updatedAt) {
 ### **Check Active Channels**
 
 ```typescript
-import { realtimeService } from '@/services/realtime.service';
+import { realtimeService } from "@/services/realtime.service";
 
-console.log('Active channels:', realtimeService.getActiveChannelsCount());
-console.log('Is active:', realtimeService.isActive());
+console.log("Active channels:", realtimeService.getActiveChannelsCount());
+console.log("Is active:", realtimeService.isActive());
 ```
 
 ---
@@ -340,9 +353,10 @@ Ora hai:
 ✅ **Performance migliorate** con Database Views  
 ✅ **Query ottimizzate** con Aggregations  
 ✅ **Offline-first** con fallback locale  
-✅ **Conflict resolution** automatica  
+✅ **Conflict resolution** automatica
 
 **Next Steps Opzionali:**
+
 - Storage per foto scontrini
 - Edge Functions per calcoli server-side
 - OAuth per login social
