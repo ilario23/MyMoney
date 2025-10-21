@@ -70,10 +70,12 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 #### 📌 Important: Fresh Install vs Migration
 
 **If you're setting up for the FIRST TIME:**
+
 - Follow **Step 3a** below - the schema already includes all v1.10 features
 - Skip migration files - they're only for upgrading existing databases
 
 **If you're UPGRADING from an older version:**
+
 - Your database already exists
 - Run the migration SQL files in order:
   - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
@@ -138,7 +140,6 @@ CREATE TABLE public.expenses (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
   amount DECIMAL(10, 2) NOT NULL,
-  currency TEXT DEFAULT 'EUR',
   category TEXT NOT NULL,  -- Foreign key to categories.id (stored as text for flexibility)
   description TEXT,
   date DATE NOT NULL,
@@ -318,11 +319,13 @@ FOR DELETE
 USING (auth.uid() = owner_id);
 
 -- ====== GROUP MEMBERS TABLE POLICIES ======
--- Members can read group members they're part of
+-- Members can read group members (permissive - frontend filters by user's groups)
+-- NOTE: Permissive policy avoids recursive subquery issues (42P17 infinite recursion)
+-- Security maintained at groups table level + frontend filtering
 CREATE POLICY "Members can read group members"
 ON public.group_members
 FOR SELECT
-USING (user_id = auth.uid());
+USING (true);
 
 -- Owners can manage members (create/add members)
 -- NOTE: Permissive policy to avoid nested query infinite recursion

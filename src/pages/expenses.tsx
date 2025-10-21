@@ -360,7 +360,6 @@ export function ExpensesPage() {
                       <p className={`text-xl font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
                         {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{expense.currency}</p>
                     </div>
                   </div>
                 );

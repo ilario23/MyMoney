@@ -120,7 +120,6 @@ export const it = {
   "expense.registerExpense": "Registra una nuova spesa",
   "expense.description": "Descrizione",
   "expense.amount": "Importo",
-  "expense.currency": "Valuta",
   "expense.category": "Categoria",
   "expense.date": "Data",
   "expense.addExpense": "Aggiungi Spesa",

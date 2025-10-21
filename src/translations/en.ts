@@ -119,7 +119,6 @@ export const en: Record<TranslationKey, string> = {
   "expense.registerExpense": "Register a new expense",
   "expense.description": "Description",
   "expense.amount": "Amount",
-  "expense.currency": "Currency",
   "expense.category": "Category",
   "expense.date": "Date",
   "expense.addExpense": "Add Expense",

@@ -26,7 +26,6 @@ export function ExpenseForm() {
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [currency, setCurrency] = useState('EUR');
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [success, setSuccess] = useState(false);
@@ -77,7 +76,6 @@ export function ExpenseForm() {
         id: uuidv4(),
         userId: user.id,
         amount: parseFloat(amount),
-        currency,
         category: categoryId,  // Save category ID, not name
         description,
         date: new Date(date),
@@ -177,33 +175,17 @@ export function ExpenseForm() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('expense.amount')}</label>
-                <Input
-                  type="number"
-                  placeholder={t('expense.amountPlaceholder')}
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={isLoading || success}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('expense.currency')}</label>
-                <Select value={currency} onValueChange={setCurrency} disabled={isLoading || success}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EUR">€ EUR</SelectItem>
-                    <SelectItem value="USD">$ USD</SelectItem>
-                    <SelectItem value="GBP">£ GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('expense.amount')}</label>
+              <Input
+                type="number"
+                placeholder={t('expense.amountPlaceholder')}
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isLoading || success}
+                required
+              />
             </div>
 
             <div className="space-y-2">

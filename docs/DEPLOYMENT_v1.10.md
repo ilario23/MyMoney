@@ -3,6 +3,7 @@
 ## 📋 Pre-Deployment Checklist
 
 ### ✅ Code Changes
+
 - [ ] All TypeScript files compile without errors
 - [ ] No ESLint warnings
 - [ ] Tested locally in dev mode
@@ -12,6 +13,7 @@
 - [ ] Verified member display shows correctly
 
 ### ✅ Database
+
 - [ ] Backup current database (if upgrading existing)
 - [ ] Migration SQL ready: `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql`
 - [ ] Supabase credentials confirmed
@@ -23,16 +25,18 @@
 ### For Existing Databases (Upgrading from v1.9 or earlier)
 
 1. **Backup Database First!**
+
    ```sql
    -- In Supabase SQL Editor
    -- Go to: SQL Editor → New Query → Backup
    ```
 
 2. **Run Migration**
+
    ```bash
    # Navigate to docs folder
    cd docs
-   
+
    # Open migration file
    # File: MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql
    ```
@@ -44,26 +48,28 @@
    - Verify success message
 
 4. **Verify Migration**
+
    ```sql
    -- Check that column exists
-   SELECT 
-       column_name, 
-       data_type, 
-       is_nullable, 
+   SELECT
+       column_name,
+       data_type,
+       is_nullable,
        column_default
    FROM information_schema.columns
-   WHERE table_name = 'groups' 
+   WHERE table_name = 'groups'
        AND column_name = 'allow_new_members';
-   
+
    -- Expected result:
    -- allow_new_members | boolean | NO | true
    ```
 
 5. **Update RLS Policy**
+
    ```sql
    -- Drop old policy
    DROP POLICY IF EXISTS "Users can read groups" ON public.groups;
-   
+
    -- Create new policy with allow_new_members check
    CREATE POLICY "Users can read groups"
    ON public.groups
@@ -141,24 +147,28 @@ netlify deploy --prod --dir=dist
 ### Critical Paths
 
 #### 1. Category Management
+
 - [ ] Create new category with icon dropdown
 - [ ] Edit existing category icon
 - [ ] Verify icon selection works smoothly
 - [ ] Confirm sync to Supabase
 
 #### 2. Group Creation
+
 - [ ] Create new group
 - [ ] Verify invite code is generated
 - [ ] Confirm `allow_new_members = true` by default
 - [ ] Check member count shows "1 member" (owner)
 
 #### 3. Group Access Control
+
 - [ ] Toggle "Accept New Members" on/off
 - [ ] Verify 🔓/🔒 icon changes
 - [ ] Confirm sync to Supabase
 - [ ] Verify badge updates
 
 #### 4. Invite Code Reusability
+
 - [ ] Copy invite code
 - [ ] Join with first user → Success
 - [ ] Join with second user (same code) → Success
@@ -167,12 +177,14 @@ netlify deploy --prod --dir=dist
 - [ ] Toggle back on → Join should work again
 
 #### 5. Member Display
+
 - [ ] Verify member count is correct
 - [ ] Check member names display
 - [ ] Confirm Owner badge shows for creator
 - [ ] Test with 3+ members
 
 #### 6. Backwards Compatibility
+
 - [ ] Existing groups load correctly
 - [ ] Old invite codes work (if any)
 - [ ] No data loss from migration
@@ -182,11 +194,12 @@ netlify deploy --prod --dir=dist
 ## 🔍 Verification SQL Queries
 
 ### Check Groups Schema
+
 ```sql
-SELECT 
-    column_name, 
-    data_type, 
-    is_nullable, 
+SELECT
+    column_name,
+    data_type,
+    is_nullable,
     column_default
 FROM information_schema.columns
 WHERE table_name = 'groups'
@@ -194,10 +207,11 @@ ORDER BY ordinal_position;
 ```
 
 ### Verify All Groups Have allow_new_members
+
 ```sql
-SELECT 
-    id, 
-    name, 
+SELECT
+    id,
+    name,
     allow_new_members,
     invite_code
 FROM public.groups
@@ -207,8 +221,9 @@ WHERE allow_new_members IS NULL;
 ```
 
 ### Check RLS Policies
+
 ```sql
-SELECT 
+SELECT
     schemaname,
     tablename,
     policyname,
@@ -222,6 +237,7 @@ WHERE tablename = 'groups';
 ```
 
 ### Test Group Join Query
+
 ```sql
 -- Simulate what happens when user tries to join
 SELECT *
@@ -241,11 +257,12 @@ WHERE invite_code = 'YOUR_CODE_HERE'
 **Cause:** Migration was already run or column was manually added
 
 **Solution:**
+
 ```sql
 -- Check if column exists
-SELECT column_name 
+SELECT column_name
 FROM information_schema.columns
-WHERE table_name = 'groups' 
+WHERE table_name = 'groups'
   AND column_name = 'allow_new_members';
 
 -- If exists, skip ADD COLUMN and just run:
@@ -258,6 +275,7 @@ ALTER TABLE groups ALTER COLUMN allow_new_members SET NOT NULL;
 **Cause:** RLS policy still checks for `used_by_user_id IS NULL`
 
 **Solution:**
+
 ```sql
 -- Drop old policy
 DROP POLICY IF EXISTS "Users can read groups" ON public.groups;
@@ -278,6 +296,7 @@ USING (
 **Cause:** `group_members` table not populated correctly
 
 **Solution:**
+
 ```sql
 -- Check group_members table
 SELECT gm.*, u.display_name, u.email
@@ -294,6 +313,7 @@ WHERE gm.group_id = 'your-group-id';
 **Cause:** Network issue or sync service error
 
 **Solution:**
+
 1. Check browser console for errors
 2. Verify network tab shows PUT request to Supabase
 3. Check RLS policy allows owner to update:
@@ -311,6 +331,7 @@ WHERE gm.group_id = 'your-group-id';
 **Cause:** Browser cache
 
 **Solution:**
+
 1. Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
 2. Clear site data: DevTools → Application → Clear Storage
 3. Unregister service worker: DevTools → Application → Service Workers → Unregister
@@ -343,6 +364,7 @@ WHERE gm.group_id = 'your-group-id';
 If deployment fails:
 
 ### Database Rollback
+
 ```sql
 -- Remove allow_new_members column
 ALTER TABLE public.groups DROP COLUMN IF EXISTS allow_new_members;
@@ -361,6 +383,7 @@ USING (
 ```
 
 ### Frontend Rollback
+
 ```bash
 # Deploy previous version
 git checkout v1.9.0  # or last stable tag

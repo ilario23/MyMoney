@@ -14,7 +14,6 @@ export interface Expense {
   userId: string; // chi ha creato la spesa
   groupId?: string; // se condivisa, altrimenti undefined
   amount: number;
-  currency: string;
   category: string;
   description: string;
   date: Date;
@@ -177,6 +176,27 @@ export class ExpenseTrackerDB extends Dexie {
           .toCollection()
           .modify((group) => {
             group.allowNewMembers = true;
+          });
+      });
+
+    // v7: Remove currency field from expenses
+    this.version(7)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, parentId, isActive",
+        groups: "id, ownerId, inviteCode",
+        groupMembers: "[groupId+userId], groupId, userId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade((tx) => {
+        // Remove currency field from all existing expenses
+        return tx
+          .table("expenses")
+          .toCollection()
+          .modify((expense) => {
+            delete expense.currency;
           });
       });
   }
