@@ -18,28 +18,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { v4 as uuidv4 } from 'uuid';
 import { ArrowLeft } from 'lucide-react';
 
-const DEFAULT_CATEGORIES = [
-  'Cibo',
-  'Trasporti',
-  'Alloggio',
-  'Intrattenimento',
-  'Shopping',
-  'Salute',
-  'Utilità',
-  'Altro',
-];
-
 export function ExpenseForm() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Altro');
+  const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [currency, setCurrency] = useState('EUR');
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,7 +39,7 @@ export function ExpenseForm() {
       try {
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
         const categoryNames = userCategories.map((c) => c.name);
-        setCategories([...DEFAULT_CATEGORIES, ...categoryNames]);
+        setCategories(categoryNames);
       } catch (error) {
         console.error('Error loading categories:', error);
       }
@@ -105,7 +94,7 @@ export function ExpenseForm() {
       // Reset form
       setDescription('');
       setAmount('');
-      setCategory('Altro');
+      setCategory('');
       setDate(new Date().toISOString().split('T')[0]);
 
       // Redirect after 2s (give time to read any error message)

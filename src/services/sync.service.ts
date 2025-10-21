@@ -136,7 +136,7 @@ export class SyncService {
             .from("categories")
             .select("*")
             .eq("id", category.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
 
@@ -239,7 +239,7 @@ export class SyncService {
             .from("expenses")
             .select("*")
             .eq("id", expense.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
 
@@ -360,7 +360,7 @@ export class SyncService {
             .from("groups")
             .select("*")
             .eq("id", group.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
 
@@ -491,7 +491,7 @@ export class SyncService {
             .from("group_members")
             .select("*")
             .eq("id", member.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
 
@@ -602,7 +602,7 @@ export class SyncService {
             .from("shared_expenses")
             .select("*")
             .eq("id", sharedExp.id)
-            .single();
+            .maybeSingle();
 
           let error = null;
 
