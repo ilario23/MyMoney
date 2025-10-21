@@ -49,7 +49,8 @@ export default defineConfig(({ command }) => ({
             manifest: {
               name: "ExpenseTracker - Gestione Spese",
               short_name: "ExpenseTracker",
-              description: "Gestisci le tue spese personali e condivise con facilità",
+              description:
+                "Gestisci le tue spese personali e condivise con facilità",
               theme_color: "#3b82f6",
               background_color: "#ffffff",
               display: "standalone",
@@ -60,15 +61,50 @@ export default defineConfig(({ command }) => ({
               lang: "it",
               icons: [
                 {
-                  src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>💰</text></svg>",
+                  src: "/icons/icon-48x48.png",
+                  sizes: "48x48",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-72x72.png",
+                  sizes: "72x72",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-96x96.png",
+                  sizes: "96x96",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-128x128.png",
+                  sizes: "128x128",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-144x144.png",
+                  sizes: "144x144",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-192x192.png",
                   sizes: "192x192",
-                  type: "image/svg+xml",
+                  type: "image/png",
                   purpose: "any maskable",
                 },
                 {
-                  src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>💰</text></svg>",
+                  src: "/icons/icon-256x256.png",
+                  sizes: "256x256",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-384x384.png",
+                  sizes: "384x384",
+                  type: "image/png",
+                },
+                {
+                  src: "/icons/icon-512x512.png",
                   sizes: "512x512",
-                  type: "image/svg+xml",
+                  type: "image/png",
                   purpose: "any maskable",
                 },
               ],
