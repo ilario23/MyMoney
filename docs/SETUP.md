@@ -638,6 +638,7 @@ Starting from v1.7.0, categories support **parent-child relationships** for bett
 **Migration**: If upgrading from v1.6.0 or earlier, run `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` in Supabase SQL Editor.
 
 **Example tree:**
+
 ```
 📌 Shopping (parent_id: null)
   └─ 🍕 Groceries (parent_id: shopping-uuid)
