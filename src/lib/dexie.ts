@@ -96,126 +96,17 @@ export class ExpenseTrackerDB extends Dexie {
 
   constructor() {
     super("ExpenseTrackerDB");
-    this.version(2).stores({
+
+    // Single version schema - no migrations needed
+    this.version(1).stores({
       users: "id, email",
       expenses: "id, userId, [userId+date], groupId, isSynced",
-      categories: "id, userId, parentId",
-      groups: "id, ownerId",
-      groupMembers: "[groupId+userId], groupId",
+      categories: "id, userId, groupId, parentId, isActive",
+      groups: "id, ownerId, inviteCode",
+      groupMembers: "[groupId+userId], groupId, userId",
       sharedExpenses: "id, groupId, creatorId",
       syncLogs: "++id, userId, lastSyncTime",
     });
-
-    // v3: Add isActive field to categories
-    this.version(3)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, parentId, isActive",
-        groups: "id, ownerId",
-        groupMembers: "[groupId+userId], groupId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade((tx) => {
-        // Set isActive = true for all existing categories
-        return tx
-          .table("categories")
-          .toCollection()
-          .modify((category) => {
-            category.isActive = true;
-          });
-      });
-
-    // v4: Add invite code fields to groups
-    this.version(4)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, parentId, isActive",
-        groups: "id, ownerId, inviteCode",
-        groupMembers: "[groupId+userId], groupId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade(() => {
-        // No data migration needed - new fields will be undefined for existing groups
-        return Promise.resolve();
-      });
-
-    // v5: Add userId index to groupMembers for efficient member group lookups
-    this.version(5)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, parentId, isActive",
-        groups: "id, ownerId, inviteCode",
-        groupMembers: "[groupId+userId], groupId, userId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade(() => {
-        // No data migration needed - just adding index
-        return Promise.resolve();
-      });
-
-    // v6: Add allowNewMembers field to groups for reusable invite codes
-    this.version(6)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, parentId, isActive",
-        groups: "id, ownerId, inviteCode",
-        groupMembers: "[groupId+userId], groupId, userId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade((tx) => {
-        // Set allowNewMembers = true for all existing groups
-        return tx
-          .table("groups")
-          .toCollection()
-          .modify((group) => {
-            group.allowNewMembers = true;
-          });
-      });
-
-    // v7: Remove currency field from expenses
-    this.version(7)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, parentId, isActive",
-        groups: "id, ownerId, inviteCode",
-        groupMembers: "[groupId+userId], groupId, userId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade((tx) => {
-        // Remove currency field from all existing expenses
-        return tx
-          .table("expenses")
-          .toCollection()
-          .modify((expense) => {
-            delete expense.currency;
-          });
-      });
-
-    // v8: Add groupId to categories for shared group categories
-    this.version(8)
-      .stores({
-        users: "id, email",
-        expenses: "id, userId, [userId+date], groupId, isSynced",
-        categories: "id, userId, groupId, parentId, isActive",
-        groups: "id, ownerId, inviteCode",
-        groupMembers: "[groupId+userId], groupId, userId",
-        sharedExpenses: "id, groupId, creatorId",
-        syncLogs: "++id, userId, lastSyncTime",
-      })
-      .upgrade(() => {
-        // No data migration needed - groupId will be undefined for existing categories (personal)
-        return Promise.resolve();
-      });
   }
 }
 

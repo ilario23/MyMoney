@@ -88,7 +88,8 @@ export const en: Record<TranslationKey, string> = {
   "categories.selectGroup": "Select a group",
   "categories.groupCategory": "Group Category",
   "categories.personalCategory": "Personal Category",
-  "categories.onlyOwnerCanEdit": "Only the group owner can edit group categories",
+  "categories.onlyOwnerCanEdit":
+    "Only the group owner can edit group categories",
   "categories.sharedWith": "Shared with group:",
   "categories.personal": "Personal: Each user has their own categories",
   "categories.local": "Local: Saved in IndexedDB on your device",

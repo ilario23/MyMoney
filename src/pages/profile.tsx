@@ -110,27 +110,74 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     try {
+      console.log('🚪 Starting logout process...');
+      
       // 1. Sign out da Supabase
       await supabase.auth.signOut();
+      console.log('✅ Supabase logout complete');
       
-      // 2. Pulisci IndexedDB (Dexie)
-      if (user) {
-        await db.expenses.where('userId').equals(user.id).delete();
-        await db.categories.where('userId').equals(user.id).delete();
-        await db.syncLogs.where('userId').equals(user.id).delete();
+      // 2. Pulisci completamente IndexedDB
+      try {
+        // Chiudi il database Dexie
+        await db.close();
+        console.log('✅ Dexie database closed');
+        
+        // Elimina tutti i database IndexedDB
+        if (window.indexedDB) {
+          const databases = await window.indexedDB.databases();
+          for (const dbInfo of databases) {
+            if (dbInfo.name) {
+              await new Promise<void>((resolve, reject) => {
+                const deleteRequest = window.indexedDB.deleteDatabase(dbInfo.name!);
+                deleteRequest.onsuccess = () => {
+                  console.log(`✅ Deleted IndexedDB: ${dbInfo.name}`);
+                  resolve();
+                };
+                deleteRequest.onerror = () => reject(deleteRequest.error);
+              });
+            }
+          }
+        }
+      } catch (dbError) {
+        console.warn('⚠️ Error cleaning IndexedDB:', dbError);
       }
       
       // 3. Pulisci localStorage
-      localStorage.removeItem('app-language');
-      localStorage.removeItem('theme');
+      try {
+        localStorage.clear();
+        console.log('✅ localStorage cleared');
+      } catch (lsError) {
+        console.warn('⚠️ Error clearing localStorage:', lsError);
+      }
       
-      // 4. Logout dall'auth store
+      // 4. Pulisci sessionStorage
+      try {
+        sessionStorage.clear();
+        console.log('✅ sessionStorage cleared');
+      } catch (ssError) {
+        console.warn('⚠️ Error clearing sessionStorage:', ssError);
+      }
+      
+      // 5. Pulisci Cache API (Service Worker caches)
+      try {
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+          console.log(`✅ Cleared ${cacheNames.length} cache(s)`);
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Error clearing caches:', cacheError);
+      }
+      
+      // 6. Logout dall'auth store (Zustand)
       logout();
+      console.log('✅ Auth store cleared');
       
-      // 5. Redirect al login
+      // 7. Redirect al login
+      console.log('🎉 Logout complete, redirecting to login...');
       navigate('/login');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout error:', error);
       setError(t('profile.logoutError') || 'Errore durante il logout');
     }
   };

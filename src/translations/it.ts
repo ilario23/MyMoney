@@ -88,7 +88,8 @@ export const it = {
   "categories.selectGroup": "Seleziona un gruppo",
   "categories.groupCategory": "Categoria Gruppo",
   "categories.personalCategory": "Categoria Personale",
-  "categories.onlyOwnerCanEdit": "Solo il proprietario del gruppo può modificare le categorie condivise",
+  "categories.onlyOwnerCanEdit":
+    "Solo il proprietario del gruppo può modificare le categorie condivise",
   "categories.sharedWith": "Condivisa con gruppo:",
   "categories.personal": "Personali: Ogni utente ha le proprie categorie",
   "categories.local": "Locali: Salvate in IndexedDB nel tuo dispositivo",
