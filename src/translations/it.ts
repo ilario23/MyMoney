@@ -237,6 +237,12 @@ export const it = {
   "groups.alreadyMember": "Sei già membro di questo gruppo",
   "groups.shareInvite": "Condividi questo codice per invitare membri:",
   "groups.duplicateError": "Un gruppo con questo nome esiste già",
+  "groups.allowNewMembers": "Accetta Nuovi Membri",
+  "groups.notAcceptingMembers": "Questo gruppo non accetta nuovi membri",
+  "groups.nowAcceptingMembers": "Il gruppo ora accetta nuovi membri",
+  "groups.notAcceptingNewMembers": "Il gruppo non accetta più nuovi membri",
+  "groups.memberCount": "{count} membri",
+  "groups.reusableCode": "Codice Riutilizzabile",
 
   // Shared Expenses (V2)
   "sharedExpenses.title": "Spese Condivise",

@@ -43,9 +43,10 @@ export interface Group {
   ownerId: string;
   description?: string;
   color?: string;
-  inviteCode?: string; // Single-use invite code (v1.9)
-  usedByUserId?: string; // User who used the code (v1.9)
-  usedAt?: Date; // When code was used (v1.9)
+  inviteCode?: string; // Reusable invite code (v1.10)
+  allowNewMembers: boolean; // Owner can allow/disallow new members (v1.10)
+  usedByUserId?: string; // DEPRECATED - kept for backwards compatibility
+  usedAt?: Date; // DEPRECATED - kept for backwards compatibility
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -156,6 +157,27 @@ export class ExpenseTrackerDB extends Dexie {
       .upgrade(() => {
         // No data migration needed - just adding index
         return Promise.resolve();
+      });
+
+    // v6: Add allowNewMembers field to groups for reusable invite codes
+    this.version(6)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, parentId, isActive",
+        groups: "id, ownerId, inviteCode",
+        groupMembers: "[groupId+userId], groupId, userId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade((tx) => {
+        // Set allowNewMembers = true for all existing groups
+        return tx
+          .table("groups")
+          .toCollection()
+          .modify((group) => {
+            group.allowNewMembers = true;
+          });
       });
   }
 }

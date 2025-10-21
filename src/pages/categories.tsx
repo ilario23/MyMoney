@@ -463,20 +463,20 @@ export function CategoriesPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('categories.icon')}</label>
-                <div className="grid grid-cols-8 gap-2">
-                  {CATEGORY_ICONS.map((icon) => (
-                    <button
-                      key={icon}
-                      type="button"
-                      onClick={() => setNewCategoryIcon(icon)}
-                      className={`p-2 text-2xl border rounded-lg transition-colors ${
-                        newCategoryIcon === icon ? 'bg-primary text-white border-primary' : 'bg-background border-border hover:bg-muted'
-                      }`}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
+                <Select value={newCategoryIcon} onValueChange={setNewCategoryIcon}>
+                  <SelectTrigger>
+                    <SelectValue>
+                      <span className="text-2xl">{newCategoryIcon}</span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORY_ICONS.map((icon) => (
+                      <SelectItem key={icon} value={icon}>
+                        <span className="text-2xl">{icon}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -613,19 +613,22 @@ export function CategoriesPage() {
                             disabled={isUpdating}
                           />
 
-                          <div className="grid grid-cols-8 gap-2">
-                            {CATEGORY_ICONS.map((icon) => (
-                              <button
-                                key={icon}
-                                type="button"
-                                onClick={() => setEditIcon(icon)}
-                                className={`p-2 text-2xl border rounded-lg transition-colors ${
-                                  editIcon === icon ? 'bg-primary text-white border-primary' : 'bg-background border-border'
-                                }`}
-                              >
-                                {icon}
-                              </button>
-                            ))}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">{t('categories.icon')}</label>
+                            <Select value={editIcon} onValueChange={setEditIcon}>
+                              <SelectTrigger>
+                                <SelectValue>
+                                  <span className="text-2xl">{editIcon}</span>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CATEGORY_ICONS.map((icon) => (
+                                  <SelectItem key={icon} value={icon}>
+                                    <span className="text-2xl">{icon}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           <div className="grid grid-cols-8 gap-2">

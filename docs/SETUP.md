@@ -67,6 +67,20 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 ### Step 3: Setup Supabase Database
 
+#### 📌 Important: Fresh Install vs Migration
+
+**If you're setting up for the FIRST TIME:**
+- Follow **Step 3a** below - the schema already includes all v1.10 features
+- Skip migration files - they're only for upgrading existing databases
+
+**If you're UPGRADING from an older version:**
+- Your database already exists
+- Run the migration SQL files in order:
+  - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
+  - `MIGRATION_v1.8.1_ACTIVE_CATEGORIES.sql` (if coming from < v1.8.1)
+  - `MIGRATION_v1.9_GROUP_INVITE_CODES.sql` (if coming from < v1.9)
+  - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
+
 #### 3a. Create Tables
 
 Go to **Supabase → SQL Editor** and run the following SQL in order:
@@ -91,9 +105,10 @@ CREATE TABLE public.groups (
   owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   description TEXT,
   color TEXT,
-  invite_code TEXT UNIQUE,  -- Single-use invite code (v1.9)
-  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- User who used the code (v1.9)
-  used_at TIMESTAMP WITH TIME ZONE,  -- When code was used (v1.9)
+  invite_code TEXT UNIQUE,  -- Reusable invite code (v1.10)
+  allow_new_members BOOLEAN DEFAULT TRUE NOT NULL,  -- Owner can control if group accepts new members (v1.10)
+  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- DEPRECATED (kept for backwards compatibility)
+  used_at TIMESTAMP WITH TIME ZONE,  -- DEPRECATED (kept for backwards compatibility)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -164,6 +179,7 @@ CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id)
 CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
 CREATE INDEX idx_groups_owner ON public.groups(owner_id);
 CREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
+CREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
 CREATE INDEX idx_group_members_group ON public.group_members(group_id);
 CREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 ```
@@ -272,14 +288,14 @@ FOR DELETE
 USING (auth.uid() = user_id);
 
 -- ====== GROUPS TABLE POLICIES ======
--- Users can read own groups OR groups with valid invite codes (for joining)
+-- Users can read own groups OR groups with valid invite codes AND allow_new_members = true (for joining)
 CREATE POLICY "Users can read groups"
 ON public.groups
 FOR SELECT
 USING (
   auth.uid() = owner_id
   OR
-  (invite_code IS NOT NULL AND used_by_user_id IS NULL)
+  (invite_code IS NOT NULL AND allow_new_members = TRUE)
 );
 
 -- Owners can create groups
@@ -661,7 +677,23 @@ Starting from v1.7.0, categories support **parent-child relationships** for bett
   └─ 🚌 Public Transit (parent_id: transportation-uuid)
 ```
 
-## �📝 Changelog
+## 📝 Changelog
+
+### v1.10.0 - Icon Dropdown & Reusable Invite Codes
+
+- **NEW**: Category icons in dropdown menu
+  - Cleaner UI with Select component instead of icon grid
+  - Applied to both create and edit modes
+- **NEW**: Reusable invite codes with access control
+  - Owner can toggle `allow_new_members` flag
+  - Single invite code works for multiple members
+  - No need to generate new codes for each invite
+- **NEW**: Group member display
+  - Shows participant count and names for each group
+  - Owner badge for group creators
+- Updated database schema with `allow_new_members` field
+- Enhanced translations (EN/IT) with new keys
+- Migration: `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql`
 
 ### v1.7.0 - Hierarchical Categories & Search
 

@@ -235,6 +235,12 @@ export const en: Record<TranslationKey, string> = {
   "groups.alreadyMember": "You are already a member of this group",
   "groups.shareInvite": "Share this code to invite members:",
   "groups.duplicateError": "A group with this name already exists",
+  "groups.allowNewMembers": "Accept New Members",
+  "groups.notAcceptingMembers": "This group is not accepting new members",
+  "groups.nowAcceptingMembers": "Group is now accepting new members",
+  "groups.notAcceptingNewMembers": "Group is no longer accepting new members",
+  "groups.memberCount": "{count} members",
+  "groups.reusableCode": "Reusable Code",
 
   // Shared Expenses (V2)
   "sharedExpenses.title": "Shared Expenses",

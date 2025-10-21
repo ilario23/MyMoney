@@ -34,6 +34,7 @@ export function GroupsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [groupMembers, setGroupMembers] = useState<Map<string, { count: number; names: string[] }>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -74,7 +75,24 @@ export function GroupsPage() {
           }
         });
         
+        // Load member information for each group
+        const memberInfo = new Map<string, { count: number; names: string[] }>();
+        for (const group of allGroups) {
+          const members = await db.groupMembers.where('groupId').equals(group.id).toArray();
+          const userIds = members.map(m => m.userId);
+          
+          // Fetch user names from Supabase
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, display_name, email')
+            .in('id', userIds);
+          
+          const names = userData?.map(u => u.display_name || u.email.split('@')[0]) || [];
+          memberInfo.set(group.id, { count: members.length, names });
+        }
+        
         setGroups(allGroups);
+        setGroupMembers(memberInfo);
       } catch (err) {
         console.error('Error loading groups:', err);
         setError(t('common.error'));
@@ -99,7 +117,8 @@ export function GroupsPage() {
         ownerId: user.id,
         description: newGroupDescription,
         color: '#3B82F6',
-        inviteCode: generateInviteCode(), // Generate invite code
+        inviteCode: generateInviteCode(), // Generate reusable invite code
+        allowNewMembers: true, // Allow new members by default
         isSynced: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -113,7 +132,7 @@ export function GroupsPage() {
         try {
           const { syncService } = await import('@/services/sync.service');
           await syncService.sync({ userId: user.id, verbose: true });
-          console.log('✅ Group synced to Supabase with invite code');
+          console.log('✅ Group synced to Supabase with reusable invite code');
         } catch (syncError) {
           console.warn('⚠️ Sync failed, will retry later:', syncError);
         }
@@ -167,10 +186,10 @@ export function GroupsPage() {
 
       console.log('✅ Found group:', groupData.name, 'Code:', groupData.invite_code);
 
-      // Check if code already used
-      if (groupData.used_by_user_id) {
-        console.warn('⚠️ Code already used by:', groupData.used_by_user_id);
-        setError(t('groups.codeAlreadyUsed'));
+      // Check if group allows new members
+      if (!groupData.allow_new_members) {
+        console.warn('⚠️ Group not accepting new members');
+        setError(t('groups.notAcceptingMembers'));
         setIsJoining(false);
         return;
       }
@@ -201,17 +220,6 @@ export function GroupsPage() {
 
       if (memberError) throw memberError;
 
-      // Mark invite code as used
-      const { error: updateError } = await supabase
-        .from('groups')
-        .update({
-          used_by_user_id: user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq('id', groupData.id);
-
-      if (updateError) throw updateError;
-
       // Add group to local DB
       const localGroup: Group = {
         id: groupData.id,
@@ -220,8 +228,7 @@ export function GroupsPage() {
         description: groupData.description,
         color: groupData.color,
         inviteCode: groupData.invite_code,
-        usedByUserId: user.id,
-        usedAt: new Date(),
+        allowNewMembers: groupData.allow_new_members ?? true,
         isSynced: true,
         createdAt: new Date(groupData.created_at),
         updatedAt: new Date(groupData.updated_at),
@@ -274,6 +281,34 @@ export function GroupsPage() {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error deleting group:', err);
+      setError(t('common.error'));
+    }
+  };
+
+  const handleToggleAllowNewMembers = async (groupId: string) => {
+    if (!user) return;
+    try {
+      const group = groups.find(g => g.id === groupId);
+      if (!group || group.ownerId !== user.id) return;
+
+      const updated = { ...group, allowNewMembers: !group.allowNewMembers, isSynced: false, updatedAt: new Date() };
+      await db.groups.put(updated);
+      setGroups(groups.map(g => g.id === groupId ? updated : g));
+
+      // Sync
+      if (navigator.onLine && user) {
+        try {
+          const { syncService } = await import('@/services/sync.service');
+          await syncService.sync({ userId: user.id, verbose: true });
+        } catch (syncError) {
+          console.warn('⚠️ Sync failed, will retry later:', syncError);
+        }
+      }
+
+      setSuccess(updated.allowNewMembers ? t('groups.nowAcceptingMembers') : t('groups.notAcceptingNewMembers'));
+      setTimeout(() => setSuccess(''), 2000);
+    } catch (err) {
+      console.error('Error toggling allowNewMembers:', err);
       setError(t('common.error'));
     }
   };
@@ -404,7 +439,11 @@ export function GroupsPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {groups.map((group) => (
+          {groups.map((group) => {
+            const memberInfo = groupMembers.get(group.id);
+            const isOwner = group.ownerId === user.id;
+            
+            return (
             <Card key={group.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -414,9 +453,23 @@ export function GroupsPage() {
                       style={{ backgroundColor: group.color }}
                     />
                     <div>
-                      <CardTitle>{group.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle>{group.name}</CardTitle>
+                        {isOwner && <Badge variant="secondary">Owner</Badge>}
+                      </div>
                       {group.description && (
                         <CardDescription>{group.description}</CardDescription>
+                      )}
+                      {memberInfo && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {t('groups.memberCount').replace('{count}', memberInfo.count.toString())}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            • {memberInfo.names.join(', ')}
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -451,10 +504,20 @@ export function GroupsPage() {
                 </div>
               </CardHeader>
               {/* Invite Code Section (only for owners) */}
-              {group.ownerId === user.id && group.inviteCode && !group.usedByUserId && (
+              {isOwner && group.inviteCode && (
                 <CardContent className="border-t pt-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">{t('groups.shareInvite')}</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{t('groups.shareInvite')}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleAllowNewMembers(group.id)}
+                        className="gap-2"
+                      >
+                        {group.allowNewMembers ? '🔓 ' + t('groups.allowNewMembers') : '🔒 Closed'}
+                      </Button>
+                    </div>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 px-4 py-2 bg-muted rounded-lg font-mono text-lg tracking-wider">
                         {group.inviteCode}
@@ -478,24 +541,21 @@ export function GroupsPage() {
                         )}
                       </Button>
                     </div>
-                    {group.inviteCode && (
+                    <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        Single-use • Not used yet
+                        {t('groups.reusableCode')}
                       </Badge>
-                    )}
+                      {!group.allowNewMembers && (
+                        <Badge variant="outline" className="text-xs">
+                          {t('groups.notAcceptingMembers')}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               )}
-              {/* Show if code was used */}
-              {group.usedByUserId && (
-                <CardContent className="border-t pt-4">
-                  <Badge variant="outline" className="text-xs">
-                    Invite code used
-                  </Badge>
-                </CardContent>
-              )}
             </Card>
-          ))}
+          )})}
         </div>
       )}
     </div>
