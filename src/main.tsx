@@ -1,19 +1,23 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { App } from "./App.tsx";
+import { registerSW } from '@/lib/pwa';
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then((registration) => {
-    console.log('ServiceWorker registration successful:', registration.scope);
-  }).catch((error) => {
-    console.log('ServiceWorker registration failed:', error);
-  });
+// App wrapper component for registering service worker
+function AppWrapper() {
+  useEffect(() => {
+    // Register service worker only in production
+    if (import.meta.env.PROD) {
+      registerSW();
+    }
+  }, []);
+
+  return <App />;
 }
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <App />
+        <AppWrapper />
     </StrictMode>,
 )

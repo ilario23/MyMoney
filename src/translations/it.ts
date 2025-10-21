@@ -285,6 +285,21 @@ export const it = {
   "sharedExpenses.youOwe": "Devi",
   "sharedExpenses.owesYou": "Ti deve",
   "sharedExpenses.settled": "Saldato",
+
+  // PWA Update Prompt
+  "pwa.updateError": "Errore di Aggiornamento",
+  "pwa.newVersionAvailable": "Nuova versione disponibile",
+  "pwa.offlineReady": "App pronta per l'uso offline",
+  "pwa.updateDescription":
+    "È disponibile una nuova versione di ExpenseTracker. Aggiorna ora per ottenere le ultime funzionalità e miglioramenti.",
+  "pwa.offlineDescription": "ExpenseTracker è ora pronta per funzionare offline.",
+  "pwa.lastChecked": "Ultimo controllo",
+  "pwa.updateNow": "Aggiorna Ora",
+  "pwa.retry": "Riprova",
+  "pwa.retrying": "Riprovando...",
+
+  // Common
+  "common.dismiss": "Chiudi",
 } as const;
 
 export type TranslationKey = keyof typeof it;

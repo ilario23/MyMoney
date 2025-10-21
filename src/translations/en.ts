@@ -283,4 +283,19 @@ export const en: Record<TranslationKey, string> = {
   "sharedExpenses.youOwe": "You owe",
   "sharedExpenses.owesYou": "Owes you",
   "sharedExpenses.settled": "Settled",
+
+  // PWA Update Prompt
+  "pwa.updateError": "Update Error",
+  "pwa.newVersionAvailable": "New version available",
+  "pwa.offlineReady": "App ready for offline use",
+  "pwa.updateDescription":
+    "A new version of ExpenseTracker is available. Update now to get the latest features and improvements.",
+  "pwa.offlineDescription": "ExpenseTracker is now ready to work offline.",
+  "pwa.lastChecked": "Last checked",
+  "pwa.updateNow": "Update Now",
+  "pwa.retry": "Retry",
+  "pwa.retrying": "Retrying...",
+
+  // Common
+  "common.dismiss": "Dismiss",
 } as const;
