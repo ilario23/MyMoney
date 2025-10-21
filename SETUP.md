@@ -1,82 +1,77 @@
-# ExpenseTracker PWA - Gestione Spese Personali e Condivise
+# ExpenseTracker PWA - Setup Guide
 
-Una Progressive Web App mobile-first per la gestione delle spese personali e condivise, sviluppata con React, Vite, TypeScript, Tailwind CSS e ShadCN UI.
+A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
 
-## 🎯 Caratteristiche
+## 🎯 Features
 
-### Versione 1 (Personale)
+### Version 1 (Personal)
 
-- ✅ Registrazione e login sicuri (Supabase Auth)
-- ✅ 8 categorie di default create automaticamente
-- ✅ Aggiunta e modifica di spese personali
-- ✅ Categorie personalizzabili
-- ✅ Dashboard con riepilogo mensile
-- ✅ Import/export locale dei dati
-- ✅ Modalità offline con cache Dexie
-- ✅ Sincronizzazione manuale con Supabase
+- ✅ Secure registration and login (Supabase Auth)
+- ✅ 8 default categories created automatically
+- ✅ Add and manage personal expenses
+- ✅ Customizable categories
+- ✅ Dashboard with monthly summary
+- ✅ Local import/export data
+- ✅ Offline mode with Dexie cache
+- ✅ Bidirectional sync with Supabase
 
-### Versione 2 (Multi-utente) - In sviluppo
+### Version 2 (Multi-user)
 
-- 📋 Creazione e gestione di gruppi
-- 📋 Spese condivise visibili da tutti i membri
-- 📋 Spese ricorrenti modificabili solo dal creatore
-- 📋 CRUD membri gruppo
-- 📋 Notifiche locali per inviti e modifiche
-- 📋 Sincronizzazione bidirezionale con Supabase
+- ✅ Group creation and management
+- ✅ Shared expenses visible to all members
+- ✅ Recurring expenses (editable only by creator)
+- ✅ Group member CRUD operations
+- ✅ Local notifications for invites and changes
+- ✅ Bidirectional synchronization with Supabase
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19 + Vite + TypeScript
 - **Styling**: Tailwind CSS v4 + ShadCN UI
 - **State Management**: Zustand
-- **Database Locale**: Dexie.js (IndexedDB)
+- **Local Database**: Dexie.js (IndexedDB)
 - **Backend**: Supabase (Auth, PostgreSQL, Real-time)
 - **PWA**: vite-plugin-pwa, Service Worker
 - **Date Handling**: date-fns
 - **UI Icons**: Lucide React
 - **Animations**: Framer Motion
 
-## 📦 Setup
+## 📦 Installation
 
-### Prerequisiti
+### Prerequisites
 
 - Node.js 18+
-- npm o pnpm
-- Account Supabase
+- npm or pnpm
+- Supabase account
 
-### Installazione
-
-1. **Clone repository**
+### Step 1: Clone and Install
 
 ```bash
 git clone <repo>
 cd frontend-starter-kit
-```
-
-2. **Installa dipendenze**
-
-```bash
 pnpm install
 ```
 
-3. **Configura variabili di ambiente**
+### Step 2: Configure Environment
 
 ```bash
 cp .env.example .env.local
 ```
 
-Aggiungi le tue credenziali Supabase:
+Add your Supabase credentials:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-4. **Setup Supabase Database**
+### Step 3: Setup Supabase Database
 
-⚠️ **IMPORTANTE**: Esegui il SQL **nell'ordine esatto** qui sotto, perché alcune tabelle hanno foreign keys su altre.
+#### 3a. Create Tables
 
-Vai a Supabase > SQL Editor e incolla tutto il seguente codice:
+Go to **Supabase → SQL Editor** and run the following SQL in order:
+
+⚠️ **IMPORTANT**: Execute SQL **in exact order** - some tables have foreign keys on others.
 
 ```sql
 -- 1. Users table (no dependencies)
@@ -159,7 +154,7 @@ CREATE INDEX idx_group_members_group ON public.group_members(group_id);
 CREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 ```
 
-**Ordine di creazione:**
+**Creation order summary:**
 
 1. ✅ `users` (no dependencies)
 2. ✅ `groups` (FK → users)
@@ -169,114 +164,295 @@ CREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 6. ✅ `shared_expenses` (FK → groups, expenses, users)
 7. ✅ Indexes
 
-8. **Avvia il server di sviluppo**
+#### 3b. Enable Row Level Security (RLS) Policies
+
+**⚠️ CRITICAL**: RLS policies are required to prevent unauthorized access to user data.
+
+In **Supabase → SQL Editor**, run:
+
+```sql
+-- Enable RLS on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shared_expenses ENABLE ROW LEVEL SECURITY;
+
+-- ====== USERS TABLE POLICIES ======
+-- Users can read own record
+CREATE POLICY "Users can read own record"
+ON public.users
+FOR SELECT
+USING (auth.uid() = id);
+
+-- Users can insert their own record
+CREATE POLICY "Users can insert their own record"
+ON public.users
+FOR INSERT
+WITH CHECK (auth.uid() = id);
+
+-- Users can update own record
+CREATE POLICY "Users can update own record"
+ON public.users
+FOR UPDATE
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+-- ====== CATEGORIES TABLE POLICIES ======
+-- Users can read own categories
+CREATE POLICY "Users can read own categories"
+ON public.categories
+FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can create categories
+CREATE POLICY "Users can create categories"
+ON public.categories
+FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update own categories
+CREATE POLICY "Users can update own categories"
+ON public.categories
+FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete own categories
+CREATE POLICY "Users can delete own categories"
+ON public.categories
+FOR DELETE
+USING (auth.uid() = user_id);
+
+-- ====== EXPENSES TABLE POLICIES ======
+-- Users can read own expenses
+CREATE POLICY "Users can read own expenses"
+ON public.expenses
+FOR SELECT
+USING (auth.uid() = user_id OR group_id IN (
+  SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+));
+
+-- Users can create expenses
+CREATE POLICY "Users can create expenses"
+ON public.expenses
+FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update own expenses
+CREATE POLICY "Users can update own expenses"
+ON public.expenses
+FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete own expenses
+CREATE POLICY "Users can delete own expenses"
+ON public.expenses
+FOR DELETE
+USING (auth.uid() = user_id);
+
+-- ====== GROUPS TABLE POLICIES ======
+-- Users can read own groups and groups they're members of
+CREATE POLICY "Users can read groups"
+ON public.groups
+FOR SELECT
+USING (
+  auth.uid() = owner_id OR 
+  id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
+);
+
+-- Owners can create groups
+CREATE POLICY "Users can create groups"
+ON public.groups
+FOR INSERT
+WITH CHECK (auth.uid() = owner_id);
+
+-- Owners can update own groups
+CREATE POLICY "Owners can update groups"
+ON public.groups
+FOR UPDATE
+USING (auth.uid() = owner_id)
+WITH CHECK (auth.uid() = owner_id);
+
+-- Owners can delete groups
+CREATE POLICY "Owners can delete groups"
+ON public.groups
+FOR DELETE
+USING (auth.uid() = owner_id);
+
+-- ====== GROUP MEMBERS TABLE POLICIES ======
+-- Members can read group members
+CREATE POLICY "Members can read group members"
+ON public.group_members
+FOR SELECT
+USING (
+  user_id = auth.uid() OR 
+  group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
+);
+
+-- Owners can manage members
+CREATE POLICY "Owners can manage members"
+ON public.group_members
+FOR INSERT
+WITH CHECK (
+  group_id IN (SELECT id FROM public.groups WHERE owner_id = auth.uid())
+);
+
+-- ====== SHARED EXPENSES TABLE POLICIES ======
+-- Members can read shared expenses
+CREATE POLICY "Members can read shared expenses"
+ON public.shared_expenses
+FOR SELECT
+USING (
+  group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
+);
+
+-- Members can create shared expenses
+CREATE POLICY "Members can create shared expenses"
+ON public.shared_expenses
+FOR INSERT
+WITH CHECK (
+  creator_id = auth.uid() AND
+  group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid())
+);
+
+-- Creators can update shared expenses
+CREATE POLICY "Creators can update shared expenses"
+ON public.shared_expenses
+FOR UPDATE
+USING (creator_id = auth.uid())
+WITH CHECK (creator_id = auth.uid());
+```
+
+### Step 4: Start Development Server
 
 ```bash
 pnpm dev
 ```
 
-L'app sarà disponibile su `http://localhost:5173`
+The app will be available at `http://localhost:5173`
 
-## 📁 Struttura del Progetto
+## 📁 Project Structure
 
 ```
 src/
-├── components/              # Componenti UI riutilizzabili
-│   ├── expense/            # Componenti spese
-│   ├── layout/             # Layout e navigazione
+├── components/              # Reusable UI components
+│   ├── expense/            # Expense-related components
+│   ├── layout/             # Layout and navigation
 │   ├── landing/            # Landing page
-│   └── ui/                 # Componenti ShadCN UI
-├── pages/                  # Pagine principali
-│   ├── dashboard.tsx       # Dashboard principale
-│   └── login.tsx           # Pagina login
+│   └── ui/                 # ShadCN UI components
+├── pages/                  # Main pages
+│   ├── dashboard.tsx       # Main dashboard
+│   ├── login.tsx           # Login page
+│   ├── signup.tsx          # Signup page
+│   └── profile.tsx         # User profile
 ├── lib/                    # Utility functions
-│   ├── dexie.ts           # Schema Dexie e config
-│   ├── auth.store.ts      # Auth state store (Zustand)
-│   └── supabase.ts        # Client Supabase
+│   ├── dexie.ts           # Dexie schema and config
+│   ├── auth.store.ts      # Auth state (Zustand)
+│   ├── language.tsx       # i18n translations
+│   └── supabase.ts        # Supabase client
 ├── hooks/                  # Custom React hooks
-│   ├── useSync.ts         # Sincronizzazione dati
-│   └── useTheme.ts        # Dark mode e temi
-├── services/               # Logica di business
-│   └── sync.service.ts    # Servizio sincronizzazione
-├── styles/                 # CSS globali e config
-├── assets/                 # Icone e immagini
-└── router.tsx             # Configurazione routing
+│   ├── useSync.ts         # Sync data
+│   └── useTheme.ts        # Dark mode
+├── services/               # Business logic
+│   └── sync.service.ts    # Synchronization service
+├── translations/           # i18n translations
+│   ├── en.ts              # English
+│   └── it.ts              # Italian
+└── router.tsx             # Routing configuration
 ```
 
-## 🔄 Sincronizzazione
+## 🔄 Synchronization
 
-### Modello di Sincronizzazione
+### Data Model
 
-Ogni record ha:
+Each record has:
 
-- `id` (uuid): ID globale univoco
-- `updated_at`: Timestamp ultima modifica
-- `isSynced`: Flag sincronizzazione locale
+- `id` (uuid): Globally unique ID
+- `updated_at`: Last modification timestamp
+- `isSynced`: Local sync flag
 
-### Flusso di Sync
+### Sync Flow
 
-1. **Al login**: Auto-sync dei dati da Supabase
-2. **On demand**: Bottone sincronizzazione manuale
-3. **On online**: Auto-sync quando torna connessione internet
-4. **Offline**: Cache locale con Dexie
+1. **On login**: Auto-sync data from Supabase
+2. **On demand**: Manual sync button
+3. **On online**: Auto-sync when connection returns
+4. **Offline**: Local cache with Dexie
 
-### Risoluzione Conflitti
+### Conflict Resolution
 
-Local wins: Se il record locale è più recente (`local.updatedAt > remote.updated_at`), viene mantenuta la versione locale.
+**Local wins**: If local record is newer (`local.updated_at > remote.updated_at`), local version is kept.
+
+## 🔐 Row Level Security (RLS)
+
+RLS ensures users can only access their own data. The policies above implement:
+
+- **users table**: Can only read/modify own profile
+- **categories table**: Can only read/modify own categories
+- **expenses table**: Can read own expenses + group expenses
+- **groups table**: Can read own groups + member groups
+- **group_members table**: Can read members of their groups
+- **shared_expenses table**: Can read/create expenses in member groups
+
+### Troubleshooting RLS
+
+If you get foreign key constraint errors during sync:
+
+1. **Verify user exists in Supabase**:
+   ```sql
+   SELECT * FROM public.users WHERE id = 'your-user-id';
+   ```
+
+2. **Check RLS is enabled**:
+   - Go to **Table Editor → Select table → Check RLS toggle**
+
+3. **If user creation fails at signup**:
+   - Check browser console for error messages
+   - Verify RLS policies allow INSERT on users table
+   - Ensure auth.uid() matches the user ID being inserted
+
+## 🌍 Multi-Language Support
+
+The app supports English (EN) and Italian (IT).
+
+**To add a new language:**
+
+1. Create `src/translations/xx.ts` (replace `xx` with language code)
+2. Copy structure from `it.ts` or `en.ts`
+3. Update `src/translations/index.ts` to include new language
+4. Update `src/lib/language.tsx` to add to language options
 
 ## 🌓 Dark Mode
 
-L'app supporta automaticamente:
+Automatically supports:
 
 - Light mode
 - Dark mode
-- Preferenza di sistema
+- System preference detection
 
-Puoi cambiare tema con il toggle in header.
+Toggle via button in header.
 
 ## 📱 PWA Features
 
-- ✅ Installabile su mobile (home screen)
-- ✅ Funziona offline
-- ✅ Sincronizzazione intelligente
-- ✅ Background sync
+- ✅ Installable on mobile (home screen)
+- ✅ Works offline
+- ✅ Intelligent sync
+- ✅ Background sync support
 - ✅ Service Worker caching
 
-### Installazione PWA
+### PWA Installation
 
 **iOS**:
-
-1. Apri l'app nel browser Safari
-2. Tap "Condividi" → "Aggiungi alla schermata Home"
+1. Open app in Safari
+2. Tap Share → Add to Home Screen
 
 **Android**:
+1. Open app in Chrome
+2. Tap menu (⋮) → Install app
 
-1. Apri l'app nel browser Chrome
-2. Tap menu (≡) → "Installa app"
-
-## 🔐 Sicurezza
-
-- ✅ Autenticazione Supabase
-- ✅ Row-level security (RLS) su Supabase
-- ❌ **Non include**: PIN, biometria, cifratura locale
-
-## 📊 Debug e Logging
-
-La sincronizzazione usa `console.log` verbose:
-
-```typescript
-const result = await syncService.sync({
-  userId: user.id,
-  verbose: true,
-});
-```
-
-Controllare browser console per:
-
-- `[Sync]` - Sync service logs
-- `[ServiceWorker]` - SW logs
-
-## 🚀 Deploy
+## � Deployment
 
 ### Vercel
 
@@ -292,54 +468,86 @@ pnpm install -g netlify-cli
 netlify deploy --prod --dir=dist
 ```
 
-## 📝 Changelog Versioni
+## 📊 Development & Debugging
 
-### v1.0.0 - Beta
+### Verbose Sync Logging
 
-- [x] Setup progetto e dipendenze
-- [x] Autenticazione Supabase
-- [x] Dexie offline database
-- [x] Sincronizzazione bidirezionale
-- [x] Dashboard e expense form
-- [x] Dark mode
-- [x] PWA setup
-- [ ] Import/export dati
-- [ ] Analytics dashboard
-
-### v2.0.0 - Coming Soon
-
-- [ ] Gestione gruppi
-- [ ] Spese condivise
-- [ ] Notifiche locali
-- [ ] Sincronizzazione real-time
-
-## 🐛 Problemi Comuni
-
-### Service Worker non registra
-
-Assicurati che l'app sia servita via HTTPS in produzione.
-
-### Dexie non persiste dati
-
-Controlla che IndexedDB non sia disabilitato nel browser.
-
-### Supabase auth non funziona
-
-Verifica che le env variables siano corrette:
-
-```bash
-echo $VITE_SUPABASE_URL
-echo $VITE_SUPABASE_ANON_KEY
+```typescript
+const result = await syncService.sync({
+  userId: user.id,
+  verbose: true,
+});
 ```
 
-## 📞 Support
+Monitor browser console for:
+- `[Sync]` logs from sync service
+- `[ServiceWorker]` logs from service worker
 
-Per problemi o suggerimenti, apri un issue su GitHub.
+### Common Issues
 
-## 📄 Licenza
+#### Service Worker not registering
+- Ensure app is served over HTTPS in production
+- Check browser DevTools → Application → Service Workers
 
-MIT License - vedi LICENSE
+#### Dexie not persisting
+- Verify IndexedDB is enabled in browser
+- Check DevTools → Application → IndexedDB
+
+#### Supabase auth failing
+- Verify environment variables are correct
+- Check Supabase project URL and anon key
+- Ensure CORS is configured correctly
+
+#### Foreign key constraint errors
+- User must exist in `public.users` table
+- Verify user is created at signup (check console logs)
+- Confirm RLS policies allow INSERT on users table
+
+#### RLS policy errors
+- Ensure `auth.uid()` matches the inserted user ID
+- Check that RLS is enabled on the table
+- Verify policies are created correctly (see Step 3b)
+
+## � Changelog
+
+### v1.5.0 - Enhanced FK Constraint Handling
+- Added detailed logging for user creation
+- Improved error messages and diagnostics
+- Fixed query issues in sync service
+- Added comprehensive RLS policy documentation
+
+### v1.4.2 - Offline Indicator
+- Added offline/online status indicator
+- Improved sync state monitoring
+
+### v1.4 - Multi-Language Support
+- Full English and Italian translations
+- Language selector in profile
+- i18n infrastructure
+
+### v1.0 - Beta Release
+- Core expense tracking
+- Personal expense management
+- Offline-first sync
+- PWA support
+- Dark mode
+
+## 📞 Support & Troubleshooting
+
+For issues or questions:
+
+1. Check browser console for error messages
+2. Review this SETUP.md troubleshooting section
+3. Check Supabase SQL Editor for table/policy issues
+4. Open an issue on GitHub with:
+   - Error message from console
+   - Steps to reproduce
+   - Browser and OS version
+
+## 📄 License
+
+MIT License - see LICENSE file
 
 ---
 
-**Fatto con ❤️ per gestire le spese in modo semplice**
+**Built with ❤️ for expense tracking made simple**
