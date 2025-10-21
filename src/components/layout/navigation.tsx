@@ -1,16 +1,18 @@
 import { useLocation, Link } from 'react-router-dom';
 import { Home, Plus, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const navItems = [
-  { path: '/dashboard', icon: Home, label: 'Home' },
-  { path: '/expense/new', icon: Plus, label: 'Nuova' },
-  { path: '/groups', icon: Users, label: 'Gruppi' },
-  { path: '/profile', icon: Settings, label: 'Profilo' },
-];
+import { useLanguage } from '@/lib/language';
 
 export function Navigation() {
   const location = useLocation();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { path: '/dashboard', icon: Home, label: t('nav.home') },
+    { path: '/expense/new', icon: Plus, label: t('nav.newExpense') },
+    { path: '/groups', icon: Users, label: t('nav.groups') },
+    { path: '/profile', icon: Settings, label: t('nav.profile') },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-background md:hidden">

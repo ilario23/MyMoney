@@ -276,7 +276,7 @@ export function CategoriesPage() {
     }
   };
 
-  const handleCreateCategory = async () {
+  const handleCreateCategory = async () => {
     const trimmedName = newCategoryName.trim();
     
     if (!trimmedName) {
@@ -504,7 +504,6 @@ export function CategoriesPage() {
                     <SelectValue placeholder="None (Top-level)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (Top-level)</SelectItem>
                     {categories.filter((c) => !c.parentId).map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.icon} {cat.name}
@@ -650,7 +649,6 @@ export function CategoriesPage() {
                                 <SelectValue placeholder="None (Top-level)" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">None (Top-level)</SelectItem>
                                 {categories
                                   .filter((c) => c.id !== category.id && !c.parentId)
                                   .map((cat) => (

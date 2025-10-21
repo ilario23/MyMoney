@@ -385,6 +385,9 @@ export class SyncService {
                   name: group.name,
                   description: group.description || null,
                   color: group.color || null,
+                  invite_code: group.inviteCode || null,
+                  used_by_user_id: group.usedByUserId || null,
+                  used_at: group.usedAt ? group.usedAt.toISOString() : null,
                   updated_at: group.updatedAt.toISOString(),
                 })
                 .eq("id", group.id);
@@ -401,6 +404,9 @@ export class SyncService {
               owner_id: userId,
               description: group.description || null,
               color: group.color || null,
+              invite_code: group.inviteCode || null,
+              used_by_user_id: group.usedByUserId || null,
+              used_at: group.usedAt ? group.usedAt.toISOString() : null,
               created_at: group.createdAt.toISOString(),
               updated_at: group.updatedAt.toISOString(),
             });
@@ -449,6 +455,9 @@ export class SyncService {
                   ownerId: remote.owner_id,
                   description: remote.description,
                   color: remote.color,
+                  inviteCode: remote.invite_code || undefined,
+                  usedByUserId: remote.used_by_user_id || undefined,
+                  usedAt: remote.used_at ? new Date(remote.used_at) : undefined,
                   isSynced: true,
                   createdAt: new Date(remote.created_at),
                   updatedAt: new Date(remote.updated_at),
@@ -462,7 +471,55 @@ export class SyncService {
           }
         }
       } catch (err) {
-        console.error("[Sync] Fetch remote groups error:", err);
+        console.error("[Sync] Fetch remote owned groups error:", err);
+      }
+
+      // 3. RICEVI: Sincronizza gruppi di cui sei membro (joined via invite)
+      try {
+        // Get group IDs where user is member from Supabase
+        const { data: memberGroups, error: memberError } = await supabase
+          .from("group_members")
+          .select("group_id")
+          .eq("user_id", userId);
+
+        if (!memberError && memberGroups && memberGroups.length > 0) {
+          const memberGroupIds = memberGroups.map((m) => m.group_id);
+
+          // Fetch those groups from Supabase
+          const { data: remoteGroups, error } = await supabase
+            .from("groups")
+            .select("*")
+            .in("id", memberGroupIds);
+
+          if (!error && remoteGroups) {
+            for (const remote of remoteGroups) {
+              const localGroup = await db.groups.get(remote.id);
+
+              // Add/update if not exists or remote is newer
+              if (
+                !localGroup ||
+                new Date(remote.updated_at) > localGroup.updatedAt
+              ) {
+                await db.groups.put({
+                  id: remote.id,
+                  name: remote.name,
+                  ownerId: remote.owner_id,
+                  description: remote.description,
+                  color: remote.color,
+                  inviteCode: remote.invite_code || undefined,
+                  usedByUserId: remote.used_by_user_id || undefined,
+                  usedAt: remote.used_at ? new Date(remote.used_at) : undefined,
+                  isSynced: true,
+                  createdAt: new Date(remote.created_at),
+                  updatedAt: new Date(remote.updated_at),
+                });
+                synced++;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[Sync] Fetch remote member groups error:", err);
       }
     } catch (error) {
       console.error("[Sync] Groups error:", error);

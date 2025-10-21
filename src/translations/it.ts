@@ -161,6 +161,8 @@ export const it = {
   "nav.settings": "Impostazioni",
   "nav.groups": "Gruppi",
   "nav.sharedExpenses": "Spese Condivise",
+  "nav.home": "Home",
+  "nav.newExpense": "Nuova",
 
   // Auth
   "auth.login": "Accedi",
@@ -223,6 +225,17 @@ export const it = {
   "groups.edit": "Modifica",
   "groups.delete": "Elimina",
   "groups.minCharsError": "Il nome deve avere almeno 2 caratteri",
+  "groups.joinGroup": "Unisciti al Gruppo",
+  "groups.enterInviteCode": "Inserisci Codice Invito",
+  "groups.inviteCode": "Codice Invito",
+  "groups.copyCode": "Copia Codice",
+  "groups.codeCopied": "Codice copiato negli appunti!",
+  "groups.joinSuccess": "Ti sei unito al gruppo con successo!",
+  "groups.invalidCode": "Codice invito non valido",
+  "groups.codeAlreadyUsed": "Questo codice invito è già stato utilizzato",
+  "groups.codeExpired": "Questo codice invito è scaduto",
+  "groups.alreadyMember": "Sei già membro di questo gruppo",
+  "groups.shareInvite": "Condividi questo codice per invitare membri:",
   "groups.duplicateError": "Un gruppo con questo nome esiste già",
 
   // Shared Expenses (V2)

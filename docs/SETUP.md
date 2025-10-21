@@ -91,6 +91,9 @@ CREATE TABLE public.groups (
   owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   description TEXT,
   color TEXT,
+  invite_code TEXT UNIQUE,  -- Single-use invite code (v1.9)
+  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- User who used the code (v1.9)
+  used_at TIMESTAMP WITH TIME ZONE,  -- When code was used (v1.9)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -156,7 +159,11 @@ CREATE TABLE public.shared_expenses (
 CREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
 CREATE INDEX idx_expenses_group ON public.expenses(group_id);
 CREATE INDEX idx_categories_user ON public.categories(user_id);
+CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
+CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
 CREATE INDEX idx_groups_owner ON public.groups(owner_id);
+CREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
 CREATE INDEX idx_group_members_group ON public.group_members(group_id);
 CREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 ```
@@ -265,11 +272,15 @@ FOR DELETE
 USING (auth.uid() = user_id);
 
 -- ====== GROUPS TABLE POLICIES ======
--- Users can read own groups (owners only - NO nested queries)
+-- Users can read own groups OR groups with valid invite codes (for joining)
 CREATE POLICY "Users can read groups"
 ON public.groups
 FOR SELECT
-USING (auth.uid() = owner_id);
+USING (
+  auth.uid() = owner_id
+  OR
+  (invite_code IS NOT NULL AND used_by_user_id IS NULL)
+);
 
 -- Owners can create groups
 CREATE POLICY "Users can create groups"

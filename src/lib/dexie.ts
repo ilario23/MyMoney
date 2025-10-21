@@ -43,6 +43,9 @@ export interface Group {
   ownerId: string;
   description?: string;
   color?: string;
+  inviteCode?: string; // Single-use invite code (v1.9)
+  usedByUserId?: string; // User who used the code (v1.9)
+  usedAt?: Date; // When code was used (v1.9)
   isSynced: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -121,6 +124,38 @@ export class ExpenseTrackerDB extends Dexie {
           .modify((category) => {
             category.isActive = true;
           });
+      });
+
+    // v4: Add invite code fields to groups
+    this.version(4)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, parentId, isActive",
+        groups: "id, ownerId, inviteCode",
+        groupMembers: "[groupId+userId], groupId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade(() => {
+        // No data migration needed - new fields will be undefined for existing groups
+        return Promise.resolve();
+      });
+
+    // v5: Add userId index to groupMembers for efficient member group lookups
+    this.version(5)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, parentId, isActive",
+        groups: "id, ownerId, inviteCode",
+        groupMembers: "[groupId+userId], groupId, userId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade(() => {
+        // No data migration needed - just adding index
+        return Promise.resolve();
       });
   }
 }

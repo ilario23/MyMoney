@@ -159,6 +159,8 @@ export const en: Record<TranslationKey, string> = {
   "nav.settings": "Settings",
   "nav.groups": "Groups",
   "nav.sharedExpenses": "Shared Expenses",
+  "nav.home": "Home",
+  "nav.newExpense": "New",
 
   // Auth
   "auth.login": "Login",
@@ -221,6 +223,17 @@ export const en: Record<TranslationKey, string> = {
   "groups.edit": "Edit",
   "groups.delete": "Delete",
   "groups.minCharsError": "Name must be at least 2 characters",
+  "groups.joinGroup": "Join Group",
+  "groups.enterInviteCode": "Enter Invite Code",
+  "groups.inviteCode": "Invite Code",
+  "groups.copyCode": "Copy Code",
+  "groups.codeCopied": "Code copied to clipboard!",
+  "groups.joinSuccess": "Successfully joined group!",
+  "groups.invalidCode": "Invalid invite code",
+  "groups.codeAlreadyUsed": "This invite code has already been used",
+  "groups.codeExpired": "This invite code has expired",
+  "groups.alreadyMember": "You are already a member of this group",
+  "groups.shareInvite": "Share this code to invite members:",
   "groups.duplicateError": "A group with this name already exists",
 
   // Shared Expenses (V2)
