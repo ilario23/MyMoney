@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db, type Category } from '@/lib/dexie';
+import { db, type Category, type Group } from '@/lib/dexie';
 import { syncService } from '@/services/sync.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,23 +26,44 @@ export function ExpenseForm() {
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [groupId, setGroupId] = useState<string>('personal'); // 'personal' or group UUID
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Load custom categories from Dexie
+  // Load custom categories and groups from Dexie
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       if (!user) return;
       try {
+        // Load categories
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
         setCategories(userCategories);
+
+        // Load groups where user is owner or member
+        const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+        const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
+        const memberGroupIds = memberships.map(m => m.groupId);
+        const memberGroups = memberGroupIds.length > 0 
+          ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
+          : [];
+        
+        // Combine and deduplicate
+        const allGroups = [...ownedGroups];
+        memberGroups.forEach(group => {
+          if (!allGroups.find(g => g.id === group.id)) {
+            allGroups.push(group);
+          }
+        });
+        
+        setGroups(allGroups);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading data:', error);
       }
     };
-    loadCategories();
+    loadData();
   }, [user]);
 
   // Helper: Build grouped category structure (only active categories)
@@ -75,6 +96,7 @@ export function ExpenseForm() {
       const expense = {
         id: uuidv4(),
         userId: user.id,
+        groupId: groupId === 'personal' ? undefined : groupId,
         amount: parseFloat(amount),
         category: categoryId,  // Save category ID, not name
         description,
@@ -111,6 +133,7 @@ export function ExpenseForm() {
       setDescription('');
       setAmount('');
       setCategoryId('');
+      setGroupId('personal');
       setDate(new Date().toISOString().split('T')[0]);
 
       // Redirect after 2s (give time to read any error message)
@@ -186,6 +209,28 @@ export function ExpenseForm() {
                 disabled={isLoading || success}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('expense.group')}</label>
+              <Select value={groupId} onValueChange={setGroupId} disabled={isLoading || success}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('expense.personalExpense')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personal">{t('expense.personalExpense')}</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {groups.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No groups yet. Create one in Groups page.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

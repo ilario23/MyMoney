@@ -122,6 +122,9 @@ export const it = {
   "expense.amount": "Importo",
   "expense.category": "Categoria",
   "expense.date": "Data",
+  "expense.group": "Gruppo (Opzionale)",
+  "expense.personalExpense": "Spesa Personale",
+  "expense.selectGroup": "Seleziona un gruppo",
   "expense.addExpense": "Aggiungi Spesa",
   "expense.saving": "Salvataggio...",
   "expense.saved": "Salvato! ✓",
@@ -134,6 +137,10 @@ export const it = {
   "expense.addError": "Errore nell'aggiunta della spesa",
   "expense.selectCategory": "Seleziona categoria",
   "expense.backToDashboard": "Torna alla Dashboard",
+  "expense.filterPersonal": "Solo Personali",
+  "expense.filterAll": "Tutte le Spese",
+  "expense.filterGroup": "Solo Gruppo",
+  "expense.createdBy": "da",
 
   // Common
   "common.loading": "Caricamento...",

@@ -27,18 +27,53 @@ export function DashboardPage() {
       const categoryMap = new Map(userCategories.map(c => [c.id, c]));
       setCategories(categoryMap);
 
+      // Load groups where user is owner or member
+      const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+      const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
+      const memberGroupIds = memberships.map(m => m.groupId);
+      const memberGroups = memberGroupIds.length > 0 
+        ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
+        : [];
+      
+      // Combine and deduplicate
+      const allGroups = [...ownedGroups];
+      memberGroups.forEach(group => {
+        if (!allGroups.find(g => g.id === group.id)) {
+          allGroups.push(group);
+        }
+      });
+      const groupIds = allGroups.map(g => g.id);
+
       // Load expenses for current month
       const now = new Date();
       const start = startOfMonth(now);
       const end = endOfMonth(now);
 
-      const data = await db.expenses
+      // Load personal expenses
+      const personalExpenses = await db.expenses
         .where('[userId+date]')
         .between([user.id, start], [user.id, end])
         .toArray();
 
+      // Load group expenses
+      const groupExpenses = groupIds.length > 0
+        ? await db.expenses
+            .where('groupId')
+            .anyOf(groupIds)
+            .and((e) => e.date >= start && e.date <= end && !e.deletedAt)
+            .toArray()
+        : [];
+
+      // Combine expenses and deduplicate
+      const allExpenses = [...personalExpenses];
+      groupExpenses.forEach(expense => {
+        if (!allExpenses.find(e => e.id === expense.id)) {
+          allExpenses.push(expense);
+        }
+      });
+
       // Filtra solo le spese NON eliminate (deletedAt === undefined)
-      const activeExpenses = data.filter((e) => !e.deletedAt);
+      const activeExpenses = allExpenses.filter((e) => !e.deletedAt);
 
       setExpenses(activeExpenses);
 

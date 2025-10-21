@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db, type Expense, type Category } from '@/lib/dexie';
+import { db, type Expense, type Category, type Group } from '@/lib/dexie';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,20 +17,24 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, X, SlidersHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { it, enUS } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 export function ExpensesPage() {
   const { user } = useAuthStore();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Map<string, Category>>(new Map());
+  const [groups, setGroups] = useState<Map<string, Group>>(new Map());
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedGroup, setSelectedGroup] = useState<string>('all'); // 'all' | 'personal' | group UUID
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [amountMin, setAmountMin] = useState<string>('');
@@ -48,16 +53,78 @@ export function ExpensesPage() {
         const categoryMap = new Map(userCategories.map(c => [c.id, c]));
         setCategories(categoryMap);
 
-        // Load all expenses (not filtered by month)
-        const allExpenses = await db.expenses
+        // Load groups where user is owner or member
+        const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+        const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
+        const memberGroupIds = memberships.map(m => m.groupId);
+        const memberGroups = memberGroupIds.length > 0 
+          ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
+          : [];
+        
+        // Combine and deduplicate
+        const allGroups = [...ownedGroups];
+        memberGroups.forEach(group => {
+          if (!allGroups.find(g => g.id === group.id)) {
+            allGroups.push(group);
+          }
+        });
+        const groupMap = new Map(allGroups.map(g => [g.id, g]));
+        setGroups(groupMap);
+
+        // Load user names for group expenses
+        const allUserIds = new Set<string>();
+        
+        // Load personal expenses
+        const personalExpenses = await db.expenses
           .where('userId')
           .equals(user.id)
-          .and((e) => !e.deletedAt)  // Exclude deleted
-          .reverse()  // Most recent first
-          .sortBy('date');
+          .and((e) => !e.deletedAt)
+          .toArray();
+        
+        // Load group expenses (from all groups where user is member)
+        const groupIds = Array.from(groupMap.keys());
+        const groupExpenses = groupIds.length > 0
+          ? await db.expenses
+              .where('groupId')
+              .anyOf(groupIds)
+              .and((e) => !e.deletedAt)
+              .toArray()
+          : [];
+        
+        // Combine expenses and deduplicate
+        const allExpenses = [...personalExpenses];
+        groupExpenses.forEach(expense => {
+          if (!allExpenses.find(e => e.id === expense.id)) {
+            allExpenses.push(expense);
+          }
+        });
+        
+        // Sort by date (most recent first)
+        allExpenses.sort((a, b) => b.date.getTime() - a.date.getTime());
+        
+        // Collect user IDs for names
+        allExpenses.forEach(expense => {
+          if (expense.groupId && expense.userId !== user.id) {
+            allUserIds.add(expense.userId);
+          }
+        });
 
-        setExpenses(allExpenses.reverse());
-        setFilteredExpenses(allExpenses.reverse());
+        // Fetch user names from Supabase
+        if (allUserIds.size > 0) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, display_name, email')
+            .in('id', Array.from(allUserIds));
+          
+          const nameMap = new Map<string, string>();
+          userData?.forEach(u => {
+            nameMap.set(u.id, u.display_name || u.email.split('@')[0]);
+          });
+          setUserNames(nameMap);
+        }
+
+        setExpenses(allExpenses);
+        setFilteredExpenses(allExpenses);
       } catch (error) {
         console.error('Error loading expenses:', error);
       } finally {
@@ -72,14 +139,23 @@ export function ExpensesPage() {
   useEffect(() => {
     let filtered = [...expenses];
 
+    // Group filter
+    if (selectedGroup === 'personal') {
+      filtered = filtered.filter((expense) => !expense.groupId);
+    } else if (selectedGroup !== 'all') {
+      filtered = filtered.filter((expense) => expense.groupId === selectedGroup);
+    }
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((expense) => {
         const category = categories.get(expense.category);
+        const group = expense.groupId ? groups.get(expense.groupId) : null;
         return (
           expense.description.toLowerCase().includes(query) ||
           category?.name.toLowerCase().includes(query) ||
+          group?.name.toLowerCase().includes(query) ||
           expense.amount.toString().includes(query)
         );
       });
@@ -130,12 +206,13 @@ export function ExpensesPage() {
     });
 
     setFilteredExpenses(filtered);
-  }, [searchQuery, expenses, categories, selectedCategory, dateFrom, dateTo, amountMin, amountMax, sortBy, sortOrder]);
+  }, [searchQuery, expenses, categories, groups, selectedCategory, selectedGroup, dateFrom, dateTo, amountMin, amountMax, sortBy, sortOrder]);
 
   // Helper: Clear all filters
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
+    setSelectedGroup('all');
     setDateFrom('');
     setDateTo('');
     setAmountMin('');
@@ -148,6 +225,7 @@ export function ExpensesPage() {
   const hasActiveFilters = 
     searchQuery.trim() !== '' ||
     selectedCategory !== 'all' ||
+    selectedGroup !== 'all' ||
     dateFrom !== '' ||
     dateTo !== '' ||
     amountMin !== '' ||
@@ -215,6 +293,25 @@ export function ExpensesPage() {
           {/* Advanced Filters (Collapsible) */}
           {showFilters && (
             <div className="space-y-4 pt-4 border-t">
+              {/* Group Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('expense.group')}</label>
+                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('expense.filterAll')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('expense.filterAll')}</SelectItem>
+                    <SelectItem value="personal">{t('expense.filterPersonal')}</SelectItem>
+                    {Array.from(groups.values()).map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Category Filter */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
@@ -337,6 +434,9 @@ export function ExpensesPage() {
             <div className="space-y-2">
               {filteredExpenses.map((expense) => {
                 const categoryObj = categories.get(expense.category);
+                const groupObj = expense.groupId ? groups.get(expense.groupId) : null;
+                const creatorName = expense.userId !== user.id ? userNames.get(expense.userId) : null;
+                
                 return (
                   <div
                     key={expense.id}
@@ -344,17 +444,29 @@ export function ExpensesPage() {
                     onClick={() => navigate(`/expense/${expense.id}`)}
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{expense.description}</p>
                         {categoryObj && (
                           <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
                             {categoryObj.icon} {categoryObj.name}
                           </span>
                         )}
+                        {groupObj && (
+                          <Badge variant="secondary" className="text-xs">
+                            {groupObj.name}
+                          </Badge>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {format(expense.date, 'EEEE, d MMMM yyyy', { locale: dateLocale })}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-muted-foreground">
+                          {format(expense.date, 'EEEE, d MMMM yyyy', { locale: dateLocale })}
+                        </p>
+                        {creatorName && (
+                          <span className="text-xs text-muted-foreground">
+                            • {t('expense.createdBy')} {creatorName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className={`text-xl font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>

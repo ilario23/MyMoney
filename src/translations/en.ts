@@ -121,6 +121,9 @@ export const en: Record<TranslationKey, string> = {
   "expense.amount": "Amount",
   "expense.category": "Category",
   "expense.date": "Date",
+  "expense.group": "Group (Optional)",
+  "expense.personalExpense": "Personal Expense",
+  "expense.selectGroup": "Select a group",
   "expense.addExpense": "Add Expense",
   "expense.saving": "Saving...",
   "expense.saved": "Saved! ✓",
@@ -132,6 +135,10 @@ export const en: Record<TranslationKey, string> = {
   "expense.addError": "Error adding expense",
   "expense.selectCategory": "Select category",
   "expense.backToDashboard": "Back to Dashboard",
+  "expense.filterPersonal": "Personal Only",
+  "expense.filterAll": "All Expenses",
+  "expense.filterGroup": "Group Only",
+  "expense.createdBy": "by",
 
   // Common
   "common.loading": "Loading...",
