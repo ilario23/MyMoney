@@ -26,6 +26,7 @@ export interface Expense {
 export interface Category {
   id: string; // uuid
   userId: string;
+  groupId?: string; // If set, this is a group category (shared with all members)
   name: string;
   color: string;
   icon: string;
@@ -198,6 +199,22 @@ export class ExpenseTrackerDB extends Dexie {
           .modify((expense) => {
             delete expense.currency;
           });
+      });
+
+    // v8: Add groupId to categories for shared group categories
+    this.version(8)
+      .stores({
+        users: "id, email",
+        expenses: "id, userId, [userId+date], groupId, isSynced",
+        categories: "id, userId, groupId, parentId, isActive",
+        groups: "id, ownerId, inviteCode",
+        groupMembers: "[groupId+userId], groupId, userId",
+        sharedExpenses: "id, groupId, creatorId",
+        syncLogs: "++id, userId, lastSyncTime",
+      })
+      .upgrade(() => {
+        // No data migration needed - groupId will be undefined for existing categories (personal)
+        return Promise.resolve();
       });
   }
 }

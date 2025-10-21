@@ -153,6 +153,7 @@ export class SyncService {
                 name: category.name,
                 color: category.color,
                 icon: category.icon,
+                group_id: category.groupId || null,
                 parent_id: category.parentId || null,
                 is_active: category.isActive !== false, // Default true if undefined
                 updated_at: category.updatedAt.toISOString(),
@@ -164,6 +165,7 @@ export class SyncService {
             const result = await supabase.from("categories").insert({
               id: category.id,
               user_id: userId,
+              group_id: category.groupId || null,
               name: category.name,
               color: category.color,
               icon: category.icon,
@@ -204,6 +206,7 @@ export class SyncService {
             await db.categories.put({
               id: remote.id,
               userId,
+              groupId: remote.group_id || undefined,
               name: remote.name,
               color: remote.color,
               icon: remote.icon,

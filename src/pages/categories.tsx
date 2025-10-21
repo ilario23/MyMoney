@@ -23,9 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, Edit2, Save, X, Search, ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
-import type { Category, Expense } from '@/lib/dexie';
+import type { Category, Expense, Group } from '@/lib/dexie';
 
 const CATEGORY_ICONS = ['🍕', '🚗', '🏠', '🎬', '💊', '🛍️', '⚡', '📌', '🎮', '📚', '✈️', '🎵', '⚽', '🎨', '📖', '🍎'];
 const CATEGORY_COLORS = ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#EC4899', '#06B6D4', '#3B82F6', '#6B7280'];
@@ -34,11 +35,14 @@ export function CategoriesPage() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState<'personal' | 'group'>('personal');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
 
   // Dialog states
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -46,6 +50,7 @@ export function CategoriesPage() {
   const [newCategoryIcon, setNewCategoryIcon] = useState('📌');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [newCategoryParentId, setNewCategoryParentId] = useState<string>('');
+  const [newCategoryGroupId, setNewCategoryGroupId] = useState<string>(''); // For group categories
   const [isCreating, setIsCreating] = useState(false);
 
   // Edit states
@@ -71,7 +76,14 @@ export function CategoriesPage() {
       if (!user) return;
       try {
         setIsLoading(true);
+        
+        // Load all categories (personal + group)
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
+        
+        // Load groups where user is owner (to manage group categories)
+        const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
+        setGroups(ownedGroups);
+        
         const expenses = await db.expenses.where('userId').equals(user.id).toArray();
         
         // Build expense statistics per category
@@ -100,19 +112,31 @@ export function CategoriesPage() {
     loadCategories();
   }, [user]);
 
-  // Filter categories based on search query
+  // Filter categories based on search query and active tab
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredCategories(categories);
-      return;
+    let filtered = categories;
+    
+    // Filter by tab (personal vs group)
+    if (activeTab === 'personal') {
+      filtered = categories.filter(c => !c.groupId);
+    } else if (activeTab === 'group') {
+      if (selectedGroupId) {
+        filtered = categories.filter(c => c.groupId === selectedGroupId);
+      } else {
+        filtered = categories.filter(c => !!c.groupId);
+      }
     }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = categories.filter((category) =>
-      category.name.toLowerCase().includes(query)
-    );
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((category) =>
+        category.name.toLowerCase().includes(query)
+      );
+    }
+    
     setFilteredCategories(filtered);
-  }, [searchQuery, categories]);
+  }, [searchQuery, categories, activeTab, selectedGroupId]);
 
   // Helper: Build category tree structure
   const buildCategoryTree = () => {
@@ -290,7 +314,12 @@ export function CategoriesPage() {
     }
 
     // Check for duplicates (case-sensitive, already trimmed)
-    if (categories.some((c) => c.name === trimmedName)) {
+    // For group categories, check only within that group
+    const existingInScope = newCategoryGroupId 
+      ? categories.some((c) => c.name === trimmedName && c.groupId === newCategoryGroupId)
+      : categories.some((c) => c.name === trimmedName && !c.groupId);
+    
+    if (existingInScope) {
       setError(t('categories.duplicateError'));
       return;
     }
@@ -304,6 +333,7 @@ export function CategoriesPage() {
       const newCategory: Category = {
         id: uuidv4(),
         userId: user.id,
+        groupId: newCategoryGroupId || undefined,  // Set groupId if creating group category
         name: trimmedName,  // Save trimmed name
         icon: newCategoryIcon,
         color: newCategoryColor,
@@ -332,6 +362,7 @@ export function CategoriesPage() {
       setNewCategoryIcon('📌');
       setNewCategoryColor('#3B82F6');
       setNewCategoryParentId('');  // Reset parent
+      setNewCategoryGroupId('');  // Reset group
       setOpenCreateDialog(false);
 
       setTimeout(() => setSuccess(''), 3000);
@@ -504,15 +535,39 @@ export function CategoriesPage() {
                     <SelectValue placeholder="None (Top-level)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.filter((c) => !c.parentId).map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.icon} {cat.name}
+                    {categories
+                      .filter((c) => !c.parentId && c.groupId === newCategoryGroupId)
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select a parent to create a subcategory
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('categories.selectGroup')}</label>
+                <Select value={newCategoryGroupId} onValueChange={setNewCategoryGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('categories.personalCategory')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t('categories.personalCategory')}</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Select a parent to create a subcategory
+                  {newCategoryGroupId 
+                    ? t('categories.sharedWith') + ' ' + (groups.find(g => g.id === newCategoryGroupId)?.name || '')
+                    : 'Personal category - only visible to you'}
                 </p>
               </div>
 
@@ -536,9 +591,9 @@ export function CategoriesPage() {
         </Alert>
       )}
 
-      {/* Search Bar */}
+      {/* Search Bar and Tabs */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -548,8 +603,37 @@ export function CategoriesPage() {
               className="pl-10"
             />
           </div>
+          
+          {/* Tabs for Personal / Group */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'personal' | 'group')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="personal">{t('categories.tabPersonal')}</TabsTrigger>
+              <TabsTrigger value="group">{t('categories.tabGroup')}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {/* Group Selector (only visible in Group tab) */}
+          {activeTab === 'group' && groups.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('categories.selectGroup')}</label>
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All group categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All group categories</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
           {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground">
               Showing {filteredCategories.length} of {categories.length} categories
             </p>
           )}

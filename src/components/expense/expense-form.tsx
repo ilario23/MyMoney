@@ -67,8 +67,19 @@ export function ExpenseForm() {
   }, [user]);
 
   // Helper: Build grouped category structure (only active categories)
+  // Filter by selected group: personal categories for personal expenses, group categories for group expenses
   const getGroupedCategories = () => {
-    const activeCategories = categories.filter((c) => c.isActive !== false); // Show only active (isActive true or undefined for old data)
+    let activeCategories = categories.filter((c) => c.isActive !== false); // Show only active
+    
+    // Filter by expense type
+    if (groupId === 'personal') {
+      // Personal expense: show only personal categories (no groupId)
+      activeCategories = activeCategories.filter(c => !c.groupId);
+    } else {
+      // Group expense: show both personal and that group's categories
+      activeCategories = activeCategories.filter(c => !c.groupId || c.groupId === groupId);
+    }
+    
     const topLevel = activeCategories.filter((c) => !c.parentId);
     const childrenMap = new Map<string, Category[]>();
     

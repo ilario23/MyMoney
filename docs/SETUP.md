@@ -119,6 +119,7 @@ CREATE TABLE public.groups (
 CREATE TABLE public.categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,  -- Shared group categories (v1.12)
   name TEXT NOT NULL,
   color TEXT,
   icon TEXT,
@@ -133,6 +134,8 @@ CREATE TABLE public.categories (
 CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
 CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
 CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
+CREATE INDEX idx_categories_group_id ON public.categories(group_id);
+CREATE INDEX idx_categories_user_group ON public.categories(user_id, group_id);
 
 -- 4. Expenses table (depends on users and groups)
 CREATE TABLE public.expenses (
@@ -233,11 +236,24 @@ USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
 -- ====== CATEGORIES TABLE POLICIES ======
--- Users can read own categories
-CREATE POLICY "Users can read own categories"
+-- Users can read own and group categories (v1.12)
+CREATE POLICY "Users can read own and group categories"
 ON public.categories
 FOR SELECT
-USING (auth.uid() = user_id);
+USING (
+  -- Personal categories (no group_id)
+  (auth.uid() = user_id AND group_id IS NULL)
+  OR
+  -- Group categories where user is owner of the group
+  (group_id IN (
+    SELECT id FROM public.groups WHERE owner_id = auth.uid()
+  ))
+  OR
+  -- Group categories where user is member of the group
+  (group_id IN (
+    SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+  ))
+);
 
 -- Users can create categories
 -- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
