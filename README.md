@@ -1,40 +1,30 @@
 # 💰 MyMoney PWA - Personal & Shared Expense Manager# 💰 ExpenseTracker PWA - Gestione Spese Personali
 
-
-
 A **Progressive Web App** for managing personal and shared expenses with intelligent synchronization, offline support, dark mode, and multi-language support (Italian & English).Una Progressive Web App mobile-first per tracciare spese personali e condivise con sincronizzazione intelligente, supporto offline e dark mode.
 
-
-
-**[📖 Quick Start →](./QUICKSTART.md)** | **[⚡ Full Setup →](./SETUP.md)** | **[🎯 Features →](#features)** | **[🚀 Roadmap →](#roadmap)****[📖 Leggi SETUP →](./SETUP.md)** | **[⚡ Quick Start →](./QUICKSTART.md)** | **[🎯 Nuove Features →](./FEATURES_NEW.md)**
-
-
+**[📖 Quick Start →](./QUICKSTART.md)** | **[⚡ Full Setup →](./SETUP.md)** | **[🎯 Features →](#features)** | **[🚀 Roadmap →](#roadmap)\*\***[📖 Leggi SETUP →](./SETUP.md)** | **[⚡ Quick Start →](./QUICKSTART.md)** | **[🎯 Nuove Features →](./FEATURES_NEW.md)\*\*
 
 ---## ✨ Features v1.0
 
-
-
 ## 🎯 Overview### � Tracking Personale
-
-
 
 MyMoney is a mobile-first PWA that allows you to:- ✅ Aggiungere/modificare spese rapidamente
 
 - ✅ 8 categorie di default + creazione personalizzate inline
 
-✅ **Track personal expenses** - Record all your daily spending  - ✅ Supporto multi-valuta (EUR, USD, GBP)
+✅ **Track personal expenses** - Record all your daily spending - ✅ Supporto multi-valuta (EUR, USD, GBP)
 
-✅ **Categorize spending** - 8 default categories + create custom ones  - ✅ Dashboard con riepilogo mensile
+✅ **Categorize spending** - 8 default categories + create custom ones - ✅ Dashboard con riepilogo mensile
 
-✅ **Share expenses** - Split costs with friends and family (v2.0)  - ✅ Statistiche utente complete
+✅ **Share expenses** - Split costs with friends and family (v2.0) - ✅ Statistiche utente complete
 
-✅ **Work offline** - Full functionality without internet  
+✅ **Work offline** - Full functionality without internet
 
-✅ **Auto-sync** - Changes automatically sync to cloud  ### 🔄 Sincronizzazione Intelligente
+✅ **Auto-sync** - Changes automatically sync to cloud ### 🔄 Sincronizzazione Intelligente
 
-✅ **Dark mode** - System preference support + manual toggle  
+✅ **Dark mode** - System preference support + manual toggle
 
-✅ **Multi-language** - Italian & English support  - ✅ Offline-first con Dexie (IndexedDB)
+✅ **Multi-language** - Italian & English support - ✅ Offline-first con Dexie (IndexedDB)
 
 ✅ **Install as app** - Add to home screen on mobile/desktop- ✅ Auto-sync quando online
 
@@ -53,7 +43,6 @@ MyMoney is a mobile-first PWA that allows you to:- ✅ Aggiungere/modificare spe
 - ✅ Dark mode + system preference
 
 - **Personal Expense Tracking**- ✅ Installabile su mobile (home screen)
-
   - Quick add/edit/delete expenses- ✅ Service Worker + caching
 
   - 8 default categories + custom categories inline- ✅ Mobile-first responsive design
@@ -64,10 +53,7 @@ MyMoney is a mobile-first PWA that allows you to:- ✅ Aggiungere/modificare spe
 
   - Complete user statistics### 🔐 Autenticazione & Profilo
 
-
-
 - **Intelligent Sync**- ✅ Login/Signup con Supabase
-
   - Offline-first with Dexie (IndexedDB)- ✅ Pagina profilo con statistiche
 
   - Auto-sync when online- ✅ Edit nome utente
@@ -78,35 +64,31 @@ MyMoney is a mobile-first PWA that allows you to:- ✅ Aggiungere/modificare spe
 
   - Sync history & timestamps- ✅ Session persistence
 
-
-
 - **PWA & UX**---
-
   - Dark mode + system preference detection
 
   - Installable on mobile (home screen)## 🛠️ Tech Stack
 
   - Service Worker + smart caching
 
-  - Mobile-first responsive design| Componente       | Tech            | Ver    |
+  - Mobile-first responsive design| Componente | Tech | Ver |
 
   - TypeScript strict mode| ---------------- | --------------- | ------ |
 
-  - Offline indicator banner| **Frontend**     | React           | 19     |
+  - Offline indicator banner| **Frontend** | React | 19 |
 
-  - Manual sync control| **Build**        | Vite            | 6.4.1  |
+  - Manual sync control| **Build** | Vite | 6.4.1 |
 
-| **Styling**      | Tailwind CSS    | 4.1    |
+| **Styling** | Tailwind CSS | 4.1 |
 
-- **Authentication & Profile**| **UI**           | ShadCN          | Latest |
+- **Authentication & Profile**| **UI** | ShadCN | Latest |
+  - Email/password login with Supabase| **State** | Zustand | Latest |
 
-  - Email/password login with Supabase| **State**        | Zustand         | Latest |
+  - Signup with automatic category creation| **DB Local** | Dexie | 4.2.1 |
 
-  - Signup with automatic category creation| **DB Local**     | Dexie           | 4.2.1  |
+  - Profile page with statistics| **Auth/Backend** | Supabase | Latest |
 
-  - Profile page with statistics| **Auth/Backend** | Supabase        | Latest |
-
-  - Edit display name & settings| **PWA**          | vite-plugin-pwa | 1.1    |
+  - Edit display name & settings| **PWA** | vite-plugin-pwa | 1.1 |
 
   - JSON backup export
 
@@ -118,7 +100,7 @@ MyMoney is a mobile-first PWA that allows you to:- ✅ Aggiungere/modificare spe
 
 ### Version 2.0 Features (NEW) 🚀
 
-```bash
+````bash
 
 - **Group Management**# 1. Setup (2 min)
 
@@ -272,23 +254,23 @@ cp .env.example .env.local
 
 # VITE_SUPABASE_ANON_KEY=xxx
 
-``````
+````
 
 User offline
 
-### 3. Configure Database  ↓
+### 3. Configure Database ↓
 
 Add expense → Saved to Dexie (isSynced: false)
 
-Get SQL from [SETUP.md](./SETUP.md) section "Database Schema" and run in Supabase SQL Editor.  ↓
+Get SQL from [SETUP.md](./SETUP.md) section "Database Schema" and run in Supabase SQL Editor. ↓
 
 Goes online → Auto-sync triggers
 
-### 4. Start Development Server  ↓
+### 4. Start Development Server ↓
 
 SyncService:
 
-```bash  • Pushes local unsync'd → Supabase
+````bash • Pushes local unsync'd → Supabase
 
 pnpm dev  • Pulls remote changes → Merges locally
 
@@ -300,11 +282,11 @@ SyncLog created, UI updates
 
 ### 5. Test Features✅ Synced!
 
-```
+````
 
 - Create account (Signup)
 
-- Add an expense**Manual Sync**: Click refresh in header  
+- Add an expense**Manual Sync**: Click refresh in header
 
 - Toggle dark mode**Auto-Sync**: On app start + browser online event
 
@@ -328,37 +310,31 @@ SyncLog created, UI updates
 
 - Smooth transitions
 
-| Route              | Component            | Features                              |
+| Route | Component | Features |
 
 | ------------------ | -------------------- | ------------------------------------- |---
 
-| `/login`           | LoginPage            | Email/password authentication          |
+| `/login` | LoginPage | Email/password authentication |
 
-| `/signup`          | SignupPage           | New account + 8 default categories    |## 📱 PWA Installation
+| `/signup` | SignupPage | New account + 8 default categories |## 📱 PWA Installation
 
-| `/dashboard`       | DashboardPage        | Expense list + summary cards + stats  |
+| `/dashboard` | DashboardPage | Expense list + summary cards + stats |
 
-| `/expense/new`     | ExpenseForm          | Add/edit expense + inline categories  |**Android**: Menu → "Installa app"  
+| `/expense/new` | ExpenseForm | Add/edit expense + inline categories |**Android**: Menu → "Installa app"
 
-| `/categories`      | CategoriesPage       | Manage custom categories              |**iOS**: Share → "Aggiungi alla schermata Home"  
+| `/categories` | CategoriesPage | Manage custom categories |**iOS**: Share → "Aggiungi alla schermata Home"
 
-| `/profile`         | ProfilePage          | Edit profile + language + settings    |**Desktop**: Install icon in address bar
+| `/profile` | ProfilePage | Edit profile + language + settings |**Desktop**: Install icon in address bar
 
-| `/groups`          | GroupsPage           | Create/manage groups (v2)             |
+| `/groups` | GroupsPage | Create/manage groups (v2) |
 
-| `/shared-expenses` | SharedExpensesPage   | View shared expenses (v2)             |Works fully offline! 📴
+| `/shared-expenses` | SharedExpensesPage | View shared expenses (v2) |Works fully offline! 📴
 
-
-
-------
-
-
+---
 
 ## 🏗️ Project Structure## 📊 Build & Performance
 
-
-
-``````bash
+````bash
 
 src/# Build
 
@@ -438,9 +414,9 @@ src/# Build
 
 │       ├── select.tsx
 
-│       └── tabs.tsx**v1.0** ✅ Personal expenses + PWA + offline  
+│       └── tabs.tsx**v1.0** ✅ Personal expenses + PWA + offline
 
-│**v1.1** ✅ Category editor + Profile page  
+│**v1.1** ✅ Category editor + Profile page
 
 ├── lib/**v2.0** 🚀 Groups + shared expenses + real-time
 
@@ -524,7 +500,7 @@ MyMoney uses a **check-then-insert-or-update** pattern to prevent conflicts:
 3. App goes online → Auto-sync triggers
    ↓
 4. SyncService.syncExpenses():
-   
+
    PUSH PHASE (Local → Supabase):
    ├─ Load all unsync'd expenses (isSynced=false)
    ├─ For each expense:
@@ -535,7 +511,7 @@ MyMoney uses a **check-then-insert-or-update** pattern to prevent conflicts:
    │  │  └─ Else → conflict detected
    │  └─ If not exists → INSERT
    └─ Track synced/failed/conflicts
-   
+
    PULL PHASE (Supabase → Local):
    ├─ Load remote expenses modified since lastSync
    ├─ For each remote expense:
@@ -546,7 +522,7 @@ MyMoney uses a **check-then-insert-or-update** pattern to prevent conflicts:
    │  │  └─ Else → keep local (wins)
    │  └─ If not exists → INSERT
    └─ Track synced/failed/conflicts
-   
+
 5. SyncLog created with results
 6. lastSync timestamp updated
 7. UI updates with sync status
@@ -649,7 +625,7 @@ import { useLanguage } from '@/lib/language';
 
 export function MyComponent() {
   const { language, t } = useLanguage();
-  
+
   return (
     <div>
       <h1>{t('dashboard.title')}</h1>
@@ -1041,3 +1017,4 @@ Ready to manage your expenses smartly?
 **Made with ❤️ for managing finances simply and efficiently**
 
 Last Updated: **October 2025** | Version: **2.0** | Status: **Production Ready** ✅
+````

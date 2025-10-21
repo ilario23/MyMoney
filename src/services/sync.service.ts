@@ -132,13 +132,18 @@ export class SyncService {
       for (const category of localUnsync) {
         try {
           // Prima controlla se esiste già
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("categories")
-            .select("id")
+            .select("*")
             .eq("id", category.id)
             .single();
 
           let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            // PGRST116 è "not found" - è normal se non esiste
+            throw checkError;
+          }
 
           if (existing) {
             // Update
@@ -230,13 +235,19 @@ export class SyncService {
       for (const expense of localUnsync) {
         try {
           // Prima controlla se esiste già
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("expenses")
-            .select("id")
+            .select("*")
             .eq("id", expense.id)
             .single();
 
           let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            // PGRST116 è "not found" - è normal se non esiste
+            // Se c'è un errore diverso, lo registriamo
+            throw checkError;
+          }
 
           if (existing) {
             // Update
@@ -345,13 +356,17 @@ export class SyncService {
       for (const group of localUnsync) {
         try {
           // Check if exists
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("groups")
-            .select("id, updated_at")
+            .select("*")
             .eq("id", group.id)
             .single();
 
           let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
 
           if (existing) {
             // Se esiste, controlla chi è più recente
@@ -472,13 +487,17 @@ export class SyncService {
 
         try {
           // Check if exists
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("group_members")
-            .select("id, updated_at")
+            .select("*")
             .eq("id", member.id)
             .single();
 
           let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
 
           if (existing) {
             // Update
@@ -579,13 +598,17 @@ export class SyncService {
       for (const sharedExp of localUnsync) {
         try {
           // Check if exists
-          const { data: existing } = await supabase
+          const { data: existing, error: checkError } = await supabase
             .from("shared_expenses")
-            .select("id, updated_at")
+            .select("*")
             .eq("id", sharedExp.id)
             .single();
 
           let error = null;
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
 
           if (existing) {
             // Se esiste, controlla chi è più recente

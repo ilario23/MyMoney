@@ -16,6 +16,7 @@ A major release introducing group-based expense sharing, complete bidirectional 
 #### Added
 
 **Core v2.0 Features:**
+
 - ✅ Group Management System
   - Create, read, update, delete groups
   - Add/remove group members
@@ -149,7 +150,7 @@ A major release introducing group-based expense sharing, complete bidirectional 
   - 145+ translation keys
 
 - Translation structure:
-  - Namespaced keys: profile.*, expense.*, category.*, etc.
+  - Namespaced keys: profile._, expense._, category.\*, etc.
   - Type-safe TranslationKey union
   - Fallback to key name if translation missing
 
@@ -256,6 +257,7 @@ A major release introducing group-based expense sharing, complete bidirectional 
 #### Added
 
 **Core Features:**
+
 - Personal expense tracking:
   - Add/edit/delete expenses
   - Date selection
@@ -297,17 +299,17 @@ A major release introducing group-based expense sharing, complete bidirectional 
 
 #### Tech Stack
 
-| Component       | Technology      | Version |
-| --------------- | --------------- | ------- |
-| Frontend        | React           | 19      |
-| Build Tool      | Vite            | 6.4     |
-| Language        | TypeScript      | 5.x     |
-| Styling         | Tailwind CSS    | 4.1     |
-| Components      | ShadCN UI       | Latest  |
-| State           | Zustand         | Latest  |
-| Local DB        | Dexie.js        | 4.2.1   |
-| Backend         | Supabase        | Latest  |
-| PWA             | vite-plugin-pwa | 1.1     |
+| Component  | Technology      | Version |
+| ---------- | --------------- | ------- |
+| Frontend   | React           | 19      |
+| Build Tool | Vite            | 6.4     |
+| Language   | TypeScript      | 5.x     |
+| Styling    | Tailwind CSS    | 4.1     |
+| Components | ShadCN UI       | Latest  |
+| State      | Zustand         | Latest  |
+| Local DB   | Dexie.js        | 4.2.1   |
+| Backend    | Supabase        | Latest  |
+| PWA        | vite-plugin-pwa | 1.1     |
 
 #### Build Metrics
 
@@ -325,12 +327,14 @@ A major release introducing group-based expense sharing, complete bidirectional 
 **No breaking changes!** All v1.0 data is fully compatible.
 
 **What's new:**
+
 - New tables: groups, group_members, shared_expenses
 - Existing tables: categories, expenses, users, sync_logs (unchanged)
 - New translation keys: 46 keys added (191 total)
 - New pages: /groups, /shared-expenses
 
 **Upgrade steps:**
+
 1. Pull latest code
 2. Run `pnpm install`
 3. Run `pnpm build` to verify
@@ -392,20 +396,20 @@ A major release introducing group-based expense sharing, complete bidirectional 
 
 ### Build Size Evolution
 
-| Version | Size    | Gzipped | Modules |
-| ------- | ------- | ------- | ------- |
-| 1.0.0   | 698 KB  | 211 KB  | 2500    |
-| 1.4.2   | 716 KB  | 213 KB  | 2600    |
-| 2.0.0   | 718 KB  | 215 KB  | 2687    |
+| Version | Size   | Gzipped | Modules |
+| ------- | ------ | ------- | ------- |
+| 1.0.0   | 698 KB | 211 KB  | 2500    |
+| 1.4.2   | 716 KB | 213 KB  | 2600    |
+| 2.0.0   | 718 KB | 215 KB  | 2687    |
 
 ### Load Time Evolution
 
-| Version | Cold    | Warm | Offline |
-| ------- | ------- | ---- | ------- |
-| 1.0.0   | 2.5s    | 0.5s | 0s      |
-| 2.0.0   | 2.3s    | 0.4s | 0s      |
+| Version | Cold | Warm | Offline |
+| ------- | ---- | ---- | ------- |
+| 1.0.0   | 2.5s | 0.5s | 0s      |
+| 2.0.0   | 2.3s | 0.4s | 0s      |
 
-*Times measured on standard mobile (Slow 4G throttling)*
+_Times measured on standard mobile (Slow 4G throttling)_
 
 ---
 

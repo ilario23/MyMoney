@@ -41,6 +41,7 @@ export function ExpenseForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   // Load custom categories from Dexie
   useEffect(() => {
@@ -62,6 +63,7 @@ export function ExpenseForm() {
     if (!user || !description || !amount) return;
 
     setIsLoading(true);
+    setError('');
 
     try {
       const expense = {
@@ -82,11 +84,21 @@ export function ExpenseForm() {
       // Sync immediato con Supabase se online
       if (navigator.onLine) {
         try {
-          await syncService.sync({ userId: user.id, verbose: true });
-          console.log('✅ Expense synced to Supabase');
+          const syncResult = await syncService.sync({ userId: user.id, verbose: true });
+          
+          if (syncResult.success) {
+            console.log('✅ Expense synced to Supabase');
+          } else {
+            console.warn(`⚠️ Sync completed with issues: ${syncResult.failed} failed, ${syncResult.conflicts} conflicts`);
+            setError(`Sync error: ${syncResult.failed} failed, will retry later`);
+          }
         } catch (syncError) {
-          console.warn('⚠️ Sync failed, will retry later:', syncError);
+          console.error('❌ Sync error:', syncError);
+          setError('Sync failed - changes saved locally, will sync when online');
         }
+      } else {
+        console.log('📡 Offline - expense saved locally, will sync when online');
+        setError('You are offline - expense will sync when back online');
       }
 
       setSuccess(true);
@@ -96,13 +108,14 @@ export function ExpenseForm() {
       setCategory('Altro');
       setDate(new Date().toISOString().split('T')[0]);
 
-      // Redirect after 1.5s
+      // Redirect after 2s (give time to read any error message)
       setTimeout(() => {
         navigate('/dashboard');
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error('Error adding expense:', error);
-      alert(t('expense.addError'));
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Error: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +140,14 @@ export function ExpenseForm() {
         <Alert className="border-green-200 bg-green-50">
           <AlertDescription className="text-green-800">
             {t('expense.addSuccess')}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <AlertDescription className="text-yellow-800">
+            {error}
           </AlertDescription>
         </Alert>
       )}

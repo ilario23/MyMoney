@@ -1,14 +1,8 @@
 # MyMoney v2.0 - Groups & Shared Expenses ✅ COMPLETE# MyMoney v2.0 - Groups & Shared Expenses ✅ COMPLETE
 
-
-
 ## 📋 Project Status## 📋 Stato del Progetto
 
-
-
 ### Version 2 Features - ALL COMPLETE ✅### Version 2 Features - ALL COMPLETE ✅
-
-
 
 - ✅ **Group Management**: Complete CRUD with dedicated page- ✅ **Gestione Gruppi**: CRUD completo con pagina dedicata
 
@@ -22,25 +16,17 @@
 
 - ✅ **Build**: 0 TypeScript errors, PWA working- ✅ **Build**: 0 TypeScript errors, PWA working
 
-
-
 ---## 🗂️ Struttura Database
-
-
 
 ## 🗂️ Database Schema### Tables Utilizzate
 
-
-
 ### Tables Used#### `groups`
-
-
 
 #### `groups````typescript
 
 {
 
-```typescript  id: string;              // UUID
+`````typescript id: string;              // UUID
 
 {  name: string;            // Nome del gruppo
 
@@ -322,23 +308,15 @@ if (existing) {## 🌐 Traduzioni Aggiunte
 
 }// ... 25+ keys
 
-``````
-
-
+`````
 
 ### For Shared Expenses### English (en.ts)
 
-
-
 Same check-then-insert-or-update pattern applied to `sharedExpenses` table.Equivalenti in inglese per tutte le chiavi italiane.
 
+**Special handling for participants array:\*\***Total Translation Keys\*\*: 191 (da 145)
 
-
-**Special handling for participants array:****Total Translation Keys**: 191 (da 145)
-
-
-
-```typescript## 🎨 Interfaccia Utente
+`````typescript## 🎨 Interfaccia Utente
 
 // Participants are stored as JSON array in Supabase
 
@@ -494,13 +472,13 @@ async sync(options?: { verbose?: boolean }) {
 
 ## 🎨 User Interface}
 
-```
+`````
 
 ### Desktop Layout (1024px+)
 
 ## 📊 Statistiche
 
-```
+````
 
 ┌─────────────────┬──────────────────────────┐- **Pagine Nuove**: 2 (`groups.tsx`, `shared-expenses.tsx`)
 
@@ -534,29 +512,29 @@ async sync(options?: { verbose?: boolean }) {
 
 8. ⏳ Aggiungi recurring expenses logic
 
-```
+````
 
 ┌──────────────────────────┐## 🔐 Security Notes
 
-│      Header              │
+│ Header │
 
 ├──────────────────────────┤- Ogni gruppo è di proprietà di un utente (ownerId)
 
-│                          │- Solo il proprietario può eliminare il gruppo
+│ │- Solo il proprietario può eliminare il gruppo
 
-│   Main Content           │- I membri possono visualizzare ma non modificare le impostazioni
+│ Main Content │- I membri possono visualizzare ma non modificare le impostazioni
 
-│   (Responsive)           │- Le spese condivise sono immutabili dopo la creazione
+│ (Responsive) │- Le spese condivise sono immutabili dopo la creazione
 
-│                          │
+│ │
 
 ├──────────────────────────┤## 📝 Note di Sviluppo
 
-│📊 🛒 📁 👥 🤝 👤 (Nav)    │
+│📊 🛒 📁 👥 🤝 👤 (Nav) │
 
 └──────────────────────────┘- Database schema è già pronto in `src/lib/dexie.ts`
 
-```- Indici sono ottimizzati per query comuni
+````- Indici sono ottimizzati per query comuni
 
 - Pattern di sincronizzazione è coerente con v1.x
 
@@ -587,7 +565,7 @@ Same structure, displayed as bottom navigation bar.
 // In src/router.tsx
 <Route path="/groups" element={<Layout><GroupsPage /></Layout>} />
 <Route path="/shared-expenses" element={<Layout><SharedExpensesPage /></Layout>} />
-```
+````
 
 ---
 
@@ -621,7 +599,7 @@ async syncSharedExpenses(): Promise<SyncResult> {
 
 async sync(options?: { verbose?: boolean }): Promise<void> {
   // Main sync orchestrator
-  // Calls: syncExpenses, syncCategories, syncGroups, 
+  // Calls: syncExpenses, syncCategories, syncGroups,
   //        syncGroupMembers, syncSharedExpenses
 }
 ```
