@@ -5,7 +5,9 @@ This folder contains all project documentation organized for easy navigation.
 ## 📂 Main Documents
 
 ### [SETUP.md](./SETUP.md) - Complete Setup Guide ⭐
+
 **Start here!** Complete guide covering:
+
 - Installation & environment setup
 - Database schema (tables, indexes, foreign keys)
 - RLS policies (security rules)
@@ -14,12 +16,14 @@ This folder contains all project documentation organized for easy navigation.
 - Full changelog
 
 ### [API.md](./API.md) - Supabase API Reference
+
 - REST API endpoints
 - Authentication flows
 - Query examples
 - Real-time subscriptions
 
 ### [TECHNICAL.md](./TECHNICAL.md) - Technical Architecture
+
 - System architecture overview
 - Local-first sync strategy
 - Conflict resolution
@@ -27,18 +31,22 @@ This folder contains all project documentation organized for easy navigation.
 - Dexie.js schema
 
 ### [CHANGELOG.md](./CHANGELOG.md) - Version History
+
 Detailed version-by-version changes with:
+
 - New features
 - Breaking changes
 - Bug fixes
 - Migration notes
 
 ### [MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql](./MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql)
+
 SQL migration script for upgrading from v1.6.0 to v1.7.0 (hierarchical categories support)
 
 ## 📦 Archive
 
 The `/archive/` folder contains historical documentation from previous versions:
+
 - Version-specific release notes (v1.1, v1.2, v1.3, v1.4)
 - Implementation guides (features, signup, language system)
 - Deprecated quick start guides

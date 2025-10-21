@@ -24,8 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Edit2, Save, X, Search } from 'lucide-react';
-import type { Category } from '@/lib/dexie';
+import { Plus, Trash2, Edit2, Save, X, Search, ChevronRight, ChevronDown } from 'lucide-react';
+import type { Category, Expense } from '@/lib/dexie';
 
 const CATEGORY_ICONS = ['🍕', '🚗', '🏠', '🎬', '💊', '🛍️', '⚡', '📌', '🎮', '📚', '✈️', '🎵', '⚽', '🎨', '📖', '🍎'];
 const CATEGORY_COLORS = ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#EC4899', '#06B6D4', '#3B82F6', '#6B7280'];
@@ -53,7 +53,12 @@ export function CategoriesPage() {
   const [editName, setEditName] = useState('');
   const [editIcon, setEditIcon] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editParentId, setEditParentId] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Tree view states
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expenseStats, setExpenseStats] = useState<Map<string, {count: number; total: number}>>(new Map());
 
   // Load categories
   useEffect(() => {
@@ -62,8 +67,24 @@ export function CategoriesPage() {
       try {
         setIsLoading(true);
         const userCategories = await db.categories.where('userId').equals(user.id).toArray();
+        const expenses = await db.expenses.where('userId').equals(user.id).toArray();
+        
+        // Build expense statistics per category
+        const stats = new Map<string, {count: number; total: number}>();
+        expenses.forEach((expense: Expense) => {
+          const category = userCategories.find(c => c.name === expense.category);
+          if (!category) return;
+          
+          const existing = stats.get(category.id) || { count: 0, total: 0 };
+          stats.set(category.id, {
+            count: existing.count + 1,
+            total: existing.total + Math.abs(expense.amount)
+          });
+        });
+        
         setCategories(userCategories);
         setFilteredCategories(userCategories);
+        setExpenseStats(stats);
       } catch (err) {
         console.error('Error loading categories:', err);
         setError(t('categories.usedError'));
@@ -87,6 +108,54 @@ export function CategoriesPage() {
     );
     setFilteredCategories(filtered);
   }, [searchQuery, categories]);
+
+  // Helper: Build category tree structure
+  const buildCategoryTree = () => {
+    const topLevel = filteredCategories.filter((c) => !c.parentId);
+    const childrenMap = new Map<string, Category[]>();
+    
+    filteredCategories.forEach((category) => {
+      if (category.parentId) {
+        const siblings = childrenMap.get(category.parentId) || [];
+        siblings.push(category);
+        childrenMap.set(category.parentId, siblings);
+      }
+    });
+    
+    return { topLevel, childrenMap };
+  };
+
+  // Helper: Check for circular references
+  const wouldCreateCircularRef = (categoryId: string, newParentId: string | undefined): boolean => {
+    if (!newParentId) return false;
+    
+    let currentId: string | undefined = newParentId;
+    const visited = new Set<string>();
+    
+    while (currentId) {
+      if (currentId === categoryId) return true;
+      if (visited.has(currentId)) return true;
+      visited.add(currentId);
+      
+      const parent = categories.find((c) => c.id === currentId);
+      currentId = parent?.parentId;
+    }
+    
+    return false;
+  };
+
+  // Helper: Toggle expand/collapse
+  const toggleExpand = (categoryId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
   const handleCreateCategory = async () => {
     const trimmedName = newCategoryName.trim();
@@ -159,6 +228,7 @@ export function CategoriesPage() {
     setEditName(category.name);
     setEditIcon(category.icon);
     setEditColor(category.color);
+    setEditParentId(category.parentId || '');
   };
 
   const handleSaveEdit = async (categoryId: string) => {
@@ -180,6 +250,12 @@ export function CategoriesPage() {
       return;
     }
 
+    // Check for circular references
+    if (editParentId && wouldCreateCircularRef(categoryId, editParentId)) {
+      setError('Cannot set parent: would create circular reference');
+      return;
+    }
+
     setIsUpdating(true);
     setError('');
 
@@ -190,6 +266,7 @@ export function CategoriesPage() {
       updated.name = trimmedName;  // Save trimmed name
       updated.icon = editIcon;
       updated.color = editColor;
+      updated.parentId = editParentId || undefined;
       updated.isSynced = false;
       updated.updatedAt = new Date();
 
@@ -434,134 +511,193 @@ export function CategoriesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredCategories.map((category) => (
-            <Card key={category.id} className="relative">
-              <CardContent className="pt-6">
-                {editingId === category.id ? (
-                  // Edit Mode
-                  <div className="space-y-4">
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Nome categoria"
-                      disabled={isUpdating}
-                    />
+        <div className="space-y-2">
+          {(() => {
+            const { topLevel, childrenMap } = buildCategoryTree();
+            
+            const renderCategory = (category: Category, depth: number = 0): React.ReactElement => {
+              const children = childrenMap.get(category.id) || [];
+              const hasChildren = children.length > 0;
+              const isExpanded = expandedCategories.has(category.id);
+              const stats = expenseStats.get(category.id);
+              
+              return (
+                <div key={category.id} className="space-y-2">
+                  <Card className={`relative ${depth > 0 ? 'ml-8' : ''}`}>
+                    <CardContent className="pt-6">
+                      {editingId === category.id ? (
+                        // Edit Mode
+                        <div className="space-y-4">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="Nome categoria"
+                            disabled={isUpdating}
+                          />
 
-                    <div className="grid grid-cols-8 gap-2">
-                      {CATEGORY_ICONS.map((icon) => (
-                        <button
-                          key={icon}
-                          type="button"
-                          onClick={() => setEditIcon(icon)}
-                          className={`p-2 text-2xl border rounded-lg transition-colors ${
-                            editIcon === icon ? 'bg-primary text-white border-primary' : 'bg-background border-border'
-                          }`}
-                        >
-                          {icon}
-                        </button>
-                      ))}
-                    </div>
+                          <div className="grid grid-cols-8 gap-2">
+                            {CATEGORY_ICONS.map((icon) => (
+                              <button
+                                key={icon}
+                                type="button"
+                                onClick={() => setEditIcon(icon)}
+                                className={`p-2 text-2xl border rounded-lg transition-colors ${
+                                  editIcon === icon ? 'bg-primary text-white border-primary' : 'bg-background border-border'
+                                }`}
+                              >
+                                {icon}
+                              </button>
+                            ))}
+                          </div>
 
-                    <div className="grid grid-cols-8 gap-2">
-                      {CATEGORY_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => setEditColor(color)}
-                          style={{ backgroundColor: color }}
-                          className={`p-3 rounded-lg border-2 transition-all ${
-                            editColor === color ? 'border-black scale-110' : 'border-transparent'
-                          }`}
-                        />
-                      ))}
-                    </div>
+                          <div className="grid grid-cols-8 gap-2">
+                            {CATEGORY_COLORS.map((color) => (
+                              <button
+                                key={color}
+                                type="button"
+                                onClick={() => setEditColor(color)}
+                                style={{ backgroundColor: color }}
+                                className={`p-3 rounded-lg border-2 transition-all ${
+                                  editColor === color ? 'border-black scale-110' : 'border-transparent'
+                                }`}
+                              />
+                            ))}
+                          </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 gap-2"
-                        onClick={() => handleSaveEdit(category.id)}
-                        disabled={isUpdating}
-                      >
-                        <Save className="w-4 h-4" />
-                        {t('categories.save')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => setEditingId(null)}
-                        disabled={isUpdating}
-                      >
-                        <X className="w-4 h-4" />
-                        {t('categories.cancel')}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  // View Mode
-                  <>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-4xl">{category.icon}</span>
-                        <div>
-                          <h3 className="font-semibold text-lg">{category.name}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(category.updatedAt).toLocaleDateString('it-IT')}
-                          </p>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Parent Category</label>
+                            <Select value={editParentId} onValueChange={setEditParentId}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="None (Top-level)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">None (Top-level)</SelectItem>
+                                {categories
+                                  .filter((c) => c.id !== category.id && !c.parentId)
+                                  .map((cat) => (
+                                    <SelectItem key={cat.id} value={cat.id}>
+                                      {cat.icon} {cat.name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 gap-2"
+                              onClick={() => handleSaveEdit(category.id)}
+                              disabled={isUpdating}
+                            >
+                              <Save className="w-4 h-4" />
+                              {t('categories.save')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 gap-2"
+                              onClick={() => setEditingId(null)}
+                              disabled={isUpdating}
+                            >
+                              <X className="w-4 h-4" />
+                              {t('categories.cancel')}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div
-                        className="w-6 h-6 rounded-full border border-gray-300"
-                        style={{ backgroundColor: category.color }}
-                      />
-                    </div>
+                      ) : (
+                        // View Mode
+                        <>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              {hasChildren && (
+                                <button
+                                  onClick={() => toggleExpand(category.id)}
+                                  className="p-1 hover:bg-muted rounded transition-colors"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-5 h-5" />
+                                  ) : (
+                                    <ChevronRight className="w-5 h-5" />
+                                  )}
+                                </button>
+                              )}
+                              <span className="text-4xl">{category.icon}</span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-lg">{category.name}</h3>
+                                  {stats && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {stats.count} • €{stats.total.toFixed(2)}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(category.updatedAt).toLocaleDateString('it-IT')}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className="w-6 h-6 rounded-full border border-gray-300"
+                              style={{ backgroundColor: category.color }}
+                            />
+                          </div>
 
-                    <div className="flex gap-2">
-                      {!category.isSynced && <Badge variant="outline">{t('categories.notSynced')}</Badge>}
-                      {category.isSynced && <Badge variant="secondary">{t('categories.synced')}</Badge>}
-                    </div>
+                          <div className="flex gap-2">
+                            {!category.isSynced && <Badge variant="outline">{t('categories.notSynced')}</Badge>}
+                            {category.isSynced && <Badge variant="secondary">{t('categories.synced')}</Badge>}
+                          </div>
 
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => handleEditCategory(category)}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        {t('categories.edit')}
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="destructive" className="flex-1 gap-2">
-                            <Trash2 className="w-4 h-4" />
-                            {t('categories.delete')}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>{t('categories.deleteCategory')}</DialogTitle>
-                            <DialogDescription>
-                              {t('categories.confirmDelete').replace('{name}', category.name)}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <Button
-                            variant="destructive"
-                            className="w-full"
-                            onClick={() => handleDeleteCategory(category.id)}
-                          >
-                            {t('categories.deleteConfirmation')}
-                          </Button>
-                        </DialogContent>
-                      </Dialog>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 gap-2"
+                              onClick={() => handleEditCategory(category)}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                              {t('categories.edit')}
+                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="destructive" className="flex-1 gap-2">
+                                  <Trash2 className="w-4 h-4" />
+                                  {t('categories.delete')}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>{t('categories.deleteCategory')}</DialogTitle>
+                                  <DialogDescription>
+                                    {t('categories.confirmDelete').replace('{name}', category.name)}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <Button
+                                  variant="destructive"
+                                  className="w-full"
+                                  onClick={() => handleDeleteCategory(category.id)}
+                                >
+                                  {t('categories.deleteConfirmation')}
+                                </Button>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  {isExpanded && children.length > 0 && (
+                    <div className="space-y-2">
+                      {children.map((child) => renderCategory(child, depth + 1))}
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  )}
+                </div>
+              );
+            };
+            
+            return topLevel.map((category) => renderCategory(category, 0));
+          })()}
         </div>
       )}
 

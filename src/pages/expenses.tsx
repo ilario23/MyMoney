@@ -5,8 +5,15 @@ import { db, type Expense, type Category } from '@/lib/dexie';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Filter } from 'lucide-react';
+import { ArrowLeft, Search, X, SlidersHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { it, enUS } from 'date-fns/locale';
 
@@ -19,6 +26,16 @@ export function ExpensesPage() {
   const [categories, setCategories] = useState<Map<string, Category>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [amountMin, setAmountMin] = useState<string>('');
+  const [amountMax, setAmountMax] = useState<string>('');
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     if (!user) return;
@@ -51,24 +68,92 @@ export function ExpensesPage() {
     loadData();
   }, [user]);
 
-  // Filter expenses based on search query
+  // Filter and sort expenses
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredExpenses(expenses);
-      return;
+    let filtered = [...expenses];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((expense) => {
+        const category = categories.get(expense.category);
+        return (
+          expense.description.toLowerCase().includes(query) ||
+          category?.name.toLowerCase().includes(query) ||
+          expense.amount.toString().includes(query)
+        );
+      });
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = expenses.filter((expense) => {
-      const category = categories.get(expense.category);
-      return (
-        expense.description.toLowerCase().includes(query) ||
-        category?.name.toLowerCase().includes(query) ||
-        expense.amount.toString().includes(query)
-      );
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter((expense) => expense.category === selectedCategory);
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((expense) => expense.date >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((expense) => expense.date <= toDate);
+    }
+
+    // Amount range filter
+    if (amountMin) {
+      const min = Math.abs(parseFloat(amountMin));
+      filtered = filtered.filter((expense) => Math.abs(expense.amount) >= min);
+    }
+    if (amountMax) {
+      const max = Math.abs(parseFloat(amountMax));
+      filtered = filtered.filter((expense) => Math.abs(expense.amount) <= max);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === 'date') {
+        comparison = a.date.getTime() - b.date.getTime();
+      } else if (sortBy === 'amount') {
+        comparison = Math.abs(a.amount) - Math.abs(b.amount);
+      } else if (sortBy === 'category') {
+        const catA = categories.get(a.category)?.name || '';
+        const catB = categories.get(b.category)?.name || '';
+        comparison = catA.localeCompare(catB);
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
+
     setFilteredExpenses(filtered);
-  }, [searchQuery, expenses, categories]);
+  }, [searchQuery, expenses, categories, selectedCategory, dateFrom, dateTo, amountMin, amountMax, sortBy, sortOrder]);
+
+  // Helper: Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setDateFrom('');
+    setDateTo('');
+    setAmountMin('');
+    setAmountMax('');
+    setSortBy('date');
+    setSortOrder('desc');
+  };
+
+  // Helper: Check if any filter is active
+  const hasActiveFilters = 
+    searchQuery.trim() !== '' ||
+    selectedCategory !== 'all' ||
+    dateFrom !== '' ||
+    dateTo !== '' ||
+    amountMin !== '' ||
+    amountMax !== '' ||
+    sortBy !== 'date' ||
+    sortOrder !== 'desc';
 
   if (!user) return null;
 
@@ -96,7 +181,8 @@ export function ExpensesPage() {
 
       {/* Search & Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
+          {/* Search and Filter Toggle */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -107,10 +193,122 @@ export function ExpensesPage() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
             </Button>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={clearFilters}
+                title="Clear filters"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+
+          {/* Advanced Filters (Collapsible) */}
+          {showFilters && (
+            <div className="space-y-4 pt-4 border-t">
+              {/* Category Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Category</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {Array.from(categories.values()).map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.icon} {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">From Date</label>
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">To Date</label>
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Amount Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Min Amount (€)</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={amountMin}
+                    onChange={(e) => setAmountMin(e.target.value)}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Max Amount (€)</label>
+                  <Input
+                    type="number"
+                    placeholder="∞"
+                    value={amountMax}
+                    onChange={(e) => setAmountMax(e.target.value)}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Sort By</label>
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'amount' | 'category')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">Date</SelectItem>
+                      <SelectItem value="amount">Amount</SelectItem>
+                      <SelectItem value="category">Category</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Order</label>
+                  <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'asc' | 'desc')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="desc">Descending</SelectItem>
+                      <SelectItem value="asc">Ascending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

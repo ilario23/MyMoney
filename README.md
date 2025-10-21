@@ -9,6 +9,7 @@ A modern **Progressive Web App** for tracking personal and shared expenses with 
 ## ✨ Key Features
 
 ### 💸 Expense Management
+
 - Quick add/edit/delete expenses
 - Hierarchical categories (parent → child structure)
 - Multi-currency support (EUR, USD, GBP)
@@ -16,6 +17,7 @@ A modern **Progressive Web App** for tracking personal and shared expenses with 
 - Advanced search & filtering
 
 ### 🔄 Intelligent Sync
+
 - **Offline-first** with Dexie (IndexedDB)
 - Auto-sync when online
 - Bidirectional sync with Supabase
@@ -23,6 +25,7 @@ A modern **Progressive Web App** for tracking personal and shared expenses with 
 - Manual sync control
 
 ### 👥 Shared Expenses (v2.0)
+
 - Create and manage groups
 - Split costs with friends/family
 - Track who owes whom
@@ -30,6 +33,7 @@ A modern **Progressive Web App** for tracking personal and shared expenses with 
 - Group statistics
 
 ### 🎨 Modern UX
+
 - **Dark mode** (system preference + manual toggle)
 - **PWA** - Install on mobile/desktop
 - **Service Worker** - Full offline support
@@ -41,6 +45,7 @@ A modern **Progressive Web App** for tracking personal and shared expenses with 
 ## � Quick Start
 
 ### 1. Install
+
 ```bash
 git clone https://github.com/ilario23/MyMoney.git
 cd MyMoney
@@ -48,15 +53,18 @@ pnpm install
 ```
 
 ### 2. Environment
+
 ```bash
 cp .env.example .env.local
 # Add Supabase credentials to .env.local
 ```
 
 ### 3. Database Setup
+
 Run SQL from **[docs/SETUP.md](./docs/SETUP.md)** in Supabase SQL Editor
 
 ### 4. Start
+
 ```bash
 pnpm dev
 # Open http://localhost:5173
@@ -68,43 +76,43 @@ pnpm dev
 
 ## 📚 Documentation
 
-| Document | Purpose |
-|----------|---------|
-| **[docs/SETUP.md](./docs/SETUP.md)** | Complete setup + database schema + RLS policies |
-| [docs/TECHNICAL.md](./docs/TECHNICAL.md) | Architecture & sync strategy deep-dive |
-| [docs/API.md](./docs/API.md) | Supabase API reference |
-| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Version history & migration notes |
-| [docs/README.md](./docs/README.md) | Documentation structure guide |
+| Document                                 | Purpose                                         |
+| ---------------------------------------- | ----------------------------------------------- |
+| **[docs/SETUP.md](./docs/SETUP.md)**     | Complete setup + database schema + RLS policies |
+| [docs/TECHNICAL.md](./docs/TECHNICAL.md) | Architecture & sync strategy deep-dive          |
+| [docs/API.md](./docs/API.md)             | Supabase API reference                          |
+| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Version history & migration notes               |
+| [docs/README.md](./docs/README.md)       | Documentation structure guide                   |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Frontend** | React | 19 |
-| **Build** | Vite | 6.4 |
-| **Language** | TypeScript | 5.8 |
-| **Styling** | Tailwind CSS | 4.1 |
-| **UI** | ShadCN | Latest |
-| **State** | Zustand | Latest |
-| **Local DB** | Dexie.js | 4.2.1 |
-| **Backend** | Supabase | Latest |
-| **PWA** | vite-plugin-pwa | 1.1 |
+| Layer        | Technology      | Version |
+| ------------ | --------------- | ------- |
+| **Frontend** | React           | 19      |
+| **Build**    | Vite            | 6.4     |
+| **Language** | TypeScript      | 5.8     |
+| **Styling**  | Tailwind CSS    | 4.1     |
+| **UI**       | ShadCN          | Latest  |
+| **State**    | Zustand         | Latest  |
+| **Local DB** | Dexie.js        | 4.2.1   |
+| **Backend**  | Supabase        | Latest  |
+| **PWA**      | vite-plugin-pwa | 1.1     |
 
 ---
 
 ## 📱 Key Pages
 
-| Route | Features |
-|-------|----------|
-| `/dashboard` | Monthly summary + recent expenses |
-| `/expenses` | Full expense list with search |
-| `/expense/new` | Add/edit expenses with category picker |
-| `/categories` | Manage hierarchical categories |
-| `/profile` | User settings + language + stats |
-| `/groups` | Create and manage expense groups |
-| `/shared-expenses` | View and settle shared costs |
+| Route              | Features                               |
+| ------------------ | -------------------------------------- |
+| `/dashboard`       | Monthly summary + recent expenses      |
+| `/expenses`        | Full expense list with search          |
+| `/expense/new`     | Add/edit expenses with category picker |
+| `/categories`      | Manage hierarchical categories         |
+| `/profile`         | User settings + language + stats       |
+| `/groups`          | Create and manage expense groups       |
+| `/shared-expenses` | View and settle shared costs           |
 
 ---
 
@@ -142,12 +150,12 @@ pnpm lint       # Check code
 
 ## 🗺️ Roadmap
 
-| Version | Status | Features |
-|---------|--------|----------|
-| **v1.7** | ✅ Current | Hierarchical categories, search, grouped dropdowns |
-| **v1.8** | 🔄 Next | Tree view UI, drag-and-drop categories |
-| **v2.0** | ✅ Complete | Groups, shared expenses, member management |
-| **v2.1** | 📋 Planned | Budget tracking, recurring automation, charts |
+| Version  | Status      | Features                                           |
+| -------- | ----------- | -------------------------------------------------- |
+| **v1.7** | ✅ Current  | Hierarchical categories, search, grouped dropdowns |
+| **v1.8** | 🔄 Next     | Tree view UI, drag-and-drop categories             |
+| **v2.0** | ✅ Complete | Groups, shared expenses, member management         |
+| **v2.1** | 📋 Planned  | Budget tracking, recurring automation, charts      |
 
 ---
 
@@ -176,6 +184,7 @@ MIT License - See [LICENSE](./LICENSE)
 ---
 
 **Made with ❤️ for simple expense tracking** | Last Updated: October 2025
+
 `````
 
 A **Progressive Web App** for managing personal and shared expenses with intelligent synchronization, offline support, dark mode, and multi-language support (Italian & English).Una Progressive Web App mobile-first per tracciare spese personali e condivise con sincronizzazione intelligente, supporto offline e dark mode.
@@ -1196,3 +1205,4 @@ Ready to manage your expenses smartly?
 
 Last Updated: **October 2025** | Version: **2.0** | Status: **Production Ready** ✅
 ````
+`````
