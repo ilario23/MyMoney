@@ -104,7 +104,7 @@ CREATE TABLE public.categories (
   icon TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, name)
+  UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
 );
 
 -- 4. Expenses table (depends on users and groups)
@@ -114,7 +114,7 @@ CREATE TABLE public.expenses (
   group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
   amount DECIMAL(10, 2) NOT NULL,
   currency TEXT DEFAULT 'EUR',
-  category TEXT NOT NULL,
+  category TEXT NOT NULL,  -- Foreign key to categories.id (stored as text for flexibility)
   description TEXT,
   date DATE NOT NULL,
   deleted_at TIMESTAMP WITH TIME ZONE,
@@ -556,7 +556,36 @@ Monitor browser console for:
 - Check that RLS is enabled on the table
 - Verify policies are created correctly (see Step 3b)
 
-## � Changelog
+## 📊 Data Model & Validation
+
+### Category Unique Constraint
+
+Categories are unique per user by name. The database enforces:
+
+```sql
+UNIQUE(user_id, name)  -- One category name per user
+```
+
+**Important**: The app must:
+1. **Trim whitespace** before INSERT/UPDATE: `.trim()`
+2. **Case-sensitive comparison** - "Food" and "food" are different
+3. **Check for duplicates** before INSERT (for better UX) and rely on DB constraint as safety net
+
+When a duplicate is detected:
+- **App Level**: Show error message "Category already exists" immediately (better UX)
+- **DB Level**: PostgreSQL will reject with constraint violation (safety net)
+
+### Expense Category Reference
+
+Expenses store category as UUID (text field):
+
+```
+expenses.category → categories.id
+```
+
+This allows category names to change without breaking references. The frontend resolves the ID to name for display.
+
+## 📝 Changelog
 
 ### v1.5.0 - Enhanced FK Constraint Handling
 

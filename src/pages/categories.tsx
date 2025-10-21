@@ -64,17 +64,20 @@ export function CategoriesPage() {
   }, [user]);
 
   const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) {
+    const trimmedName = newCategoryName.trim();
+    
+    if (!trimmedName) {
       setError(t('categories.categoryName'));
       return;
     }
 
-    if (newCategoryName.length < 2) {
+    if (trimmedName.length < 2) {
       setError(t('categories.minCharsError'));
       return;
     }
 
-    if (categories.some((c) => c.name.toLowerCase() === newCategoryName.toLowerCase())) {
+    // Check for duplicates (case-sensitive, already trimmed)
+    if (categories.some((c) => c.name === trimmedName)) {
       setError(t('categories.duplicateError'));
       return;
     }
@@ -88,7 +91,7 @@ export function CategoriesPage() {
       const newCategory: Category = {
         id: uuidv4(),
         userId: user.id,
-        name: newCategoryName,
+        name: trimmedName,  // Save trimmed name
         icon: newCategoryIcon,
         color: newCategoryColor,
         isSynced: false,
@@ -132,17 +135,20 @@ export function CategoriesPage() {
   };
 
   const handleSaveEdit = async (categoryId: string) => {
-    if (!editName.trim()) {
+    const trimmedName = editName.trim();
+    
+    if (!trimmedName) {
       setError(t('categories.minCharsError'));
       return;
     }
 
-    if (editName.length < 2) {
+    if (trimmedName.length < 2) {
       setError(t('categories.minCharsError'));
       return;
     }
 
-    if (categories.some((c) => c.id !== categoryId && c.name.toLowerCase() === editName.toLowerCase())) {
+    // Check for duplicates (case-sensitive, already trimmed, exclude current)
+    if (categories.some((c) => c.id !== categoryId && c.name === trimmedName)) {
       setError(t('categories.duplicateError'));
       return;
     }
@@ -154,7 +160,7 @@ export function CategoriesPage() {
       const updated = categories.find((c) => c.id === categoryId);
       if (!updated) return;
 
-      updated.name = editName;
+      updated.name = trimmedName;  // Save trimmed name
       updated.icon = editIcon;
       updated.color = editColor;
       updated.isSynced = false;
