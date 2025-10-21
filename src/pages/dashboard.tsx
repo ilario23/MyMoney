@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db } from '@/lib/dexie';
-import type { Expense } from '@/lib/dexie';
+import { db, type Expense, type Category } from '@/lib/dexie';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -15,13 +14,20 @@ export function DashboardPage() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categories, setCategories] = useState<Map<string, Category>>(new Map());
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
 
   useEffect(() => {
     if (!user) return;
 
-    const loadExpenses = async () => {
+    const loadExpensesAndCategories = async () => {
+      // Load categories
+      const userCategories = await db.categories.where('userId').equals(user.id).toArray();
+      const categoryMap = new Map(userCategories.map(c => [c.id, c]));
+      setCategories(categoryMap);
+
+      // Load expenses for current month
       const now = new Date();
       const start = startOfMonth(now);
       const end = endOfMonth(now);
@@ -49,7 +55,7 @@ export function DashboardPage() {
       setMonthlyIncome(income);
     };
 
-    loadExpenses();
+    loadExpensesAndCategories();
   }, [user]);
 
   if (!user) {
@@ -140,26 +146,31 @@ export function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {expenses.slice(0, 10).map((expense) => (
-                <div
-                  key={expense.id}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => navigate(`/expense/${expense.id}`)}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{expense.description}</p>
-                    <p className="text-sm text-muted-foreground">{expense.category}</p>
+              {expenses.slice(0, 10).map((expense) => {
+                const categoryObj = categories.get(expense.category);
+                return (
+                  <div
+                    key={expense.id}
+                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                    onClick={() => navigate(`/expense/${expense.id}`)}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{expense.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {categoryObj ? `${categoryObj.icon} ${categoryObj.name}` : 'Unknown category'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                        {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(expense.date, 'd MMM', { locale: dateLocale })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                      {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(expense.date, 'd MMM', { locale: dateLocale })}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
