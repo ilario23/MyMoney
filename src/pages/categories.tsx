@@ -16,6 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, Edit2, Save, X, Search } from 'lucide-react';
 import type { Category } from '@/lib/dexie';
@@ -38,6 +45,7 @@ export function CategoriesPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('📌');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
+  const [newCategoryParentId, setNewCategoryParentId] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Edit states
@@ -111,6 +119,7 @@ export function CategoriesPage() {
         name: trimmedName,  // Save trimmed name
         icon: newCategoryIcon,
         color: newCategoryColor,
+        parentId: newCategoryParentId || undefined,  // Support hierarchical
         isSynced: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -133,6 +142,7 @@ export function CategoriesPage() {
       setNewCategoryName('');
       setNewCategoryIcon('📌');
       setNewCategoryColor('#3B82F6');
+      setNewCategoryParentId('');  // Reset parent
       setOpenCreateDialog(false);
 
       setTimeout(() => setSuccess(''), 3000);
@@ -329,6 +339,26 @@ export function CategoriesPage() {
                     />
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Parent Category (Optional)</label>
+                <Select value={newCategoryParentId} onValueChange={setNewCategoryParentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="None (Top-level)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None (Top-level)</SelectItem>
+                    {categories.filter((c) => !c.parentId).map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.icon} {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select a parent to create a subcategory
+                </p>
               </div>
 
               <Button onClick={handleCreateCategory} disabled={isCreating} className="w-full">
