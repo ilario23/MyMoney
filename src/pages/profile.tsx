@@ -4,6 +4,7 @@ import { useLanguage, type Language } from '@/lib/language';
 import { supabase } from '@/lib/supabase';
 import { getDatabase, closeDatabase } from '@/lib/rxdb';
 import { statsService } from '@/services/stats.service';
+import { authLogger, dbLogger, syncLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -103,7 +104,7 @@ export function ProfilePage() {
         // Update would be handled by auth listener
       }
     } catch (err) {
-      console.error('Error updating profile:', err);
+      authLogger.error('Error updating profile:', err);
       setError(t('profile.anErrorOccurred'));
     } finally {
       setIsSaving(false);
@@ -112,17 +113,17 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      console.log('🚪 Starting logout process...');
+      authLogger.info('Starting logout process...');
 
       // 1. Sign out da Supabase
       await supabase.auth.signOut();
-      console.log('✅ Supabase logout complete');
+      authLogger.success('Supabase logout complete');
 
       // 2. Pulisci completamente IndexedDB
       try {
         // Chiudi il database RxDB
         await closeDatabase();
-        console.log('✅ RxDB database closed');
+        dbLogger.success('RxDB database closed');
 
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
@@ -132,7 +133,7 @@ export function ProfilePage() {
               await new Promise<void>((resolve, reject) => {
                 const deleteRequest = window.indexedDB.deleteDatabase(dbInfo.name!);
                 deleteRequest.onsuccess = () => {
-                  console.log(`✅ Deleted IndexedDB: ${dbInfo.name}`);
+                  dbLogger.success(`Deleted IndexedDB: ${dbInfo.name}`);
                   resolve();
                 };
                 deleteRequest.onerror = () => reject(deleteRequest.error);
@@ -141,23 +142,23 @@ export function ProfilePage() {
           }
         }
       } catch (dbError) {
-        console.warn('⚠️ Error cleaning IndexedDB:', dbError);
+        dbLogger.warn('Error cleaning IndexedDB:', dbError);
       }
 
       // 3. Pulisci localStorage
       try {
         localStorage.clear();
-        console.log('✅ localStorage cleared');
+        authLogger.success('localStorage cleared');
       } catch (lsError) {
-        console.warn('⚠️ Error clearing localStorage:', lsError);
+        authLogger.warn('Error clearing localStorage:', lsError);
       }
 
       // 4. Pulisci sessionStorage
       try {
         sessionStorage.clear();
-        console.log('✅ sessionStorage cleared');
+        authLogger.success('sessionStorage cleared');
       } catch (ssError) {
-        console.warn('⚠️ Error clearing sessionStorage:', ssError);
+        authLogger.warn('Error clearing sessionStorage:', ssError);
       }
 
       // 5. Pulisci Cache API (Service Worker caches)
@@ -165,21 +166,21 @@ export function ProfilePage() {
         if ('caches' in window) {
           const cacheNames = await caches.keys();
           await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
-          console.log(`✅ Cleared ${cacheNames.length} cache(s)`);
+          authLogger.success(`Cleared ${cacheNames.length} cache(s)`);
         }
       } catch (cacheError) {
-        console.warn('⚠️ Error clearing caches:', cacheError);
+        authLogger.warn('Error clearing caches:', cacheError);
       }
 
       // 6. Logout dall'auth store (Zustand)
       logout();
-      console.log('✅ Auth store cleared');
+      authLogger.success('Auth store cleared');
 
       // 7. Redirect al login
-      console.log('🎉 Logout complete, redirecting to login...');
+      authLogger.success('Logout complete, redirecting to login...');
       navigate('/login');
     } catch (error) {
-      console.error('❌ Logout error:', error);
+      authLogger.error('Logout error:', error);
       setError(t('profile.logoutError') || 'Errore durante il logout');
     }
   };
@@ -536,12 +537,12 @@ export function ProfilePage() {
                     }
 
                     // La sincronizzazione avverrà automaticamente
-                    console.log('✅ Data deletion queued for sync');
+                    syncLogger.success('Data deletion queued for sync');
 
                     setSuccess(t('profile.dataDeleted'));
                     setTimeout(() => navigate('/dashboard'), 1500);
                   } catch (error) {
-                    console.error('Error deleting data:', error);
+                    dbLogger.error('Error deleting data:', error);
                     setError(t('profile.anErrorOccurred'));
                   }
                 }}

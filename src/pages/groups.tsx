@@ -4,6 +4,7 @@ import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { useRxDB, useRxQuery } from "@/hooks/useRxDB";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -142,7 +143,7 @@ export function GroupsPage() {
       setShowCreateDialog(false);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Error creating group:", err);
+      logger.error("Error creating group:", err);
       setError("Errore nella creazione del gruppo");
     }
   };
@@ -241,7 +242,7 @@ export function GroupsPage() {
       setShowJoinDialog(false);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Error joining group:", err);
+      logger.error("Error joining group:", err);
       setError("Errore nell'unirsi al gruppo");
     } finally {
       setIsJoining(false);
@@ -254,7 +255,7 @@ export function GroupsPage() {
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error("Error copying code:", err);
+      logger.error("Error copying code:", err);
     }
   };
 
@@ -268,7 +269,7 @@ export function GroupsPage() {
       setSuccess("Gruppo eliminato");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Error deleting group:", err);
+      logger.error("Error deleting group:", err);
       setError("Errore nell'eliminazione");
     }
   };
@@ -294,7 +295,7 @@ export function GroupsPage() {
       );
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
-      console.error("Error toggling allowNewMembers:", err);
+      logger.error("Error toggling allowNewMembers:", err);
       setError("Errore nell'aggiornamento");
     }
   };

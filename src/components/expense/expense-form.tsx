@@ -4,6 +4,7 @@ import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
 import { getDatabase } from '@/lib/rxdb';
 import type { CategoryDocType, GroupDocType } from '@/lib/rxdb-schemas';
+import { dbLogger, syncLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -78,7 +79,7 @@ export function ExpenseForm() {
         
         setGroups(allGroups.map(g => g.toJSON()));
       } catch (error) {
-        console.error('Error loading data:', error);
+        dbLogger.error('Error loading data:', error);
       }
     };
     loadData();
@@ -140,7 +141,7 @@ export function ExpenseForm() {
       await db.expenses.insert(expense);
 
       // Sync happens automatically via RxDB replication
-      console.log('✅ Expense saved - will sync automatically');
+      syncLogger.success('Expense saved - will sync automatically');
 
       setSuccess(true);
       // Reset form
@@ -155,7 +156,7 @@ export function ExpenseForm() {
         navigate('/dashboard');
       }, 2000);
     } catch (error) {
-      console.error('Error adding expense:', error);
+      dbLogger.error('Error adding expense:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       setError(`Error: ${errorMsg}`);
     } finally {

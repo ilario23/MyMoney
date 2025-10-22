@@ -4,6 +4,7 @@ import './index.css'
 import { App } from "./App.tsx";
 import { registerSW } from '@/lib/pwa';
 import { initDatabase } from '@/lib/rxdb';
+import { dbLogger } from '@/lib/logger';
 
 // App wrapper component for RxDB initialization and service worker
 function AppWrapper() {
@@ -13,11 +14,11 @@ function AppWrapper() {
     // Initialize RxDB before rendering app
     initDatabase()
       .then(() => {
-        console.log('✅ RxDB initialized successfully');
+        dbLogger.success('RxDB initialized successfully');
         setDbReady(true);
       })
       .catch((error) => {
-        console.error('❌ Failed to initialize RxDB:', error);
+        dbLogger.error('Failed to initialize RxDB:', error);
       });
 
     // Register service worker only in production

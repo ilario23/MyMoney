@@ -9,6 +9,7 @@ import { AlertCircle, Wallet, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/auth.store';
 import { getDatabase } from '@/lib/rxdb';
+import { authLogger } from '@/lib/logger';
 
 export function SignupPage() {
   const { t } = useLanguage();
@@ -95,7 +96,7 @@ export function SignupPage() {
       });
 
       // 2b. Crea l'utente anche in Supabase
-      console.log('📝 Attempting to create user in Supabase...');
+      authLogger.info('Attempting to create user in Supabase...');
       const { error: userError, data: userData } = await supabase.from('users').insert({
         id: userId,
         email: userEmail,
@@ -105,15 +106,15 @@ export function SignupPage() {
       });
 
       if (userError) {
-        console.error('❌ Error creating user in Supabase:', userError);
-        console.error('Error code:', userError.code);
-        console.error('Error details:', userError.details);
-        console.error('Error message:', userError.message);
+        authLogger.error('Error creating user in Supabase:', userError);
+        authLogger.error('Error code:', userError.code);
+        authLogger.error('Error details:', userError.details);
+        authLogger.error('Error message:', userError.message);
         setError(`Failed to create user in database: ${userError.message}. Code: ${userError.code}`);
         return;
       }
 
-      console.log('✅ User created successfully in Supabase', userData);
+      authLogger.success('User created successfully in Supabase', userData);
 
       setSuccess(true);
 
@@ -132,7 +133,7 @@ export function SignupPage() {
         navigate('/dashboard');
       }, 1500);
     } catch (err) {
-      console.error('Signup error:', err);
+      authLogger.error('Signup error:', err);
       setError(t('auth.errorOccurred'));
     } finally {
       setIsLoading(false);

@@ -3,6 +3,7 @@ import { replicateRxCollection } from "rxdb/plugins/replication";
 import { Subject } from "rxjs";
 import { supabase } from "@/lib/supabase";
 import { getDatabase } from "@/lib/rxdb";
+import { syncLogger } from "@/lib/logger";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "completed";
 
@@ -30,7 +31,7 @@ class SyncService {
   }
 
   async startSync(userId: string) {
-    console.log("Starting sync for user:", userId);
+    syncLogger.info("Starting sync for user:", userId);
     try {
       const db = getDatabase();
       this.currentState.status = "syncing";

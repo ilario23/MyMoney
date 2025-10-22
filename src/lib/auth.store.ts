@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { syncService } from "@/services/sync.service";
+import { syncLogger } from "./logger";
 
 export interface AuthUser {
   id: string;
@@ -46,18 +47,18 @@ export const useAuthStore = create<AuthStore>()(
         if (user) {
           try {
             await syncService.startSync(user.id);
-            console.log("🔄 Sync started for user:", user.id);
+            syncLogger.info("Sync started for user:", user.id);
           } catch (error) {
-            console.error("Failed to start sync:", error);
+            syncLogger.error("Failed to start sync:", error);
           }
         }
       },
       stopSync: async () => {
         try {
           await syncService.stopSync();
-          console.log("⏸️ Sync stopped");
+          syncLogger.info("Sync stopped");
         } catch (error) {
-          console.error("Failed to stop sync:", error);
+          syncLogger.error("Failed to stop sync:", error);
         }
       },
     }),

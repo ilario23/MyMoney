@@ -9,6 +9,7 @@ import { AlertCircle, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/auth.store';
 import { getDatabase } from '@/lib/rxdb';
+import { authLogger } from '@/lib/logger';
 
 export function LoginPage() {
   const { t } = useLanguage();
@@ -47,11 +48,11 @@ export function LoginPage() {
           .single();
 
         if (checkError && checkError.code !== 'PGRST116') {
-          console.error('❌ Error checking user:', checkError);
+          authLogger.error('Error checking user:', checkError);
         }
 
         if (!existingUser) {
-          console.log('📝 Creating user in database...');
+          authLogger.info('Creating user in database...');
           const { error: createError } = await supabase.from('users').insert({
             id: data.user.id,
             email: data.user.email,
@@ -62,9 +63,9 @@ export function LoginPage() {
           });
 
           if (createError) {
-            console.error('❌ Error creating user:', createError);
+            authLogger.error('Error creating user:', createError);
           } else {
-            console.log('✅ User created successfully');
+            authLogger.success('User created successfully');
           }
         }
 
@@ -96,7 +97,7 @@ export function LoginPage() {
       }
     } catch (err) {
       setError(t('auth.errorOccurred'));
-      console.error(err);
+      authLogger.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }

@@ -15,6 +15,7 @@ import { RxDBLeaderElectionPlugin } from "rxdb/plugins/leader-election";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { wrappedValidateAjvStorage } from "rxdb/plugins/validate-ajv";
+import { dbLogger } from "./logger";
 
 import {
   userSchema,
@@ -66,7 +67,7 @@ export async function initDatabase(): Promise<MyMoneyDatabase> {
     return dbInstance;
   }
 
-  console.log("🚀 Initializing RxDB database...");
+  dbLogger.info("Initializing RxDB database...");
 
   try {
     // Create database with validation
@@ -86,7 +87,7 @@ export async function initDatabase(): Promise<MyMoneyDatabase> {
       },
     });
 
-    console.log("📦 Creating collections...");
+    dbLogger.info("Creating collections...");
 
     // Add collections
     await db.addCollections({
@@ -116,17 +117,17 @@ export async function initDatabase(): Promise<MyMoneyDatabase> {
       },
     });
 
-    console.log("✅ RxDB database initialized successfully");
+    dbLogger.success("RxDB database initialized successfully");
 
     // Set up leader election
     db.waitForLeadership().then(() => {
-      console.log("👑 This tab is now the leader");
+      dbLogger.info("This tab is now the leader");
     });
 
     dbInstance = db;
     return db;
   } catch (error) {
-    console.error("❌ Failed to initialize RxDB:", error);
+    dbLogger.error("Failed to initialize RxDB:", error);
     throw error;
   }
 }
@@ -149,7 +150,7 @@ export async function closeDatabase(): Promise<void> {
   if (dbInstance) {
     await dbInstance.remove();
     dbInstance = null;
-    console.log("🔒 Database closed");
+    dbLogger.info("Database closed");
   }
 }
 
@@ -161,7 +162,7 @@ export async function removeDatabase(): Promise<void> {
   if (dbInstance) {
     await dbInstance.remove();
     dbInstance = null;
-    console.log("🗑️ Database removed");
+    dbLogger.warn("Database removed - all local data deleted");
   }
 }
 
