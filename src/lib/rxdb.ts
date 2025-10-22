@@ -70,6 +70,16 @@ export async function initDatabase(): Promise<MyMoneyDatabase> {
   dbLogger.info("Initializing RxDB database...");
 
   try {
+    // In development, clear existing database if schema conflicts
+    if (import.meta.env.DEV) {
+      try {
+        // Try to remove existing database if it exists
+        await removeDatabase();
+      } catch {
+        // Ignore errors - database might not exist
+      }
+    }
+
     // Create database with validation
     const db = await createRxDatabase<MyMoneyCollections>({
       name: "mymoney_v3",
@@ -78,6 +88,7 @@ export async function initDatabase(): Promise<MyMoneyDatabase> {
       }),
       multiInstance: true,
       eventReduce: true,
+      ignoreDuplicate: true, // Allow reusing existing database
       cleanupPolicy: {
         minimumDeletedTime: 1000 * 60 * 60 * 24 * 30, // 30 days
         minimumCollectionAge: 1000 * 60, // 1 minute

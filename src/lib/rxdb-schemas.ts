@@ -145,7 +145,7 @@ export const userSchema: RxJsonSchema<any> = {
     },
   },
   required: ["id", "email", "created_at", "updated_at"],
-  indexes: ["updated_at", "deleted_at"],
+  indexes: ["updated_at"],
 };
 
 // Category schema
@@ -198,7 +198,7 @@ export const categorySchema: RxJsonSchema<any> = {
     },
   },
   required: ["id", "name", "created_at", "updated_at"],
-  indexes: ["user_id", "parent_id", "updated_at", "deleted_at"],
+  indexes: ["user_id", "parent_id", "updated_at"],
 };
 
 // Expense schema
@@ -246,7 +246,7 @@ export const expenseSchema: RxJsonSchema<any> = {
     },
   },
   required: ["id", "user_id", "amount", "date", "created_at", "updated_at"],
-  indexes: ["user_id", "category_id", "date", "updated_at", "deleted_at"],
+  indexes: ["user_id", "category_id", "date", "updated_at"],
 };
 
 // Group schema
@@ -290,7 +290,7 @@ export const groupSchema: RxJsonSchema<any> = {
     },
   },
   required: ["id", "name", "owner_id", "created_at", "updated_at"],
-  indexes: ["owner_id", "invite_code", "updated_at", "deleted_at"],
+  indexes: ["owner_id", "invite_code", "updated_at"],
 };
 
 // Group member schema
@@ -333,8 +333,8 @@ export const groupMemberSchema: RxJsonSchema<any> = {
       format: "date-time",
     },
   },
-  required: ["id", "group_id", "user_id", "created_at", "updated_at"],
-  indexes: ["group_id", "user_id", "updated_at", "deleted_at"],
+  required: ["id", "group_id", "user_id", "role", "created_at", "updated_at"],
+  indexes: ["group_id", "user_id", "updated_at"],
 };
 
 // Shared expense schema (matches Supabase SQL)
@@ -399,7 +399,7 @@ export const sharedExpenseSchema: RxJsonSchema<any> = {
     "created_at",
     "updated_at",
   ],
-  indexes: ["expense_id", "group_id", "creator_id", "updated_at", "deleted_at"],
+  indexes: ["expense_id", "group_id", "creator_id", "updated_at"],
 };
 
 // Shared expense split schema
