@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Wallet, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/auth.store';
-import { db } from '@/lib/dexie';
+import { getDatabase } from '@/lib/rxdb';
 
 export function SignupPage() {
   const { t } = useLanguage();
@@ -82,21 +82,24 @@ export function SignupPage() {
       const userId = data.user.id;
       const userEmail = data.user.email!;
 
-      // 2. Crea l'utente nel database locale (Dexie)
-      await db.users.add({
+      // 2. Crea l'utente nel database locale RxDB
+      const db = getDatabase();
+      await db.users.insert({
         id: userId,
         email: userEmail,
-        displayName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        full_name: displayName,
+        preferred_language: 'it',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
       });
 
-      // 2b. Crea l'utente anche in Supabase per evitare foreign key errors
+      // 2b. Crea l'utente anche in Supabase
       console.log('📝 Attempting to create user in Supabase...');
       const { error: userError, data: userData } = await supabase.from('users').insert({
         id: userId,
         email: userEmail,
-        display_name: displayName,
+        full_name: displayName,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -108,7 +111,6 @@ export function SignupPage() {
         console.error('Error message:', userError.message);
         setError(`Failed to create user in database: ${userError.message}. Code: ${userError.code}`);
         return;
-        // Interrompiamo il signup se il user non viene creato
       }
 
       console.log('✅ User created successfully in Supabase', userData);
@@ -116,12 +118,16 @@ export function SignupPage() {
       setSuccess(true);
 
       // 3. Login automatico
-      setTimeout(() => {
+      setTimeout(async () => {
         setUser({
           id: userId,
           email: userEmail,
           displayName,
         });
+
+        // Avvia sincronizzazione
+        const { startSync } = useAuthStore.getState();
+        await startSync();
 
         navigate('/dashboard');
       }, 1500);

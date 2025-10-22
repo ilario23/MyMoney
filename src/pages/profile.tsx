@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage, type Language } from '@/lib/language';
 import { supabase } from '@/lib/supabase';
-import { db } from '@/lib/dexie';
-import { syncService } from '@/services/sync.service';
-import { getUserExpenseSummary } from '@/lib/database-views';
+import { getDatabase, closeDatabase } from '@/lib/rxdb';
+import { statsService } from '@/services/stats.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -51,38 +50,21 @@ export function ProfilePage() {
     const loadStats = async () => {
       if (!user) return;
       try {
-        // 🚀 Usa Database View ottimizzata invece di calcolare nel frontend
-        if (navigator.onLine) {
-          const summary = await getUserExpenseSummary(user.id);
-          if (summary) {
-            const categories = await db.categories.where('userId').equals(user.id).toArray();
-            const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
-            const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
-
-            setStats({
-              totalExpenses: summary.total_expenses || 0,
-              totalAmount: summary.total_amount || 0,
-              categories: categories.length,
-              lastSyncDate: lastSync,
-            });
-            return;
-          }
-        }
-
-        // Fallback: calcolo locale se offline o view non disponibile
-        const allExpenses = await db.expenses.where('userId').equals(user.id).toArray();
-        const expenses = allExpenses.filter((e) => !e.deletedAt);
-        const categories = await db.categories.where('userId').equals(user.id).toArray();
-        const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
-
-        const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
-
+        const db = getDatabase();
+        
+        // Calcola statistiche del mese corrente
+        const monthlyStats = await statsService.calculateMonthlyStats(user.id, new Date());
+        
+        // Conta le categorie
+        const categories = await db.categories
+          .find({ selector: { user_id: user.id, deleted_at: null } })
+          .exec();
+        
         setStats({
-          totalExpenses: expenses.length,
-          totalAmount,
+          totalExpenses: monthlyStats.expenseCount,
+          totalAmount: monthlyStats.totalExpenses,
           categories: categories.length,
-          lastSyncDate: lastSync,
+          lastSyncDate: new Date(),
         });
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -138,9 +120,9 @@ export function ProfilePage() {
 
       // 2. Pulisci completamente IndexedDB
       try {
-        // Chiudi il database Dexie
-        await db.close();
-        console.log('✅ Dexie database closed');
+        // Chiudi il database RxDB
+        await closeDatabase();
+        console.log('✅ RxDB database closed');
 
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
@@ -475,16 +457,26 @@ export function ProfilePage() {
               </DialogHeader>
               <Button
                 onClick={async () => {
-                  const expenses = await db.expenses.where('userId').equals(user.id).toArray();
-                  const categories = await db.categories.where('userId').equals(user.id).toArray();
-                  const data = { user, expenses, categories, exportDate: new Date() };
+                  const db = getDatabase();
+                  const expenses = await db.expenses
+                    .find({ selector: { user_id: user.id } })
+                    .exec();
+                  const categories = await db.categories
+                    .find({ selector: { user_id: user.id } })
+                    .exec();
+                  const data = { 
+                    user, 
+                    expenses: expenses.map(e => e.toJSON()), 
+                    categories: categories.map(c => c.toJSON()), 
+                    exportDate: new Date() 
+                  };
                   const blob = new Blob([JSON.stringify(data, null, 2)], {
                     type: 'application/json',
                   });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = `expense-tracker-backup-${Date.now()}.json`;
+                  a.download = `mymoney-backup-${Date.now()}.json`;
                   a.click();
                   setSuccess(t('profile.dataExported'));
                 }}
@@ -513,27 +505,38 @@ export function ProfilePage() {
                 onClick={async () => {
                   if (!user) return;
                   try {
-                    // Soft delete: imposta deletedAt invece di eliminare fisicamente
-                    const expenses = await db.expenses.where('userId').equals(user.id).toArray();
+                    const db = getDatabase();
+                    
+                    // Soft delete: imposta deleted_at invece di eliminare fisicamente
+                    const expenses = await db.expenses
+                      .find({ selector: { user_id: user.id } })
+                      .exec();
+                    
                     for (const expense of expenses) {
-                      await db.expenses.update(expense.id, {
-                        deletedAt: new Date(),
-                        isSynced: false,
-                        updatedAt: new Date(),
+                      await expense.update({
+                        $set: {
+                          deleted_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        }
                       });
                     }
 
-                    await db.categories.where('userId').equals(user.id).delete();
-
-                    // Sync immediato con Supabase per propagare le eliminazioni
-                    if (navigator.onLine) {
-                      try {
-                        await syncService.sync({ userId: user.id, verbose: true });
-                        console.log('✅ Data deletion synced to Supabase');
-                      } catch (syncError) {
-                        console.warn('⚠️ Sync failed, will retry later:', syncError);
-                      }
+                    // Elimina categorie custom
+                    const categories = await db.categories
+                      .find({ selector: { user_id: user.id, is_custom: true } })
+                      .exec();
+                    
+                    for (const category of categories) {
+                      await category.update({
+                        $set: {
+                          deleted_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        }
+                      });
                     }
+
+                    // La sincronizzazione avverrà automaticamente
+                    console.log('✅ Data deletion queued for sync');
 
                     setSuccess(t('profile.dataDeleted'));
                     setTimeout(() => navigate('/dashboard'), 1500);

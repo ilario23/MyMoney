@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/auth.store';
-import { db } from '@/lib/dexie';
+import { getDatabase } from '@/lib/rxdb';
 
 export function LoginPage() {
   const { t } = useLanguage();
@@ -17,7 +17,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { setUser, startSync } = useAuthStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +40,6 @@ export function LoginPage() {
         const avatarUrl = data.user.user_metadata?.avatar_url;
 
         // Assicura che il record user esista in Supabase
-        // (per evitare foreign key errors durante il sync)
         const { data: existingUser, error: checkError } = await supabase
           .from('users')
           .select('id')
@@ -48,48 +47,50 @@ export function LoginPage() {
           .single();
 
         if (checkError && checkError.code !== 'PGRST116') {
-          // PGRST116 = not found (è normale)
           console.error('❌ Error checking user:', checkError);
         }
 
         if (!existingUser) {
-          console.log('📝 User not found in database, creating...');
-          // Crea l'utente in Supabase se non esiste
+          console.log('📝 Creating user in database...');
           const { error: createError } = await supabase.from('users').insert({
             id: data.user.id,
             email: data.user.email,
-            display_name: displayName,
+            full_name: displayName,
+            avatar_url: avatarUrl,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
 
           if (createError) {
-            console.error('❌ Error creating user on login:', createError);
-            console.error('Error code:', createError.code);
-            console.error('Error message:', createError.message);
+            console.error('❌ Error creating user:', createError);
           } else {
             console.log('✅ User created successfully');
           }
-        } else {
-          console.log('✅ User already exists in database');
         }
 
-        // Salva nel database locale
-        await db.users.put({
+        // Salva nel database locale RxDB
+        const db = getDatabase();
+        await db.users.upsert({
           id: data.user.id,
           email: data.user.email!,
-          displayName,
-          avatarUrl,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          full_name: displayName,
+          avatar_url: avatarUrl,
+          preferred_language: 'it',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
         });
 
+        // Imposta user nello store
         setUser({
           id: data.user.id,
           email: data.user.email!,
           displayName,
           avatarUrl,
         });
+
+        // Avvia sincronizzazione
+        await startSync();
 
         navigate('/dashboard');
       }
