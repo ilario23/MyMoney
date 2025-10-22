@@ -84,15 +84,7 @@ CREATE POLICY "Users manage own categories"
   ON categories FOR ALL
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Group members view group categories"
-  ON categories FOR SELECT
-  USING (
-    group_id IS NOT NULL AND 
-    group_id IN (
-      SELECT group_id FROM group_members 
-      WHERE user_id = auth.uid() AND deleted_at IS NULL
-    )
-  );
+-- Note: Group-related policies will be added after group_members table creation
 
 -- ============================================================================
 -- EXPENSES TABLE
@@ -133,15 +125,7 @@ CREATE POLICY "Users manage own expenses"
   ON expenses FOR ALL
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Group members view group expenses"
-  ON expenses FOR SELECT
-  USING (
-    group_id IS NOT NULL AND 
-    group_id IN (
-      SELECT group_id FROM group_members 
-      WHERE user_id = auth.uid() AND deleted_at IS NULL
-    )
-  );
+-- Note: Group-related policies will be added after group_members table creation
 
 -- ============================================================================
 -- GROUPS TABLE
@@ -172,18 +156,11 @@ CREATE POLICY "Owners manage own groups"
   ON groups FOR ALL
   USING (auth.uid() = owner_id);
 
-CREATE POLICY "Members view their groups"
-  ON groups FOR SELECT
-  USING (
-    id IN (
-      SELECT group_id FROM group_members 
-      WHERE user_id = auth.uid() AND deleted_at IS NULL
-    )
-  );
-
 CREATE POLICY "Anyone can view groups by invite code"
   ON groups FOR SELECT
   USING (invite_code IS NOT NULL AND allow_new_members = true);
+
+-- Note: Member-related policies will be added after group_members table creation
 
 -- ============================================================================
 -- GROUP_MEMBERS TABLE
@@ -264,6 +241,42 @@ CREATE POLICY "Group members manage shared expenses"
   ON shared_expenses FOR ALL
   USING (
     group_id IN (
+      SELECT group_id FROM group_members 
+      WHERE user_id = auth.uid() AND deleted_at IS NULL
+    )
+  );
+
+-- ============================================================================
+-- ADDITIONAL RLS POLICIES (After group_members creation)
+-- ============================================================================
+
+-- Categories: Group members can view group categories
+CREATE POLICY "Group members view group categories"
+  ON categories FOR SELECT
+  USING (
+    group_id IS NOT NULL AND 
+    group_id IN (
+      SELECT group_id FROM group_members 
+      WHERE user_id = auth.uid() AND deleted_at IS NULL
+    )
+  );
+
+-- Expenses: Group members can view group expenses
+CREATE POLICY "Group members view group expenses"
+  ON expenses FOR SELECT
+  USING (
+    group_id IS NOT NULL AND 
+    group_id IN (
+      SELECT group_id FROM group_members 
+      WHERE user_id = auth.uid() AND deleted_at IS NULL
+    )
+  );
+
+-- Groups: Members can view their groups
+CREATE POLICY "Members view their groups"
+  ON groups FOR SELECT
+  USING (
+    id IN (
       SELECT group_id FROM group_members 
       WHERE user_id = auth.uid() AND deleted_at IS NULL
     )
