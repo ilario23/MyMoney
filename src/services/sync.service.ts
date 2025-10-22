@@ -46,7 +46,7 @@ class SyncService {
       ] as const;
 
       for (const collectionName of collections) {
-        const collection = db[collectionName] as any;
+        const collection = db[collectionName];
         if (!collection) continue;
 
         const replicationState = replicateRxCollection({
@@ -54,7 +54,10 @@ class SyncService {
           replicationIdentifier: `supabase-${collectionName}-${userId}`,
           live: true,
           pull: {
-            async handler(checkpoint: any, batchSize: number) {
+            async handler(
+              checkpoint: { updated_at: string } | undefined,
+              batchSize: number
+            ) {
               const minTimestamp =
                 checkpoint?.updated_at || new Date(0).toISOString();
               const result = await supabase
@@ -97,9 +100,10 @@ class SyncService {
       this.currentState.status = "completed";
       this.currentState.lastSync = new Date();
       this.syncStateSubject.next(this.currentState);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.currentState.status = "error";
-      this.currentState.error = error?.message || "Unknown error";
+      this.currentState.error =
+        error instanceof Error ? error.message : "Unknown error";
       this.syncStateSubject.next(this.currentState);
       throw error;
     }

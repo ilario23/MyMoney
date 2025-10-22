@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { getDatabase } from "@/lib/rxdb";
+import type { MyMoneyCollections } from "@/lib/rxdb";
 import type { RxDocument, RxQuery } from "rxdb";
 
 /**
@@ -41,7 +42,7 @@ export function useRxQuery<T = any>(queryFn: () => RxQuery<T> | null) {
 
       // Subscribe to query results
       const subscription = query.$.subscribe({
-        next: (results: any) => {
+        next: (results: RxDocument<T>[]) => {
           setData(results);
           setLoading(false);
         },
@@ -83,7 +84,7 @@ export function useRxDocument<T = any>(queryFn: () => RxQuery<T> | null) {
 
       // Subscribe to single document
       const subscription = query.$.subscribe({
-        next: (results: any) => {
+        next: (results: RxDocument<T>[]) => {
           setDoc(results[0] || null);
           setLoading(false);
         },
@@ -106,9 +107,11 @@ export function useRxDocument<T = any>(queryFn: () => RxQuery<T> | null) {
 /**
  * Hook for RxDB collection operations
  */
-export function useRxCollection<T = any>(collectionName: string) {
+export function useRxCollection<T = any>(
+  collectionName: keyof MyMoneyCollections
+) {
   const db = useRxDB();
-  const collection = (db as any)[collectionName];
+  const collection = db[collectionName];
 
   const insert = async (data: Partial<T> & { id?: string }) => {
     return collection.insert({

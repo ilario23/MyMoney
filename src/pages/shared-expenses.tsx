@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/language";
 import { useAuthStore } from "@/lib/auth.store";
 import { useRxDB, useRxQuery } from "@/hooks/useRxDB";
+import type { SharedExpenseDocType } from "@/lib/rxdb-schemas";
 import {
   Card,
   CardContent,
@@ -73,7 +74,9 @@ export function SharedExpensesPage() {
       if (selectedGroup !== "all" && exp.group_id !== selectedGroup)
         return false;
       if (selectedStatus !== "all") {
-        const isSettled = exp.participants.every((p: any) => p.settled);
+        const isSettled = exp.participants.every(
+          (p: SharedExpenseDocType["participants"][number]) => p.settled
+        );
         if (selectedStatus === "settled" && !isSettled) return false;
         if (selectedStatus === "pending" && isSettled) return false;
       }
@@ -91,10 +94,12 @@ export function SharedExpensesPage() {
 
       const data = doc.toJSON();
       await doc.patch({
-        participants: data.participants.map((p: any) => ({
-          ...p,
-          settled: true,
-        })),
+        participants: data.participants.map(
+          (p: SharedExpenseDocType["participants"][number]) => ({
+            ...p,
+            settled: true,
+          })
+        ),
         updated_at: new Date().toISOString(),
       });
     } catch (err) {
@@ -191,7 +196,7 @@ export function SharedExpensesPage() {
         <div className="grid gap-4">
           {filteredExpenses.map((sharedExp) => {
             const isSettled = sharedExp.participants.every(
-              (p: any) => p.settled
+              (p: SharedExpenseDocType["participants"][number]) => p.settled
             );
             const paidByUser = sharedExp.creator_id === user.id;
             const expense = expenses.get(sharedExp.expense_id);
@@ -240,7 +245,10 @@ export function SharedExpensesPage() {
                     </p>
                     <div className="space-y-1">
                       {sharedExp.participants.map(
-                        (participant: any, idx: number) => (
+                        (
+                          participant: SharedExpenseDocType["participants"][number],
+                          idx: number
+                        ) => (
                           <div
                             key={idx}
                             className="text-sm flex justify-between"

@@ -1,5 +1,6 @@
 // Stats Service v3.0 - Local statistics calculation
 import { getDatabase } from "@/lib/rxdb";
+import type { ExpenseDocType } from "@/lib/rxdb-schemas";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export interface StatsData {
@@ -61,7 +62,10 @@ class StatsService {
     return stats;
   }
 
-  private processExpenses(expenses: any[], period: string): StatsData {
+  private processExpenses(
+    expenses: Array<ExpenseDocType & { category_name?: string }>,
+    period: string
+  ): StatsData {
     let totalExpenses = 0;
     let totalIncome = 0;
     const categoryMap = new Map();
@@ -114,7 +118,20 @@ class StatsService {
     return cacheAge < maxAge;
   }
 
-  private mapCacheToStats(cached: any): StatsData {
+  private mapCacheToStats(cached: {
+    period: string;
+    total_expenses: number;
+    total_income: number;
+    expense_count: number;
+    top_categories: Array<{
+      categoryId: string;
+      categoryName: string;
+      amount: number;
+      count: number;
+    }>;
+    daily_average: number;
+    monthly_average: number;
+  }): StatsData {
     return {
       period: cached.period,
       totalExpenses: cached.total_expenses,

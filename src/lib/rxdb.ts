@@ -3,7 +3,13 @@
  * Local-first database with reactive queries and Supabase sync
  */
 
-import { createRxDatabase, addRxPlugin, RxDatabase, RxCollection } from "rxdb";
+import {
+  createRxDatabase,
+  addRxPlugin,
+  type RxDatabase,
+  type RxCollection,
+  type RxDumpDatabaseAny,
+} from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { RxDBLeaderElectionPlugin } from "rxdb/plugins/leader-election";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
@@ -177,7 +183,9 @@ export async function exportDatabase(): Promise<any> {
 /**
  * Import database from JSON
  */
-export async function importDatabase(json: any): Promise<void> {
+export async function importDatabase(
+  json: RxDumpDatabaseAny<MyMoneyCollections>
+): Promise<void> {
   const db = getDatabase();
   await db.importJSON(json);
 }
