@@ -1,414 +1,803 @@
-# Spendix PWA - Setup Guide
+# MyMoney v3.0 - Complete Setup Guide# Spendix PWA - Setup Guide
 
-A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
+Welcome to MyMoney v3.0! This guide will help you set up a fresh installation from scratch.A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
 
-## 🎯 Features
+---## 🎯 Features
 
-### Version 1 (Personal)
+## 🎯 What's New in v3.0### Version 1 (Personal)
 
-- ✅ Secure registration and login (Supabase Auth)
+### Major Changes- ✅ Secure registration and login (Supabase Auth)
+
 - ✅ Create custom categories on-demand
-- ✅ Add and manage personal expenses
-- ✅ Customizable categories (name, color, icon)
-- ✅ Dashboard with monthly summary
-- ✅ Local import/export data
-- ✅ Offline mode with Dexie cache
+
+- **🔄 RxDB Instead of Dexie**: Reactive, observable database with automatic UI updates- ✅ Add and manage personal expenses
+
+- **📊 Local-First Statistics**: Calculate stats on the client with intelligent caching- ✅ Customizable categories (name, color, icon)
+
+- **🚀 Improved Sync**: Bidirectional replication protocol with better conflict resolution- ✅ Dashboard with monthly summary
+
+- **🗄️ Cleaner Backend**: Removed database views and aggregate tables - everything computed locally- ✅ Local import/export data
+
+- **✨ Better Performance**: Faster queries, reactive subscriptions, leader election for multi-tab- ✅ Offline mode with Dexie cache
+
 - ✅ Bidirectional sync with Supabase
+
+### Breaking Changes from v2.x
 
 ### Version 2 (Multi-user)
 
-- ✅ Group creation and management
-- ✅ Shared expenses visible to all members
+- **Database migration required** - v3.0 uses a completely new local database structure
+
+- **No backward compatibility** - Export your data from v2.x before upgrading- ✅ Group creation and management
+
+- **New Supabase schema** - Run the v3.0 SQL setup script for fresh installations- ✅ Shared expenses visible to all members
+
 - ✅ Recurring expenses (editable only by creator)
-- ✅ Group member CRUD operations
+
+---- ✅ Group member CRUD operations
+
 - ✅ Local notifications for invites and changes
-- ✅ Bidirectional synchronization with Supabase
 
-## 🛠️ Tech Stack
+## 📋 Prerequisites- ✅ Bidirectional synchronization with Supabase
 
-- **Frontend**: React 19 + Vite + TypeScript
-- **Styling**: Tailwind CSS v4 + ShadCN UI
+- **Node.js** 18 or higher## 🛠️ Tech Stack
+
+- **pnpm** (recommended) or npm
+
+- **Supabase account** (free tier works fine)- **Frontend**: React 19 + Vite + TypeScript
+
+- Modern browser with IndexedDB support- **Styling**: Tailwind CSS v4 + ShadCN UI
+
 - **State Management**: Zustand
-- **Local Database**: Dexie.js (IndexedDB)
+
+---- **Local Database**: Dexie.js (IndexedDB)
+
 - **Backend**: Supabase (Auth, PostgreSQL, Real-time)
-- **PWA**: vite-plugin-pwa, Service Worker
+
+## 🚀 Quick Start- **PWA**: vite-plugin-pwa, Service Worker
+
 - **Date Handling**: date-fns
-- **UI Icons**: Lucide React
+
+### 1. Clone and Install- **UI Icons**: Lucide React
+
 - **Animations**: Framer Motion
 
-## 📦 Installation
+```bash
 
-### Prerequisites
+git clone https://github.com/yourusername/mymoney.git## 📦 Installation
+
+cd mymoney
+
+pnpm install### Prerequisites
+
+```
 
 - Node.js 18+
-- npm or pnpm
+
+### 2. Environment Configuration- npm or pnpm
+
 - Supabase account
+
+Create a `.env.local` file in the project root:
 
 ### Step 1: Clone and Install
 
-```bash
-git clone <repo>
-cd frontend-starter-kit
+`````env
+
+VITE_SUPABASE_URL=https://your-project.supabase.co```bash
+
+VITE_SUPABASE_ANON_KEY=your-anon-key-heregit clone <repo>
+
+```cd frontend-starter-kit
+
 pnpm install
-```
 
-### Step 2: Configure Environment
+**Getting Supabase Credentials:**```
 
-```bash
-cp .env.example .env.local
-```
+
+
+1. Go to [supabase.com](https://supabase.com)### Step 2: Configure Environment
+
+2. Create a new project (or use existing)
+
+3. Go to **Settings** → **API**```bash
+
+4. Copy:cp .env.example .env.local
+
+   - **Project URL** → `VITE_SUPABASE_URL````
+
+   - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
 
 Add your Supabase credentials:
 
+### 3. Database Setup
+
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
+
+#### Option A: Fresh Installation (Recommended)VITE_SUPABASE_URL=https://your-project.supabase.co
+
 VITE_SUPABASE_ANON_KEY=your-anon-key
-```
 
-### Step 3: Setup Supabase Database
+1. Open your Supabase project```
 
-#### 📌 Important: Fresh Install vs Migration
+2. Go to **SQL Editor**
 
-**If you're setting up for the FIRST TIME:**
+3. Copy the entire content of `docs/SETUP_v3.0.sql`### Step 3: Setup Supabase Database
 
-- Follow **Step 3a** below - the schema already includes all v1.10 features
+4. Paste and run the script
+
+5. Wait for completion (should take 5-10 seconds)#### 📌 Important: Fresh Install vs Migration
+
+
+
+#### Option B: Migrate from v2.x**If you're setting up for the FIRST TIME:**
+
+
+
+⚠️ **Important:** Export your data first!- Follow **Step 3a** below - the schema already includes all v1.10 features
+
 - Skip migration files - they're only for upgrading existing databases
 
-**If you're UPGRADING from an older version:**
+```bash
+
+# In your v2.x app, export data**If you're UPGRADING from an older version:**
+
+# Settings → Export Data → Download JSON
 
 - Your database already exists
-- Run the migration SQL files in order:
-  - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
-  - `MIGRATION_v1.8.1_ACTIVE_CATEGORIES.sql` (if coming from < v1.8.1)
+
+# Then follow Option A for fresh install- Run the migration SQL files in order:
+
+# Afterward, import your data via the app UI  - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
+
+```  - `MIGRATION_v1.8.1_ACTIVE_CATEGORIES.sql` (if coming from < v1.8.1)
+
   - `MIGRATION_v1.9_GROUP_INVITE_CODES.sql` (if coming from < v1.9)
-  - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
 
-#### 3a. Create Tables
+### 4. Run the Application  - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
 
-Go to **Supabase → SQL Editor** and run the following SQL in order:
 
-⚠️ **IMPORTANT**: Execute SQL **in exact order** - some tables have foreign keys on others.
 
-```sql
--- 1. Users table (no dependencies)
+```bash#### 3a. Create Tables
+
+# Development mode
+
+pnpm devGo to **Supabase → SQL Editor** and run the following SQL in order:
+
+
+
+# Production build⚠️ **IMPORTANT**: Execute SQL **in exact order** - some tables have foreign keys on others.
+
+pnpm build
+
+pnpm preview```sql
+
+```-- 1. Users table (no dependencies)
+
 CREATE TABLE public.users (
-  id UUID PRIMARY KEY,
+
+Open [http://localhost:5173](http://localhost:5173)  id UUID PRIMARY KEY,
+
   email TEXT UNIQUE NOT NULL,
-  display_name TEXT,
+
+---  display_name TEXT,
+
   avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- 2. Groups table (depends on users)
-CREATE TABLE public.groups (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
+## 🔐 Authentication Setup  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+### Enable Email Authentication);
+
+
+
+1. Go to Supabase Dashboard-- 2. Groups table (depends on users)
+
+2. **Authentication** → **Providers**CREATE TABLE public.groups (
+
+3. Enable **Email** provider  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+4. Configure email templates (optional)  name TEXT NOT NULL,
+
   owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  description TEXT,
+
+### Optional: Social Login  description TEXT,
+
   color TEXT,
-  invite_code TEXT UNIQUE,  -- Reusable invite code (v1.10)
+
+To enable Google/GitHub/etc:  invite_code TEXT UNIQUE,  -- Reusable invite code (v1.10)
+
   allow_new_members BOOLEAN DEFAULT TRUE NOT NULL,  -- Owner can control if group accepts new members (v1.10)
-  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- DEPRECATED (kept for backwards compatibility)
-  used_at TIMESTAMP WITH TIME ZONE,  -- DEPRECATED (kept for backwards compatibility)
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+1. **Authentication** → **Providers**  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- DEPRECATED (kept for backwards compatibility)
+
+2. Enable desired provider  used_at TIMESTAMP WITH TIME ZONE,  -- DEPRECATED (kept for backwards compatibility)
+
+3. Add OAuth credentials  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+4. Update redirect URLs  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
 );
 
--- 3. Categories table (depends on users)
-CREATE TABLE public.categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+**Redirect URL format:**
+
+```-- 3. Categories table (depends on users)
+
+https://your-domain.com/auth/callbackCREATE TABLE public.categories (
+
+http://localhost:5173/auth/callback  # for development  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+```  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
   group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,  -- Shared group categories (v1.12)
-  name TEXT NOT NULL,
-  color TEXT,
-  icon TEXT,
-  parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
-  is_active BOOLEAN DEFAULT TRUE NOT NULL,  -- Hide from expense form (v1.8.1)
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
-);
 
--- Create indexes for categories
-CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
-CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
-CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
-CREATE INDEX idx_categories_group_id ON public.categories(group_id);
+---  name TEXT NOT NULL,
+
+  color TEXT,
+
+## 🗄️ Database Schema Overview  icon TEXT,
+
+  parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
+
+### Core Tables  is_active BOOLEAN DEFAULT TRUE NOT NULL,  -- Hide from expense form (v1.8.1)
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+| Table | Purpose | Synced |  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+|-------|---------|--------|  UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
+
+| `users` | User profiles | ✅ |);
+
+| `categories` | Expense categories | ✅ |
+
+| `expenses` | Personal expenses | ✅ |-- Create indexes for categories
+
+| `groups` | Shared expense groups | ✅ |CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+
+| `group_members` | Group membership | ✅ |CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
+
+| `shared_expenses` | Group expenses | ✅ |CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
+
+| `shared_expense_splits` | Split calculations | ✅ |CREATE INDEX idx_categories_group_id ON public.categories(group_id);
+
 CREATE INDEX idx_categories_user_group ON public.categories(user_id, group_id);
 
+### Local-Only Collections
+
 -- 4. Expenses table (depends on users and groups)
-CREATE TABLE public.expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
+| Collection | Purpose |CREATE TABLE public.expenses (
+
+|------------|---------|  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+| `stats_cache` | Cached statistics (not synced) |  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
   group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
-  amount DECIMAL(10, 2) NOT NULL,
+
+---  amount DECIMAL(10, 2) NOT NULL,
+
   category TEXT NOT NULL,  -- Foreign key to categories.id (stored as text for flexibility)
-  description TEXT,
+
+## 🔄 How Synchronization Works  description TEXT,
+
   date DATE NOT NULL,
-  deleted_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- 5. Group members table (depends on groups and users)
-CREATE TABLE public.group_members (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+### Initial Load  deleted_at TIMESTAMP WITH TIME ZONE,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+```  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+1. User logs in);
+
+2. RxDB initializes local database
+
+3. UI loads immediately from cache (if available)-- 5. Group members table (depends on groups and users)
+
+4. Sync starts in backgroundCREATE TABLE public.group_members (
+
+5. UI updates reactively as data syncs  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+```  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'member',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(group_id, user_id)
-);
 
--- 6. Shared expenses table (depends on groups, expenses, and users)
-CREATE TABLE public.shared_expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+### Ongoing Sync  role TEXT DEFAULT 'member',
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+```  UNIQUE(group_id, user_id)
+
+- Live sync: Changes replicate automatically);
+
+- Conflict resolution: Last-write-wins based on updated_at
+
+- Soft deletes: Items marked as deleted_at, not hard-deleted-- 6. Shared expenses table (depends on groups, expenses, and users)
+
+- Leader election: Only one tab syncs at a timeCREATE TABLE public.shared_expenses (
+
+```  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
   group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
-  expense_id UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
+
+### Offline Mode  expense_id UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
+
   creator_id UUID NOT NULL REFERENCES public.users(id),
-  participants JSONB DEFAULT '[]',
-  is_recurring BOOLEAN DEFAULT FALSE,
-  recurring_rule TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- 7. Create indexes per performance
+```  participants JSONB DEFAULT '[]',
+
+- All data cached locally in IndexedDB  is_recurring BOOLEAN DEFAULT FALSE,
+
+- Full CRUD operations work offline  recurring_rule TEXT,
+
+- Changes queued automatically  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+- Sync resumes when connection restored  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+```);
+
+
+
+----- 7. Create indexes per performance
+
 CREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
-CREATE INDEX idx_expenses_group ON public.expenses(group_id);
+
+## 📊 Local StatisticsCREATE INDEX idx_expenses_group ON public.expenses(group_id);
+
 CREATE INDEX idx_categories_user ON public.categories(user_id);
-CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+
+### How It WorksCREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+
 CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
-CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
-CREATE INDEX idx_groups_owner ON public.groups(owner_id);
-CREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
-CREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
+
+1. **Check cache first**: 30-minute validityCREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
+
+2. **Calculate from local data**: If cache expired/missingCREATE INDEX idx_groups_owner ON public.groups(owner_id);
+
+3. **Update cache**: Store results locallyCREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
+
+4. **Invalidate on change**: Recalculate when expenses changeCREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
+
 CREATE INDEX idx_group_members_group ON public.group_members(group_id);
-CREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
-```
 
-**Creation order summary:**
+### PerformanceCREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 
-1. ✅ `users` (no dependencies)
+`````
+
+- **Instant results** for cached periods
+
+- **No network latency\*\***Creation order summary:\*\*
+
+- **Works completely offline**
+
+- **Scales to thousands of expenses**1. ✅ `users` (no dependencies)
+
 2. ✅ `groups` (FK → users)
-3. ✅ `categories` (FK → users)
+
+---3. ✅ `categories` (FK → users)
+
 4. ✅ `expenses` (FK → users, groups)
-5. ✅ `group_members` (FK → groups, users)
+
+## 🎨 Customization5. ✅ `group_members` (FK → groups, users)
+
 6. ✅ `shared_expenses` (FK → groups, expenses, users)
-7. ✅ Indexes
 
-#### 3b. Enable Row Level Security (RLS) Policies
+### Theme7. ✅ Indexes
 
-**⚠️ CRITICAL**: RLS policies are required to prevent unauthorized access to user data.
+Edit `src/index.css` to customize colors:#### 3b. Enable Row Level Security (RLS) Policies
 
-In **Supabase → SQL Editor**, run:
+````css**⚠️ CRITICAL**: RLS policies are required to prevent unauthorized access to user data.
 
-```sql
--- Enable RLS on all tables
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+:root {
+
+  --primary: 240 5.9% 10%;In **Supabase → SQL Editor**, run:
+
+  --primary-foreground: 0 0% 98%;
+
+  /* ... more variables */```sql
+
+}-- Enable RLS on all tables
+
+```ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
+### TranslationsALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+
+Add new languages in `src/translations/`:ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.shared_expenses ENABLE ROW LEVEL SECURITY;
 
--- ====== USERS TABLE POLICIES ======
--- Users can read own record
-CREATE POLICY "Users can read own record"
-ON public.users
-FOR SELECT
-USING (auth.uid() = id);
+```typescript
 
--- Users can insert their own record (NEW USERS at signup)
+// src/translations/de.ts-- ====== USERS TABLE POLICIES ======
+
+export default {-- Users can read own record
+
+  common: {CREATE POLICY "Users can read own record"
+
+    appName: 'MeinGeld',ON public.users
+
+    // ... translationsFOR SELECT
+
+  }USING (auth.uid() = id);
+
+}
+
+```-- Users can insert their own record (NEW USERS at signup)
+
 -- NOTE: Uses permissive policy (WITH CHECK true) because auth.uid() isn't fully linked yet
--- during user creation. App logic validates user_id = auth.uid() in signup.tsx
+
+Register in `src/translations/index.ts`:-- during user creation. App logic validates user_id = auth.uid() in signup.tsx
+
 CREATE POLICY "Users can insert their own record"
-ON public.users
-FOR INSERT
+
+```typescriptON public.users
+
+import de from './de';FOR INSERT
+
 WITH CHECK (true);  -- Allow insertion, app validates user_id match
 
--- Users can update own record
-CREATE POLICY "Users can update own record"
-ON public.users
-FOR UPDATE
-USING (auth.uid() = id)
+export const translations = {
+
+  en,-- Users can update own record
+
+  it,CREATE POLICY "Users can update own record"
+
+  de  // Add hereON public.users
+
+};FOR UPDATE
+
+```USING (auth.uid() = id)
+
 WITH CHECK (auth.uid() = id);
 
+---
+
 -- ====== CATEGORIES TABLE POLICIES ======
--- Users can read own and group categories (v1.12)
+
+## 🧪 Testing-- Users can read own and group categories (v1.12)
+
 CREATE POLICY "Users can read own and group categories"
-ON public.categories
+
+### Run TestsON public.categories
+
 FOR SELECT
-USING (
-  -- Personal categories (no group_id)
-  (auth.uid() = user_id AND group_id IS NULL)
+
+```bashUSING (
+
+# Unit tests  -- Personal categories (no group_id)
+
+pnpm test  (auth.uid() = user_id AND group_id IS NULL)
+
   OR
-  -- Group categories where user is owner of the group
-  (group_id IN (
+
+# E2E tests  -- Group categories where user is owner of the group
+
+pnpm test:e2e  (group_id IN (
+
     SELECT id FROM public.groups WHERE owner_id = auth.uid()
-  ))
-  OR
-  -- Group categories where user is member of the group
+
+# Coverage report  ))
+
+pnpm test:coverage  OR
+
+```  -- Group categories where user is member of the group
+
   (group_id IN (
-    SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+
+### Test Sync Locally    SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+
   ))
-);
 
--- Users can create categories
+```bash);
+
+# Terminal 1: Start dev server
+
+pnpm dev-- Users can create categories
+
 -- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
--- App validates user_id = auth.uid() in frontend/sync
-CREATE POLICY "Users can create categories"
-ON public.categories
+
+# Terminal 2: Open Supabase local (optional)-- App validates user_id = auth.uid() in frontend/sync
+
+npx supabase startCREATE POLICY "Users can create categories"
+
+```ON public.categories
+
 FOR INSERT
-WITH CHECK (true);  -- Allow insertion, app validates user_id match
 
--- Users can update own categories
+---WITH CHECK (true);  -- Allow insertion, app validates user_id match
+
+
+
+## 🚢 Deployment-- Users can update own categories
+
 CREATE POLICY "Users can update own categories"
-ON public.categories
+
+### Vercel (Recommended)ON public.categories
+
 FOR UPDATE
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
 
--- Users can delete own categories
-CREATE POLICY "Users can delete own categories"
-ON public.categories
+1. Push your code to GitHubUSING (auth.uid() = user_id)
+
+2. Import project in VercelWITH CHECK (auth.uid() = user_id);
+
+3. Add environment variables:
+
+   - `VITE_SUPABASE_URL`-- Users can delete own categories
+
+   - `VITE_SUPABASE_ANON_KEY`CREATE POLICY "Users can delete own categories"
+
+4. Deploy!ON public.categories
+
 FOR DELETE
-USING (auth.uid() = user_id);
 
--- ====== EXPENSES TABLE POLICIES ======
--- Users can read own expenses (NO nested queries - causes 42P17 infinite recursion)
-CREATE POLICY "Users can read own expenses"
-ON public.expenses
-FOR SELECT
-USING (auth.uid() = user_id);
+**vercel.json** is already configured:USING (auth.uid() = user_id);
+
+
+
+```json-- ====== EXPENSES TABLE POLICIES ======
+
+{-- Users can read own expenses (NO nested queries - causes 42P17 infinite recursion)
+
+  "rewrites": [CREATE POLICY "Users can read own expenses"
+
+    { "source": "/(.*)", "destination": "/index.html" }ON public.expenses
+
+  ]FOR SELECT
+
+}USING (auth.uid() = user_id);
+
+````
 
 -- Users can create expenses
--- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
+
+### Netlify-- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
+
 -- App validates user_id = auth.uid() and group_id permissions in frontend
-CREATE POLICY "Users can create expenses"
-ON public.expenses
-FOR INSERT
-WITH CHECK (true);  -- Allow insertion, app validates user_id match
 
--- Users can update own expenses
+````bashCREATE POLICY "Users can create expenses"
+
+pnpm buildON public.expenses
+
+FOR INSERT
+
+# Deploy dist/ folderWITH CHECK (true);  -- Allow insertion, app validates user_id match
+
+netlify deploy --prod --dir=dist
+
+```-- Users can update own expenses
+
 CREATE POLICY "Users can update own expenses"
-ON public.expenses
+
+### DockerON public.expenses
+
 FOR UPDATE
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
 
--- Users can delete own expenses
-CREATE POLICY "Users can delete own expenses"
-ON public.expenses
-FOR DELETE
-USING (auth.uid() = user_id);
+```dockerfileUSING (auth.uid() = user_id)
 
--- ====== GROUPS TABLE POLICIES ======
+FROM node:18-alpineWITH CHECK (auth.uid() = user_id);
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml ./-- Users can delete own expenses
+
+RUN npm install -g pnpm && pnpm installCREATE POLICY "Users can delete own expenses"
+
+COPY . .ON public.expenses
+
+RUN pnpm buildFOR DELETE
+
+EXPOSE 5173USING (auth.uid() = user_id);
+
+CMD ["pnpm", "preview", "--host"]
+
+```-- ====== GROUPS TABLE POLICIES ======
+
 -- Users can read own groups OR groups with valid invite codes AND allow_new_members = true (for joining)
-CREATE POLICY "Users can read groups"
+
+---CREATE POLICY "Users can read groups"
+
 ON public.groups
-FOR SELECT
+
+## 🔧 TroubleshootingFOR SELECT
+
 USING (
-  auth.uid() = owner_id
+
+### Sync Not Working  auth.uid() = owner_id
+
   OR
-  (invite_code IS NOT NULL AND allow_new_members = TRUE)
-);
 
--- Owners can create groups
-CREATE POLICY "Users can create groups"
-ON public.groups
-FOR INSERT
-WITH CHECK (auth.uid() = owner_id);
+**Check:**  (invite_code IS NOT NULL AND allow_new_members = TRUE)
 
--- Owners can update own groups
-CREATE POLICY "Owners can update groups"
+1. Supabase credentials in `.env.local`);
+
+2. RLS policies enabled on all tables
+
+3. User is authenticated-- Owners can create groups
+
+4. Browser console for errorsCREATE POLICY "Users can create groups"
+
 ON public.groups
+
+**Reset sync:**FOR INSERT
+
+```typescriptWITH CHECK (auth.uid() = owner_id);
+
+// Open browser console
+
+syncService.stopSync()-- Owners can update own groups
+
+await syncService.startSync(userId)CREATE POLICY "Owners can update groups"
+
+```ON public.groups
+
 FOR UPDATE
-USING (auth.uid() = owner_id)
+
+### IndexedDB Quota ExceededUSING (auth.uid() = owner_id)
+
 WITH CHECK (auth.uid() = owner_id);
 
--- Owners can delete groups
-CREATE POLICY "Owners can delete groups"
-ON public.groups
-FOR DELETE
-USING (auth.uid() = owner_id);
+**Solution:**
 
--- ====== GROUP MEMBERS TABLE POLICIES ======
--- Members can read group members (permissive - frontend filters by user's groups)
--- NOTE: Permissive policy avoids recursive subquery issues (42P17 infinite recursion)
--- Security maintained at groups table level + frontend filtering
-CREATE POLICY "Members can read group members"
+```typescript-- Owners can delete groups
+
+// Clear old dataCREATE POLICY "Owners can delete groups"
+
+await db.expensesON public.groups
+
+  .find({FOR DELETE
+
+    selector: {USING (auth.uid() = owner_id);
+
+      deleted_at: { $ne: null },
+
+      updated_at: { $lt: thirtyDaysAgo }-- ====== GROUP MEMBERS TABLE POLICIES ======
+
+    }-- Members can read group members (permissive - frontend filters by user's groups)
+
+  })-- NOTE: Permissive policy avoids recursive subquery issues (42P17 infinite recursion)
+
+  .remove()-- Security maintained at groups table level + frontend filtering
+
+```CREATE POLICY "Members can read group members"
+
 ON public.group_members
-FOR SELECT
+
+### Stats Not UpdatingFOR SELECT
+
 USING (true);
 
--- Owners can manage members (create/add members)
--- NOTE: Permissive policy to avoid nested query infinite recursion
--- App validates ownership in sync.service.ts before inserting
+**Fix:**
+
+```typescript-- Owners can manage members (create/add members)
+
+// Invalidate cache-- NOTE: Permissive policy to avoid nested query infinite recursion
+
+await statsService.invalidateCache(userId)-- App validates ownership in sync.service.ts before inserting
+
 CREATE POLICY "Owners can manage members"
-ON public.group_members
-FOR INSERT
-WITH CHECK (true);
 
--- ====== SHARED EXPENSES TABLE POLICIES ======
+// RecalculateON public.group_members
+
+const stats = await statsService.calculateMonthlyStats(userId, new Date())FOR INSERT
+
+```WITH CHECK (true);
+
+
+
+### Multiple Tabs Syncing-- ====== SHARED EXPENSES TABLE POLICIES ======
+
 -- Members can read shared expenses (NO nested queries - simplified)
-CREATE POLICY "Members can read shared expenses"
-ON public.shared_expenses
-FOR SELECT
-USING (true);  -- Frontend filters by user's groups
 
--- Members can create shared expenses
--- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
--- App validates creator_id = auth.uid() and group membership in sync.service.ts
+RxDB handles this automatically with leader election. Only one tab will sync at a time.CREATE POLICY "Members can read shared expenses"
+
+ON public.shared_expenses
+
+**Check current leader:**FOR SELECT
+
+```typescriptUSING (true);  -- Frontend filters by user's groups
+
+db.waitForLeadership().then(() => {
+
+  console.log('This tab is the leader')-- Members can create shared expenses
+
+})-- NOTE: Permissive policy (WITH CHECK true) to avoid 42501 errors
+
+```-- App validates creator_id = auth.uid() and group membership in sync.service.ts
+
 CREATE POLICY "Members can create shared expenses"
-ON public.shared_expenses
-FOR INSERT
-WITH CHECK (true);
 
--- Creators can update shared expenses
-CREATE POLICY "Creators can update shared expenses"
-ON public.shared_expenses
-FOR UPDATE
+---ON public.shared_expenses
+
+FOR INSERT
+
+## 📚 Additional ResourcesWITH CHECK (true);
+
+
+
+- [Technical Documentation](./TECHNICAL.md) - Architecture deep-dive-- Creators can update shared expenses
+
+- [API Reference](./API.md) - Service APIs and hooksCREATE POLICY "Creators can update shared expenses"
+
+- [Changelog](./CHANGELOG.md) - Version historyON public.shared_expenses
+
+- [PWA Guide](./PWA.md) - Progressive Web App featuresFOR UPDATE
+
 USING (creator_id = auth.uid())
-WITH CHECK (creator_id = auth.uid());
-```
+
+---WITH CHECK (creator_id = auth.uid());
+
+````
+
+## 🤝 Contributing
 
 ### Step 4: Create Database Views (v1.8+)
 
+We welcome contributions! Please:
+
 **Purpose**: Pre-calculated views for optimized queries and better performance.
 
-Go to **Supabase → SQL Editor** and run:
+1. Fork the repository
 
-```sql
--- ============================================================
+2. Create a feature branchGo to **Supabase → SQL Editor** and run:
+
+3. Make your changes
+
+4. Add tests```sql
+
+5. Submit a pull request-- ============================================================
+
 -- DATABASE VIEWS - v1.8
--- Ottimizzazione query con viste pre-calcolate
+
+----- Ottimizzazione query con viste pre-calcolate
+
 -- ============================================================
+
+## 📞 Support
 
 -- 1. Vista: Riepilogo spese utente
-CREATE OR REPLACE VIEW user_expense_summary AS
-SELECT
-  user_id,
-  COUNT(*) FILTER (WHERE deleted_at IS NULL) as total_expenses,
-  SUM(amount) FILTER (WHERE deleted_at IS NULL) as total_amount,
-  AVG(amount) FILTER (WHERE deleted_at IS NULL) as avg_expense,
-  MIN(date) FILTER (WHERE deleted_at IS NULL) as first_expense_date,
-  MAX(date) FILTER (WHERE deleted_at IS NULL) as last_expense_date,
-  COUNT(DISTINCT category) FILTER (WHERE deleted_at IS NULL) as unique_categories
-FROM expenses
-GROUP BY user_id;
 
--- 2. Vista: Statistiche categoria per utente
-CREATE OR REPLACE VIEW user_category_stats AS
-SELECT
-  e.user_id,
-  e.category,
-  COUNT(*) as expense_count,
-  SUM(e.amount) as total_amount,
-  AVG(e.amount) as avg_amount,
-  MIN(e.date) as first_expense,
-  MAX(e.date) as last_expense
+- **Issues**: [GitHub Issues](https://github.com/yourusername/mymoney/issues)CREATE OR REPLACE VIEW user_expense_summary AS
+
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/mymoney/discussions)SELECT
+
+- **Email**: support@mymoney.app user_id,
+
+  COUNT(\*) FILTER (WHERE deleted_at IS NULL) as total_expenses,
+
+--- SUM(amount) FILTER (WHERE deleted_at IS NULL) as total_amount,
+
+AVG(amount) FILTER (WHERE deleted_at IS NULL) as avg_expense,
+
+## 📄 License MIN(date) FILTER (WHERE deleted_at IS NULL) as first_expense_date,
+
+MAX(date) FILTER (WHERE deleted_at IS NULL) as last_expense_date,
+
+MIT License - see [LICENSE](../LICENSE) file for details. COUNT(DISTINCT category) FILTER (WHERE deleted_at IS NULL) as unique_categories
+
+FROM expenses
+
+---GROUP BY user_id;
+
+**Version:** 3.0.0 -- 2. Vista: Statistiche categoria per utente
+
+**Last Updated:** October 2025 CREATE OR REPLACE VIEW user_category_stats AS
+
+**Minimum Node:** 18+ SELECT
+
+**Supported Browsers:** Chrome 90+, Firefox 88+, Safari 14+, Edge 90+ e.user_id,
+
+e.category,
+COUNT(\*) as expense_count,
+SUM(e.amount) as total_amount,
+AVG(e.amount) as avg_amount,
+MIN(e.date) as first_expense,
+MAX(e.date) as last_expense
 FROM expenses e
 WHERE e.deleted_at IS NULL
 GROUP BY e.user_id, e.category;
@@ -416,12 +805,12 @@ GROUP BY e.user_id, e.category;
 -- 3. Vista: Spese mensili aggregate
 CREATE OR REPLACE VIEW monthly_expense_summary AS
 SELECT
-  user_id,
-  DATE_TRUNC('month', date) as month,
-  COUNT(*) as expense_count,
-  SUM(amount) as total_amount,
-  AVG(amount) as avg_amount,
-  COUNT(DISTINCT category) as unique_categories
+user_id,
+DATE_TRUNC('month', date) as month,
+COUNT(\*) as expense_count,
+SUM(amount) as total_amount,
+AVG(amount) as avg_amount,
+COUNT(DISTINCT category) as unique_categories
 FROM expenses
 WHERE deleted_at IS NULL
 GROUP BY user_id, DATE_TRUNC('month', date);
@@ -429,14 +818,14 @@ GROUP BY user_id, DATE_TRUNC('month', date);
 -- 4. Vista: Totali gruppo
 CREATE OR REPLACE VIEW group_expense_summary AS
 SELECT
-  g.id as group_id,
-  g.name as group_name,
-  g.owner_id,
-  COUNT(DISTINCT e.id) FILTER (WHERE e.deleted_at IS NULL) as total_expenses,
-  SUM(e.amount) FILTER (WHERE e.deleted_at IS NULL) as total_amount,
-  COUNT(DISTINCT gm.user_id) as member_count,
-  MIN(e.date) FILTER (WHERE e.deleted_at IS NULL) as first_expense_date,
-  MAX(e.date) FILTER (WHERE e.deleted_at IS NULL) as last_expense_date
+g.id as group_id,
+g.name as group_name,
+g.owner_id,
+COUNT(DISTINCT e.id) FILTER (WHERE e.deleted_at IS NULL) as total_expenses,
+SUM(e.amount) FILTER (WHERE e.deleted_at IS NULL) as total_amount,
+COUNT(DISTINCT gm.user_id) as member_count,
+MIN(e.date) FILTER (WHERE e.deleted_at IS NULL) as first_expense_date,
+MAX(e.date) FILTER (WHERE e.deleted_at IS NULL) as last_expense_date
 FROM groups g
 LEFT JOIN expenses e ON e.group_id = g.id
 LEFT JOIN group_members gm ON gm.group_id = g.id
@@ -445,19 +834,19 @@ GROUP BY g.id, g.name, g.owner_id;
 -- 5. Vista: Spese condivise con dettagli
 CREATE OR REPLACE VIEW shared_expense_details AS
 SELECT
-  se.id,
-  se.group_id,
-  se.expense_id,
-  se.creator_id,
-  e.amount,
-  e.category,
-  e.description,
-  e.date,
-  g.name as group_name,
-  JSONB_ARRAY_LENGTH(se.participants) as participant_count,
-  se.is_recurring,
-  se.created_at,
-  se.updated_at
+se.id,
+se.group_id,
+se.expense_id,
+se.creator_id,
+e.amount,
+e.category,
+e.description,
+e.date,
+g.name as group_name,
+JSONB_ARRAY_LENGTH(se.participants) as participant_count,
+se.is_recurring,
+se.created_at,
+se.updated_at
 FROM shared_expenses se
 JOIN expenses e ON e.id = se.expense_id
 JOIN groups g ON g.id = se.group_id
@@ -466,21 +855,21 @@ WHERE e.deleted_at IS NULL;
 -- 6. Vista: Categorie attive con conteggio utilizzo
 CREATE OR REPLACE VIEW category_usage_stats AS
 SELECT
-  c.id,
-  c.user_id,
-  c.group_id,
-  c.name,
-  c.icon,
-  c.color,
-  c.parent_id,
-  c.is_active,
-  COUNT(e.id) as usage_count,
-  COALESCE(SUM(e.amount), 0) as total_amount,
-  MAX(e.date) as last_used
+c.id,
+c.user_id,
+c.group_id,
+c.name,
+c.icon,
+c.color,
+c.parent_id,
+c.is_active,
+COUNT(e.id) as usage_count,
+COALESCE(SUM(e.amount), 0) as total_amount,
+MAX(e.date) as last_used
 FROM categories c
 LEFT JOIN expenses e ON e.category = c.name
-  AND e.user_id = c.user_id
-  AND e.deleted_at IS NULL
+AND e.user_id = c.user_id
+AND e.deleted_at IS NULL
 GROUP BY c.id, c.user_id, c.group_id, c.name, c.icon, c.color, c.parent_id, c.is_active;
 
 -- Grant SELECT permissions to authenticated users
@@ -495,9 +884,10 @@ GRANT SELECT ON category_usage_stats TO authenticated;
 SELECT table_name, table_type
 FROM information_schema.tables
 WHERE table_schema = 'public'
-  AND table_type = 'VIEW'
+AND table_type = 'VIEW'
 ORDER BY table_name;
-```
+
+````
 
 **Expected output**: Should show 6 views created (user_expense_summary, user_category_stats, etc.)
 
@@ -526,7 +916,7 @@ SELECT 'Realtime enabled for: ' || tablename as status
 FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime'
 ORDER BY tablename;
-```
+````
 
 **Expected output**: Should show 5 tables with Realtime enabled.
 
