@@ -1,21 +1,13 @@
-import { useEffect, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db, type Expense, type Category, type Group } from '@/lib/dexie';
-import { supabase } from '@/lib/supabase';
+import { useRxDB, useRxQuery } from '@/hooks/useRxDB';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { it, enUS } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -24,464 +16,189 @@ export function ExpensesPage() {
   const { user } = useAuthStore();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Map<string, Category>>(new Map());
-  const [groups, setGroups] = useState<Map<string, Group>>(new Map());
-  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
+  const db = useRxDB();
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Filter states
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedGroup, setSelectedGroup] = useState<string>('all'); // 'all' | 'personal' | group UUID
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
-  const [amountMin, setAmountMin] = useState<string>('');
-  const [amountMax, setAmountMax] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  useEffect(() => {
-    if (!user) return;
-
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        // Load categories
-        const userCategories = await db.categories.where('userId').equals(user.id).toArray();
-        const categoryMap = new Map(userCategories.map(c => [c.id, c]));
-        setCategories(categoryMap);
-
-        // Load groups where user is owner or member
-        const ownedGroups = await db.groups.where('ownerId').equals(user.id).toArray();
-        const memberships = await db.groupMembers.where('userId').equals(user.id).toArray();
-        const memberGroupIds = memberships.map(m => m.groupId);
-        const memberGroups = memberGroupIds.length > 0 
-          ? await db.groups.where('id').anyOf(memberGroupIds).toArray()
-          : [];
-        
-        // Combine and deduplicate
-        const allGroups = [...ownedGroups];
-        memberGroups.forEach(group => {
-          if (!allGroups.find(g => g.id === group.id)) {
-            allGroups.push(group);
-          }
-        });
-        const groupMap = new Map(allGroups.map(g => [g.id, g]));
-        setGroups(groupMap);
-
-        // Load user names for group expenses
-        const allUserIds = new Set<string>();
-        
-        // Load personal expenses
-        const personalExpenses = await db.expenses
-          .where('userId')
-          .equals(user.id)
-          .and((e) => !e.deletedAt)
-          .toArray();
-        
-        // Load group expenses (from all groups where user is member)
-        const groupIds = Array.from(groupMap.keys());
-        const groupExpenses = groupIds.length > 0
-          ? await db.expenses
-              .where('groupId')
-              .anyOf(groupIds)
-              .and((e) => !e.deletedAt)
-              .toArray()
-          : [];
-        
-        // Combine expenses and deduplicate
-        const allExpenses = [...personalExpenses];
-        groupExpenses.forEach(expense => {
-          if (!allExpenses.find(e => e.id === expense.id)) {
-            allExpenses.push(expense);
-          }
-        });
-        
-        // Sort by date (most recent first)
-        allExpenses.sort((a, b) => b.date.getTime() - a.date.getTime());
-        
-        // Collect user IDs for names
-        allExpenses.forEach(expense => {
-          if (expense.groupId && expense.userId !== user.id) {
-            allUserIds.add(expense.userId);
-          }
-        });
-
-        // Fetch user names from Supabase
-        if (allUserIds.size > 0) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, display_name, email')
-            .in('id', Array.from(allUserIds));
-          
-          const nameMap = new Map<string, string>();
-          userData?.forEach(u => {
-            nameMap.set(u.id, u.display_name || u.email.split('@')[0]);
-          });
-          setUserNames(nameMap);
-        }
-
-        setExpenses(allExpenses);
-        setFilteredExpenses(allExpenses);
-      } catch (error) {
-        console.error('Error loading expenses:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user]);
-
-  // Filter and sort expenses
-  useEffect(() => {
-    let filtered = [...expenses];
-
-    // Group filter
-    if (selectedGroup === 'personal') {
-      filtered = filtered.filter((expense) => !expense.groupId);
-    } else if (selectedGroup !== 'all') {
-      filtered = filtered.filter((expense) => expense.groupId === selectedGroup);
-    }
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((expense) => {
-        const category = categories.get(expense.category);
-        const group = expense.groupId ? groups.get(expense.groupId) : null;
-        return (
-          expense.description.toLowerCase().includes(query) ||
-          category?.name.toLowerCase().includes(query) ||
-          group?.name.toLowerCase().includes(query) ||
-          expense.amount.toString().includes(query)
-        );
-      });
-    }
-
-    // Category filter
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter((expense) => expense.category === selectedCategory);
-    }
-
-    // Date range filter
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((expense) => expense.date >= fromDate);
-    }
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((expense) => expense.date <= toDate);
-    }
-
-    // Amount range filter
-    if (amountMin) {
-      const min = Math.abs(parseFloat(amountMin));
-      filtered = filtered.filter((expense) => Math.abs(expense.amount) >= min);
-    }
-    if (amountMax) {
-      const max = Math.abs(parseFloat(amountMax));
-      filtered = filtered.filter((expense) => Math.abs(expense.amount) <= max);
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      let comparison = 0;
-      
-      if (sortBy === 'date') {
-        comparison = a.date.getTime() - b.date.getTime();
-      } else if (sortBy === 'amount') {
-        comparison = Math.abs(a.amount) - Math.abs(b.amount);
-      } else if (sortBy === 'category') {
-        const catA = categories.get(a.category)?.name || '';
-        const catB = categories.get(b.category)?.name || '';
-        comparison = catA.localeCompare(catB);
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
+  
+  // Reactive queries
+  const { data: expenseDocs, loading } = useRxQuery(() => 
+    user ? db.expenses.find({
+      selector: {
+        user_id: user.id,
+        deleted_at: null
+      },
+      sort: sortBy === 'date' 
+        ? [{ date: sortOrder }] 
+        : [{ amount: sortOrder }]
+    }) : null
+  );
+  
+  const { data: categoryDocs } = useRxQuery(() =>
+    user ? db.categories.find({
+      selector: { user_id: user.id, deleted_at: null }
+    }) : null
+  );
+  
+  // Convert to plain objects
+  const allExpenses = useMemo(() => expenseDocs.map(doc => doc.toJSON()), [expenseDocs]);
+  const categories = useMemo(() => {
+    const map = new Map();
+    categoryDocs.forEach(doc => {
+      const data = doc.toJSON();
+      map.set(data.id, data);
     });
-
-    setFilteredExpenses(filtered);
-  }, [searchQuery, expenses, categories, groups, selectedCategory, selectedGroup, dateFrom, dateTo, amountMin, amountMax, sortBy, sortOrder]);
-
-  // Helper: Clear all filters
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-    setSelectedGroup('all');
-    setDateFrom('');
-    setDateTo('');
-    setAmountMin('');
-    setAmountMax('');
-    setSortBy('date');
-    setSortOrder('desc');
-  };
-
-  // Helper: Check if any filter is active
-  const hasActiveFilters = 
-    searchQuery.trim() !== '' ||
-    selectedCategory !== 'all' ||
-    selectedGroup !== 'all' ||
-    dateFrom !== '' ||
-    dateTo !== '' ||
-    amountMin !== '' ||
-    amountMax !== '' ||
-    sortBy !== 'date' ||
-    sortOrder !== 'desc';
-
-  if (!user) return null;
-
+    return map;
+  }, [categoryDocs]);
+  
+  // Filter expenses by search query
+  const filteredExpenses = useMemo(() => {
+    if (!searchQuery) return allExpenses;
+    
+    const query = searchQuery.toLowerCase();
+    return allExpenses.filter(expense => {
+      const description = expense.description?.toLowerCase() || '';
+      const category = categories.get(expense.category_id);
+      const categoryName = category?.name?.toLowerCase() || '';
+      const amount = expense.amount.toString();
+      
+      return description.includes(query) || 
+             categoryName.includes(query) || 
+             amount.includes(query);
+    });
+  }, [allExpenses, searchQuery, categories]);
+  
+  if (!user) {
+    return null;
+  }
+  
   const dateLocale = language === 'it' ? it : enUS;
 
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate('/dashboard')}
-          className="rounded-full"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">All Expenses</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Spese</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filteredExpenses.length} of {expenses.length} expenses
+            {filteredExpenses.length} {filteredExpenses.length === 1 ? 'spesa' : 'spese'}
           </p>
         </div>
         <FloatingActionButton href="/expense/new" label="Add expense" />
       </div>
 
-      {/* Search & Filters */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6 space-y-4">
-          {/* Search and Filter Toggle */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search expenses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button
-              variant={showFilters ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={clearFilters}
-                title="Clear filters"
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cerca spese..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              </button>
             )}
           </div>
 
-          {/* Advanced Filters (Collapsible) */}
-          {showFilters && (
-            <div className="space-y-4 pt-4 border-t">
-              {/* Group Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('expense.group')}</label>
-                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('expense.filterAll')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('expense.filterAll')}</SelectItem>
-                    <SelectItem value="personal">{t('expense.filterPersonal')}</SelectItem>
-                    {Array.from(groups.values()).map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Category Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {Array.from(categories.values()).map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.icon} {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">From Date</label>
-                  <Input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">To Date</label>
-                  <Input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Amount Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Min Amount (€)</label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={amountMin}
-                    onChange={(e) => setAmountMin(e.target.value)}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Max Amount (€)</label>
-                  <Input
-                    type="number"
-                    placeholder="∞"
-                    value={amountMax}
-                    onChange={(e) => setAmountMax(e.target.value)}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-
-              {/* Sort Options */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Sort By</label>
-                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'amount' | 'category')}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">Date</SelectItem>
-                      <SelectItem value="amount">Amount</SelectItem>
-                      <SelectItem value="category">Category</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Order</label>
-                  <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'asc' | 'desc')}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="desc">Descending</SelectItem>
-                      <SelectItem value="asc">Ascending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Sort */}
+          <div className="flex gap-2">
+            <Button
+              variant={sortBy === 'date' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSortBy('date')}
+            >
+              Data
+            </Button>
+            <Button
+              variant={sortBy === 'amount' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSortBy('amount')}
+            >
+              Importo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            >
+              {sortOrder === 'asc' ? '' : ''}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
       {/* Expenses List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Expense History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : filteredExpenses.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>{searchQuery ? 'No expenses found matching your search' : 'No expenses yet'}</p>
-              {!searchQuery && (
-                <Button
-                  variant="link"
-                  onClick={() => navigate('/expense/new')}
-                  className="mt-2"
-                >
-                  Add your first expense
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredExpenses.map((expense) => {
-                const categoryObj = categories.get(expense.category);
-                const groupObj = expense.groupId ? groups.get(expense.groupId) : null;
-                const creatorName = expense.userId !== user.id ? userNames.get(expense.userId) : null;
-                
-                return (
-                  <div
-                    key={expense.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                    onClick={() => navigate(`/expense/${expense.id}`)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">{expense.description}</p>
-                        {categoryObj && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                            {categoryObj.icon} {categoryObj.name}
-                          </span>
-                        )}
-                        {groupObj && (
-                          <Badge variant="secondary" className="text-xs">
-                            {groupObj.name}
-                          </Badge>
-                        )}
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">{t('common.loading') || 'Caricamento...'}</p>
+          </CardContent>
+        </Card>
+      ) : filteredExpenses.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground mb-4">
+              {searchQuery ? 'Nessuna spesa trovata' : 'Nessuna spesa'}
+            </p>
+            {!searchQuery && (
+              <Button onClick={() => navigate('/expense/new')}>
+                Aggiungi la prima spesa
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredExpenses.map((expense) => {
+            const category = categories.get(expense.category_id);
+            
+            return (
+              <Card
+                key={expense.id}
+                className="cursor-pointer hover:shadow-md transition-all"
+                onClick={() => navigate(`/expense/${expense.id}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{category?.icon || ''}</span>
+                        <h3 className="font-medium truncate">{expense.description}</h3>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-muted-foreground">
-                          {format(expense.date, 'EEEE, d MMMM yyyy', { locale: dateLocale })}
-                        </p>
-                        {creatorName && (
-                          <span className="text-xs text-muted-foreground">
-                            • {t('expense.createdBy')} {creatorName}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{category?.name || 'Senza categoria'}</span>
+                        <span></span>
+                        <span>{format(new Date(expense.date), 'd MMM yyyy', { locale: dateLocale })}</span>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-4">
                       <p className={`text-xl font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        {expense.amount > 0 ? '-' : '+'}€{Math.abs(expense.amount).toFixed(2)}
+                        {expense.amount > 0 ? '-' : '+'}{Math.abs(expense.amount).toFixed(2)}
                       </p>
+                      {expense.group_id && (
+                        <Badge variant="secondary" className="mt-1">
+                          Gruppo
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

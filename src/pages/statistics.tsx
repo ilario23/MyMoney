@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth.store';
 import { useLanguage } from '@/lib/language';
-import { db, type Category } from '@/lib/dexie';
-import { getUserExpenseSummary, getUserCategoryStats, getCurrentVsPreviousMonth } from '@/lib/aggregations';
-import type { UserCategoryStats } from '@/lib/aggregations';
+import { getDatabase } from '@/lib/rxdb';
+import type { CategoryDocType } from '@/lib/rxdb-schemas';
+import { statsService } from '@/services/stats.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,8 @@ export function StatisticsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
-  const [categories, setCategories] = useState<Map<string, Category>>(new Map());
-  const [topCategories, setTopCategories] = useState<UserCategoryStats[]>([]);
+  const [categories, setCategories] = useState<Map<string, CategoryDocType>>(new Map());
+  const [topCategories, setTopCategories] = useState<Array<{category: string; total: number; count: number}>>([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [avgExpense, setAvgExpense] = useState(0);
   const [percentageChange, setPercentageChange] = useState(0);
@@ -29,26 +29,39 @@ export function StatisticsPage() {
     const loadStats = async () => {
       setIsLoading(true);
       try {
+        const db = getDatabase();
+        
         // Load categories for icons
-        const userCategories = await db.categories.where('userId').equals(user.id).toArray();
-        const categoryMap = new Map(userCategories.map(c => [c.name, c]));
+        const userCategories = await db.categories
+          .find({ selector: { user_id: user.id, deleted_at: null } })
+          .exec();
+        const categoryMap = new Map(userCategories.map(c => [c.name, c.toJSON()]));
         setCategories(categoryMap);
 
-        // Load aggregated stats
-        const summary = await getUserExpenseSummary(user.id);
-        if (summary) {
-          setTotalExpenses(summary.total_expenses);
-          setAvgExpense(summary.avg_expense);
-        }
-
-        const topCats = await getUserCategoryStats(user.id);
-        setTopCategories(topCats.slice(0, 5));
-
-        const comparison = await getCurrentVsPreviousMonth(user.id);
-        setPercentageChange(comparison.percentageChange);
+        // Calculate stats using statsService
+        const stats = await statsService.calculateMonthlyStats(user.id, new Date());
         
-        if (comparison.current) {
-          setMonthlyTotal(comparison.current.total_amount);
+        setTotalExpenses(stats.expenseCount);
+        setAvgExpense(stats.dailyAverage);
+        setMonthlyTotal(stats.totalExpenses);
+        
+        // Get top categories
+        const topCats = stats.topCategories.slice(0, 5).map(cat => ({
+          category: cat.categoryName,
+          total: cat.amount,
+          count: cat.count
+        }));
+        
+        setTopCategories(topCats);
+        
+        // Calculate percentage change (compare with previous month)
+        const previousMonth = new Date();
+        previousMonth.setMonth(previousMonth.getMonth() - 1);
+        const prevStats = await statsService.calculateMonthlyStats(user.id, previousMonth);
+        
+        if (prevStats.totalExpenses > 0) {
+          const change = ((stats.totalExpenses - prevStats.totalExpenses) / prevStats.totalExpenses) * 100;
+          setPercentageChange(change);
         }
       } catch (error) {
         console.error('Error loading statistics:', error);
@@ -111,7 +124,7 @@ export function StatisticsPage() {
             <div className="space-y-4">
               {topCategories.map((cat, index) => {
                 const categoryInfo = categories.get(cat.category);
-                const percentage = monthlyTotal > 0 ? (cat.total_amount / monthlyTotal * 100) : 0;
+                const percentage = monthlyTotal > 0 ? (cat.total / monthlyTotal * 100) : 0;
                 
                 return (
                   <div key={cat.category} className="flex items-center gap-3 hover:scale-105 transition-transform duration-200 cursor-pointer">
@@ -123,7 +136,7 @@ export function StatisticsPage() {
                         <span className="text-lg">{categoryInfo?.icon || '📌'}</span>
                         <span className="font-medium truncate">{cat.category}</span>
                         <Badge variant="secondary" className="ml-auto">
-                          {cat.expense_count} {cat.expense_count === 1 ? t('dashboard.expense') : t('dashboard.expenses')}
+                          {cat.count} {cat.count === 1 ? t('dashboard.expense') : t('dashboard.expenses')}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2">
@@ -134,7 +147,7 @@ export function StatisticsPage() {
                           />
                         </div>
                         <span className="text-sm font-semibold text-muted-foreground w-16 text-right">
-                          €{cat.total_amount.toFixed(0)}
+                          €{cat.total.toFixed(0)}
                         </span>
                       </div>
                     </div>

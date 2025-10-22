@@ -1,22 +1,28 @@
-import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/lib/auth.store';
-import { useLanguage, type Language } from '@/lib/language';
-import { supabase } from '@/lib/supabase';
-import { db } from '@/lib/dexie';
-import { syncService } from '@/services/sync.service';
-import { getUserExpenseSummary } from '@/lib/database-views';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/lib/auth.store";
+import { useLanguage, type Language } from "@/lib/language";
+import { supabase } from "@/lib/supabase";
+import { getDatabase, closeDatabase } from "@/lib/rxdb";
+import { statsService } from "@/services/stats.service";
+import { authLogger, dbLogger, syncLogger } from "@/lib/logger";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -24,16 +30,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, Edit2, Save, X } from 'lucide-react';
-import packageJson from '../../package.json';
+} from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
+import { LogOut, Edit2, Save, X } from "lucide-react";
+import packageJson from "../../package.json";
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [stats, setStats] = useState({
@@ -42,8 +48,8 @@ export function ProfilePage() {
     categories: 0,
     lastSyncDate: null as Date | null,
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Load user statistics
@@ -51,41 +57,27 @@ export function ProfilePage() {
     const loadStats = async () => {
       if (!user) return;
       try {
-        // 🚀 Usa Database View ottimizzata invece di calcolare nel frontend
-        if (navigator.onLine) {
-          const summary = await getUserExpenseSummary(user.id);
-          if (summary) {
-            const categories = await db.categories.where('userId').equals(user.id).toArray();
-            const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
-            const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
+        const db = getDatabase();
 
-            setStats({
-              totalExpenses: summary.total_expenses || 0,
-              totalAmount: summary.total_amount || 0,
-              categories: categories.length,
-              lastSyncDate: lastSync,
-            });
-            return;
-          }
-        }
+        // Calcola statistiche del mese corrente
+        const monthlyStats = await statsService.calculateMonthlyStats(
+          user.id,
+          new Date()
+        );
 
-        // Fallback: calcolo locale se offline o view non disponibile
-        const allExpenses = await db.expenses.where('userId').equals(user.id).toArray();
-        const expenses = allExpenses.filter((e) => !e.deletedAt);
-        const categories = await db.categories.where('userId').equals(user.id).toArray();
-        const syncLogs = await db.syncLogs.where('userId').equals(user.id).toArray();
-
-        const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        const lastSync = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1].lastSyncTime : null;
+        // Conta le categorie
+        const categories = await db.categories
+          .find({ selector: { user_id: user.id, deleted_at: null } })
+          .exec();
 
         setStats({
-          totalExpenses: expenses.length,
-          totalAmount,
+          totalExpenses: monthlyStats.expenseCount,
+          totalAmount: monthlyStats.totalExpenses,
           categories: categories.length,
-          lastSyncDate: lastSync,
+          lastSyncDate: new Date(),
         });
       } catch (error) {
-        console.error('Error loading stats:', error);
+        console.error("Error loading stats:", error);
       }
     };
 
@@ -94,13 +86,13 @@ export function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!displayName.trim()) {
-      setError(t('profile.nameCannotBeEmpty'));
+      setError(t("profile.nameCannotBeEmpty"));
       return;
     }
 
     setIsSaving(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       // Update display name in Supabase
@@ -109,11 +101,11 @@ export function ProfilePage() {
       });
 
       if (updateError) {
-        setError(t('profile.errorUpdatingProfile'));
+        setError(t("profile.errorUpdatingProfile"));
         return;
       }
 
-      setSuccess(t('profile.profileUpdated'));
+      setSuccess(t("profile.profileUpdated"));
       setIsEditing(false);
 
       // Update local user in auth store
@@ -121,8 +113,8 @@ export function ProfilePage() {
         // Update would be handled by auth listener
       }
     } catch (err) {
-      console.error('Error updating profile:', err);
-      setError(t('profile.anErrorOccurred'));
+      authLogger.error("Error updating profile:", err);
+      setError(t("profile.anErrorOccurred"));
     } finally {
       setIsSaving(false);
     }
@@ -130,17 +122,17 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      console.log('🚪 Starting logout process...');
+      authLogger.info("Starting logout process...");
 
       // 1. Sign out da Supabase
       await supabase.auth.signOut();
-      console.log('✅ Supabase logout complete');
+      authLogger.success("Supabase logout complete");
 
       // 2. Pulisci completamente IndexedDB
       try {
-        // Chiudi il database Dexie
-        await db.close();
-        console.log('✅ Dexie database closed');
+        // Chiudi il database RxDB
+        await closeDatabase();
+        dbLogger.success("RxDB database closed");
 
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
@@ -148,9 +140,11 @@ export function ProfilePage() {
           for (const dbInfo of databases) {
             if (dbInfo.name) {
               await new Promise<void>((resolve, reject) => {
-                const deleteRequest = window.indexedDB.deleteDatabase(dbInfo.name!);
+                const deleteRequest = window.indexedDB.deleteDatabase(
+                  dbInfo.name!
+                );
                 deleteRequest.onsuccess = () => {
-                  console.log(`✅ Deleted IndexedDB: ${dbInfo.name}`);
+                  dbLogger.success(`Deleted IndexedDB: ${dbInfo.name}`);
                   resolve();
                 };
                 deleteRequest.onerror = () => reject(deleteRequest.error);
@@ -159,46 +153,48 @@ export function ProfilePage() {
           }
         }
       } catch (dbError) {
-        console.warn('⚠️ Error cleaning IndexedDB:', dbError);
+        dbLogger.warn("Error cleaning IndexedDB:", dbError);
       }
 
       // 3. Pulisci localStorage
       try {
         localStorage.clear();
-        console.log('✅ localStorage cleared');
+        authLogger.success("localStorage cleared");
       } catch (lsError) {
-        console.warn('⚠️ Error clearing localStorage:', lsError);
+        authLogger.warn("Error clearing localStorage:", lsError);
       }
 
       // 4. Pulisci sessionStorage
       try {
         sessionStorage.clear();
-        console.log('✅ sessionStorage cleared');
+        authLogger.success("sessionStorage cleared");
       } catch (ssError) {
-        console.warn('⚠️ Error clearing sessionStorage:', ssError);
+        authLogger.warn("Error clearing sessionStorage:", ssError);
       }
 
       // 5. Pulisci Cache API (Service Worker caches)
       try {
-        if ('caches' in window) {
+        if ("caches" in window) {
           const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
-          console.log(`✅ Cleared ${cacheNames.length} cache(s)`);
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+          authLogger.success(`Cleared ${cacheNames.length} cache(s)`);
         }
       } catch (cacheError) {
-        console.warn('⚠️ Error clearing caches:', cacheError);
+        authLogger.warn("Error clearing caches:", cacheError);
       }
 
       // 6. Logout dall'auth store (Zustand)
       logout();
-      console.log('✅ Auth store cleared');
+      authLogger.success("Auth store cleared");
 
       // 7. Redirect al login
-      console.log('🎉 Logout complete, redirecting to login...');
-      navigate('/login');
+      authLogger.success("Logout complete, redirecting to login...");
+      navigate("/login");
     } catch (error) {
-      console.error('❌ Logout error:', error);
-      setError(t('profile.logoutError') || 'Errore durante il logout');
+      authLogger.error("Logout error:", error);
+      setError(t("profile.logoutError") || "Errore durante il logout");
     }
   };
 
@@ -214,7 +210,7 @@ export function ProfilePage() {
     <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('profile.title')}</h1>
+        <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
       </div>
 
       {error && (
@@ -225,7 +221,9 @@ export function ProfilePage() {
 
       {success && (
         <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">✓ {success}</AlertDescription>
+          <AlertDescription className="text-green-800">
+            ✓ {success}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -233,7 +231,7 @@ export function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{t('profile.title')}</CardTitle>
+            <CardTitle>{t("profile.title")}</CardTitle>
             <div className="flex gap-2">
               {!isEditing && (
                 <Button
@@ -243,15 +241,18 @@ export function ProfilePage() {
                   className="gap-2"
                 >
                   <Edit2 className="w-4 h-4" />
-                  {t('profile.editProfile')}
+                  {t("profile.editProfile")}
                 </Button>
               )}
-              <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+              <Dialog
+                open={showLogoutDialog}
+                onOpenChange={setShowLogoutDialog}
+              >
                 <DialogTrigger asChild>
                   <Button
                     variant="destructive"
                     size="sm"
-                    title={t('profile.logout')}
+                    title={t("profile.logout")}
                     className="w-10 h-10 p-0"
                   >
                     <LogOut className="w-4 h-4" />
@@ -259,9 +260,9 @@ export function ProfilePage() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{t('profile.logout')}</DialogTitle>
+                    <DialogTitle>{t("profile.logout")}</DialogTitle>
                     <DialogDescription>
-                      {t('profile.confirmLogout')}
+                      {t("profile.confirmLogout")}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="flex gap-3 justify-end">
@@ -269,7 +270,7 @@ export function ProfilePage() {
                       variant="outline"
                       onClick={() => setShowLogoutDialog(false)}
                     >
-                      {t('common.cancel')}
+                      {t("common.cancel")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -278,7 +279,7 @@ export function ProfilePage() {
                         handleLogout();
                       }}
                     >
-                      {t('profile.logout')}
+                      {t("profile.logout")}
                     </Button>
                   </div>
                 </DialogContent>
@@ -288,22 +289,26 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('profile.name')}</label>
+            <label className="text-sm font-medium">{t("profile.name")}</label>
             {isEditing ? (
               <Input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={t('profile.name')}
+                placeholder={t("profile.name")}
                 disabled={isSaving}
               />
             ) : (
-              <p className="text-lg font-semibold">{displayName || t('profile.notSet')}</p>
+              <p className="text-lg font-semibold">
+                {displayName || t("profile.notSet")}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('profile.email')}</label>
-            <p className="text-sm text-muted-foreground break-all">{user.email}</p>
+            <label className="text-sm font-medium">{t("profile.email")}</label>
+            <p className="text-sm text-muted-foreground break-all">
+              {user.email}
+            </p>
           </div>
 
           {isEditing && (
@@ -314,19 +319,19 @@ export function ProfilePage() {
                 className="gap-2 flex-1"
               >
                 <Save className="w-4 h-4" />
-                {isSaving ? t('common.loading') : t('profile.saveChanges')}
+                {isSaving ? t("common.loading") : t("profile.saveChanges")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => {
                   setIsEditing(false);
-                  setDisplayName(user.displayName || '');
+                  setDisplayName(user.displayName || "");
                 }}
                 disabled={isSaving}
                 className="gap-2"
               >
                 <X className="w-4 h-4" />
-                {t('profile.cancelEdit')}
+                {t("profile.cancelEdit")}
               </Button>
             </div>
           )}
@@ -336,23 +341,31 @@ export function ProfilePage() {
       {/* Statistics Card */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('profile.statistics')}</CardTitle>
-          <CardDescription>{t('profile.yourTrackingData')}</CardDescription>
+          <CardTitle>{t("profile.statistics")}</CardTitle>
+          <CardDescription>{t("profile.yourTrackingData")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">{t('profile.expenses')}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {t("profile.expenses")}
+              </p>
               <p className="text-2xl font-bold">{stats.totalExpenses}</p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">{t('profile.totalAmount')}</p>
-              <p className="text-2xl font-bold">€{stats.totalAmount.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {t("profile.totalAmount")}
+              </p>
+              <p className="text-2xl font-bold">
+                €{stats.totalAmount.toFixed(2)}
+              </p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">{t('profile.categories')}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {t("profile.categories")}
+              </p>
               <p className="text-2xl font-bold">{stats.categories}</p>
             </div>
           </div>
@@ -360,15 +373,18 @@ export function ProfilePage() {
           {stats.lastSyncDate && (
             <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-sm">
               <p className="text-muted-foreground">
-                {t('profile.lastSync')}:{' '}
+                {t("profile.lastSync")}:{" "}
                 <span className="font-medium">
-                  {stats.lastSyncDate.toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {stats.lastSyncDate.toLocaleDateString(
+                    language === "it" ? "it-IT" : "en-US",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
                 </span>
               </p>
             </div>
@@ -379,19 +395,21 @@ export function ProfilePage() {
       {/* Categories Management */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('profile.categoriesManagement')}</CardTitle>
-          <CardDescription>{t('profile.manageCategoriesDescription')}</CardDescription>
+          <CardTitle>{t("profile.categoriesManagement")}</CardTitle>
+          <CardDescription>
+            {t("profile.manageCategoriesDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
-            onClick={() => navigate('/categories')}
+            onClick={() => navigate("/categories")}
             className="w-full"
             variant="outline"
           >
-            {t('profile.editCategories')}
+            {t("profile.editCategories")}
           </Button>
           <p className="text-sm text-muted-foreground mt-3">
-            {t('profile.manageCategoriesDescription')}
+            {t("profile.manageCategoriesDescription")}
           </p>
         </CardContent>
       </Card>
@@ -399,18 +417,20 @@ export function ProfilePage() {
       {/* Language Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>🌍 {t('profile.language')}</CardTitle>
-          <CardDescription>{t('profile.selectLanguage')}</CardDescription>
+          <CardTitle>🌍 {t("profile.language")}</CardTitle>
+          <CardDescription>{t("profile.selectLanguage")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('profile.language')}</label>
+            <label className="text-sm font-medium">
+              {t("profile.language")}
+            </label>
             <Select
               value={language}
               onValueChange={(value) => {
                 setLanguage(value as Language);
-                setSuccess(t('profile.languageUpdated'));
-                setTimeout(() => setSuccess(''), 3000);
+                setSuccess(t("profile.languageUpdated"));
+                setTimeout(() => setSuccess(""), 3000);
               }}
             >
               <SelectTrigger className="w-full">
@@ -428,25 +448,27 @@ export function ProfilePage() {
       {/* Account Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('profile.account')}</CardTitle>
-          <CardDescription>{t('profile.manageAccount')}</CardDescription>
+          <CardTitle>{t("profile.account")}</CardTitle>
+          <CardDescription>{t("profile.manageAccount")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
-              <h3 className="font-medium mb-2">{t('profile.appVersion')}</h3>
+              <h3 className="font-medium mb-2">{t("profile.appVersion")}</h3>
               <Badge variant="outline">v{packageJson.version} - PWA</Badge>
             </div>
 
             <div>
-              <h3 className="font-medium mb-2">{t('profile.localDatabase')}</h3>
-              <Badge variant="outline">{t('profile.dexieIndexedDB')}</Badge>
+              <h3 className="font-medium mb-2">{t("profile.localDatabase")}</h3>
+              <Badge variant="outline">{t("profile.dexieIndexedDB")}</Badge>
             </div>
 
             <div>
-              <h3 className="font-medium mb-2">{t('profile.synchronization')}</h3>
+              <h3 className="font-medium mb-2">
+                {t("profile.synchronization")}
+              </h3>
               <p className="text-sm text-muted-foreground mb-2">
-                {t('profile.syncDescription')}
+                {t("profile.syncDescription")}
               </p>
             </div>
           </div>
@@ -456,41 +478,51 @@ export function ProfilePage() {
       {/* Data Management */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('profile.dataManagement')}</CardTitle>
-          <CardDescription>{t('profile.exportDeleteData')}</CardDescription>
+          <CardTitle>{t("profile.dataManagement")}</CardTitle>
+          <CardDescription>{t("profile.exportDeleteData")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full">
-                {t('profile.exportData')}
+                {t("profile.exportData")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t('profile.exportData')}</DialogTitle>
+                <DialogTitle>{t("profile.exportData")}</DialogTitle>
                 <DialogDescription>
-                  {t('profile.exportDescription')}
+                  {t("profile.exportDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Button
                 onClick={async () => {
-                  const expenses = await db.expenses.where('userId').equals(user.id).toArray();
-                  const categories = await db.categories.where('userId').equals(user.id).toArray();
-                  const data = { user, expenses, categories, exportDate: new Date() };
+                  const db = getDatabase();
+                  const expenses = await db.expenses
+                    .find({ selector: { user_id: user.id } })
+                    .exec();
+                  const categories = await db.categories
+                    .find({ selector: { user_id: user.id } })
+                    .exec();
+                  const data = {
+                    user,
+                    expenses: expenses.map((e) => e.toJSON()),
+                    categories: categories.map((c) => c.toJSON()),
+                    exportDate: new Date(),
+                  };
                   const blob = new Blob([JSON.stringify(data, null, 2)], {
-                    type: 'application/json',
+                    type: "application/json",
                   });
                   const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
+                  const a = document.createElement("a");
                   a.href = url;
-                  a.download = `expense-tracker-backup-${Date.now()}.json`;
+                  a.download = `mymoney-backup-${Date.now()}.json`;
                   a.click();
-                  setSuccess(t('profile.dataExported'));
+                  setSuccess(t("profile.dataExported"));
                 }}
                 className="w-full"
               >
-                ✓ {t('common.save')}
+                ✓ {t("common.save")}
               </Button>
             </DialogContent>
           </Dialog>
@@ -498,14 +530,14 @@ export function ProfilePage() {
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="destructive" className="w-full">
-                {t('profile.deleteAllData')}
+                {t("profile.deleteAllData")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t('profile.deleteAllData')}</DialogTitle>
+                <DialogTitle>{t("profile.deleteAllData")}</DialogTitle>
                 <DialogDescription className="text-destructive">
-                  ⚠️ {t('profile.confirmDeleteAllData')}
+                  ⚠️ {t("profile.confirmDeleteAllData")}
                 </DialogDescription>
               </DialogHeader>
               <Button
@@ -513,38 +545,49 @@ export function ProfilePage() {
                 onClick={async () => {
                   if (!user) return;
                   try {
-                    // Soft delete: imposta deletedAt invece di eliminare fisicamente
-                    const expenses = await db.expenses.where('userId').equals(user.id).toArray();
+                    const db = getDatabase();
+
+                    // Soft delete: imposta deleted_at invece di eliminare fisicamente
+                    const expenses = await db.expenses
+                      .find({ selector: { user_id: user.id } })
+                      .exec();
+
                     for (const expense of expenses) {
-                      await db.expenses.update(expense.id, {
-                        deletedAt: new Date(),
-                        isSynced: false,
-                        updatedAt: new Date(),
+                      await expense.update({
+                        $set: {
+                          deleted_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        },
                       });
                     }
 
-                    await db.categories.where('userId').equals(user.id).delete();
+                    // Elimina categorie custom
+                    const categories = await db.categories
+                      .find({ selector: { user_id: user.id, is_custom: true } })
+                      .exec();
 
-                    // Sync immediato con Supabase per propagare le eliminazioni
-                    if (navigator.onLine) {
-                      try {
-                        await syncService.sync({ userId: user.id, verbose: true });
-                        console.log('✅ Data deletion synced to Supabase');
-                      } catch (syncError) {
-                        console.warn('⚠️ Sync failed, will retry later:', syncError);
-                      }
+                    for (const category of categories) {
+                      await category.update({
+                        $set: {
+                          deleted_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        },
+                      });
                     }
 
-                    setSuccess(t('profile.dataDeleted'));
-                    setTimeout(() => navigate('/dashboard'), 1500);
+                    // La sincronizzazione avverrà automaticamente
+                    syncLogger.success("Data deletion queued for sync");
+
+                    setSuccess(t("profile.dataDeleted"));
+                    setTimeout(() => navigate("/dashboard"), 1500);
                   } catch (error) {
-                    console.error('Error deleting data:', error);
-                    setError(t('profile.anErrorOccurred'));
+                    dbLogger.error("Error deleting data:", error);
+                    setError(t("profile.anErrorOccurred"));
                   }
                 }}
                 className="w-full"
               >
-                {t('profile.deleteConfirmation')}
+                {t("profile.deleteConfirmation")}
               </Button>
             </DialogContent>
           </Dialog>
