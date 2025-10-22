@@ -20,9 +20,12 @@ export function useSync(): UseSync {
 
     setIsSyncing(true);
     try {
-      const result = await syncService.sync({ userId: user.id, verbose: true });
+      await syncService.startSync(user.id);
       setLastSync(new Date());
-      setHasUnsyncedChanges(!result.success);
+      setHasUnsyncedChanges(false);
+    } catch (error) {
+      console.error("Sync error:", error);
+      setHasUnsyncedChanges(true);
     } finally {
       setIsSyncing(false);
     }
