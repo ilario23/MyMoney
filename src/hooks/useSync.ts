@@ -7,13 +7,34 @@ interface UseSync {
   lastSync: Date | null;
   sync: () => Promise<void>;
   hasUnsyncedChanges: boolean;
+  isOnline: boolean;
+  triggerBackgroundSync: () => void;
+  unsyncedCount: number;
 }
 
 export function useSync(): UseSync {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(false);
+  const [isOnline, setIsOnline] = useState(syncService.isAppOnline());
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
   const { user } = useAuthStore();
+
+  // Update unsynced count
+  const updateUnsyncedCount = useCallback(async () => {
+    if (!user) {
+      setUnsyncedCount(0);
+      return;
+    }
+
+    try {
+      const count = await syncService.getUnsyncedCount(user.id);
+      setUnsyncedCount(count);
+      setHasUnsyncedChanges(count > 0);
+    } catch (error) {
+      console.error("Error updating unsynced count:", error);
+    }
+  }, [user]);
 
   const sync = useCallback(async () => {
     if (!user || isSyncing) return;
@@ -23,25 +44,73 @@ export function useSync(): UseSync {
       await syncService.startSync(user.id);
       setLastSync(new Date());
       setHasUnsyncedChanges(false);
+      setUnsyncedCount(0);
+      await updateUnsyncedCount();
     } catch (error) {
       console.error("Sync error:", error);
       setHasUnsyncedChanges(true);
+      await updateUnsyncedCount();
     } finally {
       setIsSyncing(false);
     }
-  }, [user, isSyncing]);
+  }, [user, isSyncing, updateUnsyncedCount]);
+
+  const triggerBackgroundSync = useCallback(() => {
+    if (!user || !isOnline) return;
+
+    syncService.syncAfterChange(user.id)
+      .then(() => updateUnsyncedCount())
+      .catch((error) => {
+        console.error("Background sync error:", error);
+        updateUnsyncedCount();
+      });
+  }, [user, isOnline, updateUnsyncedCount]);
 
   // Auto-sync quando torna online
   useEffect(() => {
     const handleOnline = () => {
+      setIsOnline(true);
       if (user) {
         void sync();
       }
     };
 
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
     window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, [user, sync]);
 
-  return { isSyncing, lastSync, sync, hasUnsyncedChanges };
+  // Subscribe to sync state changes
+  useEffect(() => {
+    const unsubscribe = syncService.subscribe((state) => {
+      setIsSyncing(state.status === "syncing");
+      if (state.lastSync) {
+        setLastSync(state.lastSync);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Update unsynced count on mount and when user changes
+  useEffect(() => {
+    updateUnsyncedCount();
+  }, [user, updateUnsyncedCount]);
+
+  return {
+    isSyncing,
+    lastSync,
+    sync,
+    hasUnsyncedChanges,
+    isOnline,
+    triggerBackgroundSync,
+    unsyncedCount,
+  };
 }

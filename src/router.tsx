@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { supabase } from "@/lib/supabase";
+import { syncService } from "@/services/sync.service";
 import { Layout } from "@/components/layout/layout";
 import { LoginPage } from "@/pages/login";
 import { SignupPage } from "@/pages/signup";
@@ -40,6 +41,10 @@ export function AppRoutes() {
             displayName: session.user.user_metadata?.display_name,
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
+
+          // Initialize app: Load from Dexie first, then sync with Supabase in background
+          // This ensures data is available immediately while syncing remotely
+          await syncService.initializeAtStartup(session.user.id);
         }
       } catch (error) {
         console.error("Auth check error:", error);

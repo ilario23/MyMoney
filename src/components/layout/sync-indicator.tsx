@@ -12,11 +12,24 @@ interface SyncIndicatorProps {
 
 export function SyncIndicator({ isSyncing, lastSync, onSync }: SyncIndicatorProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showOnlineMessage, setShowOnlineMessage] = useState(false);
 
   // Ascolta eventi online/offline per aggiornamento immediato
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowOnlineMessage(true);
+      
+      // Nascondi il messaggio "Online" dopo 2 secondi
+      setTimeout(() => {
+        setShowOnlineMessage(false);
+      }, 2000);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowOnlineMessage(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -36,7 +49,14 @@ export function SyncIndicator({ isSyncing, lastSync, onSync }: SyncIndicatorProp
         </div>
       )}
 
-      {isOnline && lastSync && (
+      {showOnlineMessage && isOnline && (
+        <div className="flex items-center gap-1 text-xs text-green-600 font-semibold animate-in fade-in duration-300">
+          <Cloud className="w-4 h-4" />
+          <span>Online</span>
+        </div>
+      )}
+
+      {isOnline && !showOnlineMessage && lastSync && (
         <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
           <Cloud className="w-4 h-4" />
           <span>

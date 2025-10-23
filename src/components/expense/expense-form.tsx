@@ -4,6 +4,7 @@ import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { getDatabase } from "@/lib/db";
 import { renderIcon } from "@/lib/icon-renderer";
+import { syncService } from "@/services/sync.service";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
@@ -108,7 +109,16 @@ export function ExpenseForm() {
 
       await db.expenses.put(expense);
 
-      syncLogger.success("Expense saved - will sync automatically");
+      syncLogger.success("Expense saved locally - syncing with server");
+
+      // Trigger background sync if online (don't wait for it)
+      if (syncService.isAppOnline()) {
+        syncService.syncAfterChange(user.id).catch((error) => {
+          syncLogger.error("Background sync error:", error);
+        });
+      } else {
+        syncLogger.info("Offline - data saved locally, will sync when online");
+      }
 
       setSuccess(true);
       // Reset form

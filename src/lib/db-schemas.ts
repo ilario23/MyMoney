@@ -30,6 +30,7 @@ export interface CategoryDocType {
   is_active: boolean; // true = shown in transaction form, false = archived
   created_at: string;
   updated_at: string;
+  synced_at?: string | null; // Track when this was last synced to Supabase
   deleted_at?: string | null;
 }
 
@@ -46,6 +47,7 @@ export interface ExpenseDocType {
   date: string;
   created_at: string;
   updated_at: string;
+  synced_at?: string | null; // Track when this was last synced to Supabase
   deleted_at?: string | null;
 }
 
