@@ -1,5 +1,15 @@
 import { getAvailableIcons } from "@/lib/icon-library";
 import * as LucideIcons from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 interface IconPickerProps {
   value: string;
@@ -9,7 +19,7 @@ interface IconPickerProps {
 
 /**
  * Icon picker component for selecting category icons
- * Displays a grid of all available icons
+ * Displays icon picker in a dialog/modal
  */
 export function IconPicker({
   value,
@@ -17,6 +27,7 @@ export function IconPicker({
   className = "",
 }: IconPickerProps) {
   const icons = getAvailableIcons();
+  const [open, setOpen] = useState(false);
 
   const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];
@@ -29,23 +40,47 @@ export function IconPicker({
   return (
     <div className={`space-y-2 ${className}`}>
       <label className="text-sm font-medium text-foreground">Icon</label>
-      <div className="grid grid-cols-6 gap-2 p-3 border border-input rounded-lg bg-background max-h-96 overflow-y-auto">
-        {icons.map((icon) => (
-          <button
-            key={icon}
-            type="button"
-            onClick={() => onChange(icon)}
-            className={`p-2 rounded-lg transition-all ${
-              value === icon
-                ? "bg-primary text-primary-foreground shadow-lg"
-                : "bg-secondary hover:bg-secondary/80 text-foreground"
-            }`}
-            title={icon}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            size="lg"
           >
-            {renderIcon(icon)}
-          </button>
-        ))}
-      </div>
+            <div className="flex items-center gap-2">
+              {renderIcon(value)}
+              <span>{value || "Select an icon"}</span>
+            </div>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Select Icon</DialogTitle>
+            <DialogDescription>
+              Choose an icon for this category
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-8 gap-2 max-h-96 overflow-y-auto p-2">
+            {icons.map((icon) => (
+              <button
+                key={icon}
+                onClick={() => {
+                  onChange(icon);
+                  setOpen(false);
+                }}
+                className={`p-3 rounded-lg transition-all flex items-center justify-center ${
+                  value === icon
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "bg-secondary hover:bg-secondary/80 text-foreground hover:shadow-md"
+                }`}
+                title={icon}
+              >
+                {renderIcon(icon)}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
       <p className="text-xs text-muted-foreground">
         Selected: {value || "None"}
       </p>

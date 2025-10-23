@@ -1,0 +1,200 @@
+import {
+  setTheme,
+  setColorScheme,
+  getThemeConfig,
+  AVAILABLE_COLOR_SCHEMES,
+  type Theme,
+} from "@/lib/theme.store";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Sun, Moon, Monitor, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PalettePreview } from "./palette-preview";
+
+/**
+ * Theme selector component for profile settings
+ * Allows users to choose theme (light/dark/system) and color scheme
+ */
+export function ThemeSelector() {
+  const [config, setConfig] = useState(getThemeConfig());
+  const [mounted, setMounted] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const handleThemeChange = (theme: Theme) => {
+    setTheme(theme);
+    setConfig(getThemeConfig());
+  };
+
+  const handleColorSchemeChange = (colorScheme: string) => {
+    setColorScheme(colorScheme as any);
+    setConfig(getThemeConfig());
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sun className="w-5 h-5" />
+          Appearance
+        </CardTitle>
+        <CardDescription>
+          Customize the look and feel of the app
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Theme Selection */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium">Theme</label>
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant={config.theme === "light" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleThemeChange("light")}
+              className="flex items-center gap-2"
+            >
+              <Sun className="w-4 h-4" />
+              Light
+            </Button>
+            <Button
+              variant={config.theme === "dark" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleThemeChange("dark")}
+              className="flex items-center gap-2"
+            >
+              <Moon className="w-4 h-4" />
+              Dark
+            </Button>
+            <Button
+              variant={config.theme === "system" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleThemeChange("system")}
+              className="flex items-center gap-2"
+            >
+              <Monitor className="w-4 h-4" />
+              System
+            </Button>
+          </div>
+        </div>
+
+        {/* Color Scheme Selection */}
+        <div className="space-y-3 border rounded-lg">
+          <button
+            onClick={() => setIsColorSchemeOpen(!isColorSchemeOpen)}
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <label className="text-sm font-medium cursor-pointer">
+              Color Scheme
+            </label>
+            {isColorSchemeOpen ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+
+          {isColorSchemeOpen && (
+            <div className="px-4 pb-4 space-y-4 border-t">
+              {/* Neutral Schemes */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Neutral
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {AVAILABLE_COLOR_SCHEMES.filter((s) =>
+                    ["neutral", "stone", "zinc", "gray", "slate"].includes(
+                      s.value
+                    )
+                  ).map((scheme) => (
+                    <button
+                      key={scheme.value}
+                      onClick={() => handleColorSchemeChange(scheme.value)}
+                      className={`h-10 rounded-lg border-2 transition-all text-sm font-medium ${
+                        config.colorScheme === scheme.value
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border hover:bg-muted"
+                      }`}
+                      title={scheme.name}
+                    >
+                      {scheme.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vivid Schemes */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Vivid
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {AVAILABLE_COLOR_SCHEMES.filter(
+                    (s) =>
+                      !["neutral", "stone", "zinc", "gray", "slate"].includes(
+                        s.value
+                      )
+                  ).map((scheme) => (
+                    <button
+                      key={scheme.value}
+                      onClick={() => handleColorSchemeChange(scheme.value)}
+                      className={`h-10 rounded-lg border-2 transition-all text-sm font-medium ${
+                        config.colorScheme === scheme.value
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border hover:bg-muted"
+                      }`}
+                      title={scheme.name}
+                    >
+                      {scheme.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="pt-2 mt-4 border-t space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Current:{" "}
+                  {config.theme === "system"
+                    ? "System"
+                    : config.theme.charAt(0).toUpperCase() +
+                      config.theme.slice(1)}{" "}
+                  Mode •{" "}
+                  {AVAILABLE_COLOR_SCHEMES.find(
+                    (s) => s.value === config.colorScheme
+                  )?.name || config.colorScheme}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowPreview((p) => !p)}
+                  className="flex items-center gap-2"
+                >
+                  {showPreview ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                  {showPreview ? "Hide" : "Show"} Palette
+                </Button>
+                {showPreview && <PalettePreview />}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

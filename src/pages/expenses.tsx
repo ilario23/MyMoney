@@ -101,34 +101,34 @@ export function ExpensesPage() {
     return null;
   }
 
-  // Helper: Get color and style for transaction type
+  // Helper: Get semantic classes for transaction type using theme tokens
   const getTypeStyle = (type: "expense" | "income" | "investment") => {
     switch (type) {
       case "expense":
         return {
-          bgColor: "bg-red-50",
-          borderColor: "border-red-200",
-          textColor: "text-red-700",
-          badgeColor: "bg-red-100",
-          amountColor: "text-red-600",
+          bgColor: "bg-destructive/10",
+          borderColor: "border-destructive/40",
+          textColor: "text-destructive",
+          badgeColor: "bg-destructive/15",
+          amountColor: "text-destructive",
           icon: "📤",
         };
       case "income":
         return {
-          bgColor: "bg-green-50",
-          borderColor: "border-green-200",
-          textColor: "text-green-700",
-          badgeColor: "bg-green-100",
-          amountColor: "text-green-600",
+          bgColor: "bg-primary/10",
+          borderColor: "border-primary/40",
+          textColor: "text-primary",
+          badgeColor: "bg-primary/15",
+          amountColor: "text-primary",
           icon: "📥",
         };
       case "investment":
         return {
-          bgColor: "bg-blue-50",
-          borderColor: "border-blue-200",
-          textColor: "text-blue-700",
-          badgeColor: "bg-blue-100",
-          amountColor: "text-blue-600",
+          bgColor: "bg-primary/10",
+          borderColor: "border-primary/40",
+          textColor: "text-primary",
+          badgeColor: "bg-primary/15",
+          amountColor: "text-primary",
           icon: "💰",
         };
     }
@@ -231,7 +231,7 @@ export function ExpensesPage() {
             return (
               <div
                 key={expense.id}
-                className={`${typeStyle.bgColor} ${typeStyle.borderColor} border rounded-lg cursor-pointer hover:shadow-md transition-all p-4`}
+                className={`${typeStyle.bgColor} ${typeStyle.borderColor} border rounded-lg cursor-pointer hover:bg-accent hover:shadow-md transition-all p-4`}
                 onClick={() => navigate(`/expense/${expense.id}`)}
               >
                 <div className="flex items-center justify-between">

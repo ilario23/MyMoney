@@ -228,8 +228,8 @@ export function StatisticsPage() {
                 </p>
                 <p className="text-2xl font-bold">{totalExpenses}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="h-12 w-12 rounded-full bg-primary/15 dark:bg-primary/25 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-primary" />
               </div>
             </div>
 
@@ -241,8 +241,8 @@ export function StatisticsPage() {
                 </p>
                 <p className="text-2xl font-bold">€{avgExpense.toFixed(2)}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="h-12 w-12 rounded-full bg-primary/15 dark:bg-primary/25 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-primary" />
               </div>
             </div>
 
@@ -254,7 +254,7 @@ export function StatisticsPage() {
                     {t("dashboard.vsLastMonth") || "vs Mese Scorso"}
                   </p>
                   <p
-                    className={`text-xl font-bold ${percentageChange > 0 ? "text-destructive" : "text-green-600"}`}
+                    className={`text-xl font-bold ${percentageChange > 0 ? "text-destructive" : "text-primary"}`}
                   >
                     {percentageChange > 0 ? "+" : ""}
                     {percentageChange.toFixed(1)}%
@@ -263,7 +263,7 @@ export function StatisticsPage() {
                 {percentageChange > 0 ? (
                   <TrendingUp className="h-8 w-8 text-destructive" />
                 ) : (
-                  <TrendingDown className="h-8 w-8 text-green-600" />
+                  <TrendingDown className="h-8 w-8 text-primary" />
                 )}
               </div>
             )}

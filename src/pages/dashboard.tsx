@@ -235,10 +235,10 @@ export function DashboardPage() {
           <div className="hidden md:grid md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingDown className="h-4 w-4 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-destructive" />
                 <span>{t("dashboard.expensesThisMonth") || "Spese"}</span>
               </div>
-              <div className="text-3xl font-bold text-red-500">
+              <div className="text-3xl font-bold text-destructive">
                 {monthlyTotal.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -255,10 +255,10 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-green-500" />
+                <TrendingUp className="h-4 w-4 text-primary" />
                 <span>{t("dashboard.incomeThisMonth") || "Entrate"}</span>
               </div>
-              <div className="text-3xl font-bold text-green-500">
+              <div className="text-3xl font-bold text-primary">
                 {monthlyIncome.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -275,12 +275,12 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Zap className="h-4 w-4 text-blue-500" />
+                <Zap className="h-4 w-4 text-primary" />
                 <span>
                   {t("dashboard.investmentsThisMonth") || "Investimenti"}
                 </span>
               </div>
-              <div className="text-3xl font-bold text-blue-500">
+              <div className="text-3xl font-bold text-primary">
                 {monthlyInvestment.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -379,8 +379,8 @@ export function DashboardPage() {
                     </p>
                     <p className="text-2xl font-bold">{totalExpenses}</p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-blue-600" />
+                  <div className="h-12 w-12 rounded-full bg-primary/15 dark:bg-primary/25 flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-primary" />
                   </div>
                 </div>
 
@@ -393,8 +393,8 @@ export function DashboardPage() {
                       {avgExpense.toFixed(2)}
                     </p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                  <div className="h-12 w-12 rounded-full bg-primary/15 dark:bg-primary/25 flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-primary" />
                   </div>
                 </div>
 
@@ -405,7 +405,7 @@ export function DashboardPage() {
                         {t("dashboard.vsLastMonth") || "vs Mese Scorso"}
                       </p>
                       <p
-                        className={`text-xl font-bold ${percentageChange > 0 ? "text-destructive" : "text-green-600"}`}
+                        className={`text-xl font-bold ${percentageChange > 0 ? "text-destructive" : "text-primary"}`}
                       >
                         {percentageChange > 0 ? "+" : ""}
                         {percentageChange.toFixed(1)}%
@@ -414,7 +414,7 @@ export function DashboardPage() {
                     {percentageChange > 0 ? (
                       <TrendingUp className="h-8 w-8 text-destructive" />
                     ) : (
-                      <TrendingDown className="h-8 w-8 text-green-600" />
+                      <TrendingDown className="h-8 w-8 text-primary" />
                     )}
                   </div>
                 )}
@@ -475,7 +475,7 @@ export function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p
-                        className={`font-bold ${expense.amount > 0 ? "text-destructive" : "text-green-600"}`}
+                        className={`font-bold ${expense.amount > 0 ? "text-destructive" : "text-primary"}`}
                       >
                         {expense.amount > 0 ? "-" : "+"}
                         {Math.abs(expense.amount).toFixed(2)}

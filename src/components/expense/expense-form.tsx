@@ -145,16 +145,16 @@ export function ExpenseForm() {
       </div>
 
       {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">
+        <Alert className="border border-primary/30 bg-primary/10">
+          <AlertDescription className="text-primary font-medium">
             {t("expense.addSuccess")}
           </AlertDescription>
         </Alert>
       )}
 
       {error && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <AlertDescription className="text-yellow-800">
+        <Alert className="border border-destructive/30 bg-destructive/10">
+          <AlertDescription className="text-destructive font-medium">
             {error}
           </AlertDescription>
         </Alert>
@@ -181,8 +181,8 @@ export function ExpenseForm() {
                   }}
                   className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
                     type === "expense"
-                      ? "bg-red-500 text-white shadow-lg"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      ? "bg-destructive text-destructive-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   disabled={isLoading || success}
                 >
@@ -197,8 +197,8 @@ export function ExpenseForm() {
                   }}
                   className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
                     type === "income"
-                      ? "bg-green-500 text-white shadow-lg"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   disabled={isLoading || success}
                 >
@@ -213,8 +213,8 @@ export function ExpenseForm() {
                   }}
                   className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
                     type === "investment"
-                      ? "bg-blue-500 text-white shadow-lg"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      ? "bg-accent text-accent-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   disabled={isLoading || success}
                 >
@@ -257,8 +257,8 @@ export function ExpenseForm() {
                 {t("expense.category")}
               </label>
               {categories.length === 0 ? (
-                <Alert className="border-blue-200 bg-blue-50">
-                  <AlertDescription className="text-blue-800 flex items-center justify-between">
+                <Alert className="border border-ring bg-muted">
+                  <AlertDescription className="text-muted-foreground flex items-center justify-between">
                     <span>No categories yet. Create one first!</span>
                     <Button
                       type="button"

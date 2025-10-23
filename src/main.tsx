@@ -5,12 +5,16 @@ import { App } from "./App.tsx";
 import { registerSW } from "@/lib/pwa";
 import { initDatabase } from "@/lib/db";
 import { dbLogger } from "@/lib/logger";
+import { initTheme } from "@/lib/theme.store";
 
 // App wrapper component for Dexie initialization and service worker
 function AppWrapper() {
   const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
+    // Initialize theme on app startup
+    initTheme();
+
     // Initialize Dexie before rendering app
     initDatabase()
       .then(() => {

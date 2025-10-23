@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, X, Edit2 } from "lucide-react";
+import { Trash2, X, Edit2, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { IconPicker } from "@/components/ui/icon-picker";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { getDatabase } from "@/lib/db";
@@ -153,7 +153,17 @@ export function CategoriesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 px-4">
-      <h1 className="text-3xl font-bold">Categorie</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Categorie</h1>
+        <FloatingActionButton
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+          label="Add category"
+        />
+      </div>
 
       {showForm && (
         <Card className="border-2 border-primary">
@@ -168,6 +178,52 @@ export function CategoriesPage() {
             </div>
 
             <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Type</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, type: "expense" })
+                    }
+                    className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                      formData.type === "expense"
+                        ? "bg-destructive text-destructive-foreground shadow-lg"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <TrendingDown className="w-4 h-4" />
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: "income" })}
+                    className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                      formData.type === "income"
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Income
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, type: "investment" })
+                    }
+                    className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                      formData.type === "investment"
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <Zap className="w-4 h-4" />
+                    Investment
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-medium mb-1 block">Name</label>
                 <Input
@@ -200,28 +256,6 @@ export function CategoriesPage() {
                     {formData.color}
                   </span>
                 </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">Type</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => {
-                    const newType = e.target.value as
-                      | "expense"
-                      | "income"
-                      | "investment";
-                    setFormData({
-                      ...formData,
-                      type: newType,
-                    });
-                  }}
-                  className="w-full px-3 py-2 border rounded-md bg-white"
-                >
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                  <option value="investment">Investment</option>
-                </select>
               </div>
 
               {editingId && (
@@ -297,10 +331,10 @@ export function CategoriesPage() {
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleEditCategory(cat)}
-                    className="p-2 hover:bg-blue-100 rounded transition-colors"
+                    className="p-2 hover:bg-primary/15 rounded transition-colors"
                     title="Edit"
                   >
-                    <Edit2 className="w-4 h-4 text-blue-600" />
+                    <Edit2 className="w-4 h-4 text-primary" />
                   </button>
                   <button
                     onClick={() => handleDeleteCategory(cat)}
@@ -324,14 +358,6 @@ export function CategoriesPage() {
           </div>
         )}
       </div>
-
-      <FloatingActionButton
-        onClick={() => {
-          resetForm();
-          setShowForm(true);
-        }}
-        label="Add category"
-      />
     </div>
   );
 }

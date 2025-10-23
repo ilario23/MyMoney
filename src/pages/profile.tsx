@@ -7,6 +7,7 @@ import { statsService } from "@/services/stats.service";
 import { authLogger, dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 import {
   Select,
   SelectContent,
@@ -220,8 +221,8 @@ export function ProfilePage() {
       )}
 
       {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">
+        <Alert className="border border-primary/30 bg-primary/10">
+          <AlertDescription className="text-primary font-medium">
             ✓ {success}
           </AlertDescription>
         </Alert>
@@ -444,6 +445,9 @@ export function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Theme Settings */}
+      <ThemeSelector />
 
       {/* Account Settings */}
       <Card>

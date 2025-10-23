@@ -80,8 +80,7 @@ CREATE TABLE public.categories (
 
 COMMENT ON TABLE public.categories IS 'Transaction categories per user - supports soft-delete via deleted_at';
 COMMENT ON COLUMN public.categories.type IS 'Category type: expense, income, or investment';
-COMMENT ON COLUMN public.categories.is_custom IS 'true = user-created, false = default category';
-COMMENT ON COLUMN public.categories.is_active IS 'Controls visibility in transaction form';
+COMMENT ON COLUMN public.categories.is_active IS 'Controls visibility in transaction form - true = active, false = archived';
 COMMENT ON COLUMN public.categories.deleted_at IS 'Soft-delete timestamp (NULL = active)';
 
 -- Table 3: transactions (user transactions - expenses, income, investments)

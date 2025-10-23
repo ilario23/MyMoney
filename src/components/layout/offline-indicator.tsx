@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { WifiOff, Wifi, X } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/lib/language';
+import { useEffect, useState } from "react";
+import { WifiOff, Wifi, X } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/language";
 
 export function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -15,7 +15,7 @@ export function OfflineIndicator() {
       setIsOnline(true);
       setShowOffline(false);
       setShowBackOnline(true);
-      
+
       // Nascondi il messaggio "Sei tornato online" dopo 2 secondi
       setTimeout(() => {
         setShowBackOnline(false);
@@ -26,15 +26,15 @@ export function OfflineIndicator() {
       setIsOnline(false);
       setShowOffline(true);
       setShowBackOnline(false);
-      
+
       // Nascondi il messaggio "Sei offline" dopo 2 secondi
       setTimeout(() => {
         setShowOffline(false);
       }, 2000);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     // Mostra subito se siamo offline
     if (!navigator.onLine) {
@@ -42,8 +42,8 @@ export function OfflineIndicator() {
     }
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -55,7 +55,8 @@ export function OfflineIndicator() {
           <WifiOff className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between gap-2">
             <span className="font-medium">
-              {t('common.offline') || 'Sei offline. Le modifiche verranno sincronizzate quando tornerai online.'}
+              {t("common.offline") ||
+                "Sei offline. Le modifiche verranno sincronizzate quando tornerai online."}
             </span>
             <Button
               variant="ghost"
@@ -75,16 +76,17 @@ export function OfflineIndicator() {
   if (showBackOnline && isOnline) {
     return (
       <div className="fixed top-16 left-0 right-0 z-40 px-4 pt-4 animate-in slide-in-from-top-5">
-        <Alert className="max-w-screen-2xl mx-auto border-green-500 bg-green-50 dark:bg-green-950">
-          <Wifi className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <Alert className="max-w-screen-2xl mx-auto border border-primary/40 bg-primary/10">
+          <Wifi className="h-4 w-4 text-primary" />
           <AlertDescription className="flex items-center justify-between gap-2">
-            <span className="text-green-800 dark:text-green-200 font-medium">
-              {t('common.backOnline') || 'Sei tornato online! Sincronizzazione in corso...'}
+            <span className="text-primary font-medium">
+              {t("common.backOnline") ||
+                "Sei tornato online! Sincronizzazione in corso..."}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-green-800 dark:text-green-200 hover:bg-green-600/10"
+              className="h-6 w-6 p-0 text-primary hover:bg-primary/15"
               onClick={() => setShowBackOnline(false)}
             >
               <X className="h-4 w-4" />
