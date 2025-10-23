@@ -1,18 +1,10 @@
 # 🚀 MyMoney Setup Guide v3.0 - Dexie + Local-First# 🚀 MyMoney Setup Guide v3.0 - Dexie + Local-First
 
-
-
 Benvenuto! Questa guida ti aiuterà a configurare MyMoney da zero con la nuova architettura **Dexie + Local-First**.Benvenuto! Questa guida ti aiuterà a configurare MyMoney da zero con la nuova architettura **Dexie + Local-First**.
-
-
 
 ## 📋 Cosa è MyMoney?## 📋 Cosa è MyMoney?
 
-
-
 **MyMoney** è un'app **locale-first** per la gestione delle spese personali:**MyMoney** è un'app **locale-first** per la gestione delle spese personali:
-
-
 
 - 💾 **Dati salvati localmente** in IndexedDB via Dexie- 💾 **Dati salvati localmente** in IndexedDB via Dexie
 
@@ -24,19 +16,11 @@ Benvenuto! Questa guida ti aiuterà a configurare MyMoney da zero con la nuova a
 
 - 🔐 **Privato** - controllo totale dei tuoi dati- 🔐 **Privato** - controllo totale dei tuoi dati
 
-
-
-------
-
-
+---
 
 ## 🛠️ Prerequisiti## 🛠️ Prerequisiti
 
-
-
 Prima di iniziare, assicurati di avere:
-
-
 
 - **Node.js** v18 o superioreL'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:pnpm install
 
@@ -46,11 +30,11 @@ Prima di iniziare, assicurati di avere:
 
 - Un account **Supabase** (opzionale, solo per sync online)
 
-#### 1. **users****Getting Supabase Credentials:**```
+#### 1. **users\*\***Getting Supabase Credentials:\*\*```
 
 ### Verifica versioni
 
-```typescript
+````typescript
 
 ```bash
 
@@ -80,13 +64,13 @@ git clone https://github.com/ilario23/MyMoney.git
 
 cd MyMoney  created_at: string            // ISO timestamp3. Go to **Settings** → **API**```bash
 
-```
+````
 
-  updated_at: string            // ISO timestamp
+updated_at: string // ISO timestamp
 
 ### 2. Installa dipendenze
 
-  deleted_at?: string           // Soft delete flag4. Copy:cp .env.example .env.local
+deleted_at?: string // Soft delete flag4. Copy:cp .env.example .env.local
 
 ```bash
 
@@ -94,15 +78,13 @@ pnpm install}
 
 ```
 
-```   - **Project URL** → `VITE_SUPABASE_URL````
+```  - **Project URL** →`VITE_SUPABASE_URL````
 
 Questo installerà:
 
-
-
 - **React 19** - Framework UI
 
-- **Dexie 4.2.1** - IndexedDB wrapper#### 2. **categories**   - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
+- **Dexie 4.2.1** - IndexedDB wrapper#### 2. **categories** - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
 
 - **dexie-observable 4.0.1** - Reattività real-time
 
@@ -114,17 +96,17 @@ Questo installerà:
 
 - E altre librerie
 
-  id: string                    // UUID
+  id: string // UUID
 
 ### 3. Configura variabili d'ambiente (opzionale)
 
-  user_id: string               // Link all'utente### 3. Database Setup
+user_id: string // Link all'utente### 3. Database Setup
 
 Crea un file `.env.local` nella root del progetto:
 
-  name: string                  // Es: "Cibo", "Trasporto"
+name: string // Es: "Cibo", "Trasporto"
 
-```env
+````env
 
 # Supabase (opzionale - solo per sincronizzazione online)  icon: string                  // Emoji: "🍕"```env
 
@@ -132,25 +114,25 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 
 VITE_SUPABASE_ANON_KEY=your-anon-key  color?: string                // Hex color
 
-```
+````
 
-  parent_id?: string            // Per categorie annidate#### Option A: Fresh Installation (Recommended)VITE_SUPABASE_URL=https://your-project.supabase.co
+parent_id?: string // Per categorie annidate#### Option A: Fresh Installation (Recommended)VITE_SUPABASE_URL=https://your-project.supabase.co
 
 Se **non usi Supabase**, l'app funzionerà comunque 100% localmente!
 
-  is_custom: boolean            // true = creata dall'utente
+is_custom: boolean // true = creata dall'utente
 
 ---
 
-  created_at: stringVITE_SUPABASE_ANON_KEY=your-anon-key
+created_at: stringVITE_SUPABASE_ANON_KEY=your-anon-key
 
 ## 📁 Architettura dei Dati
 
-  updated_at: string
+updated_at: string
 
 ### Database Locale (Dexie - IndexedDB)
 
-  deleted_at?: string1. Open your Supabase project```
+deleted_at?: string1. Open your Supabase project```
 
 L'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:
 
@@ -158,7 +140,7 @@ L'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:
 
 #### 1. **users**
 
-```2. Go to **SQL Editor**
+````2. Go to **SQL Editor**
 
 ```typescript
 
@@ -218,15 +200,11 @@ L'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:
 
 }
 
-`````````
-
-
+````
 
 #### 3. **expenses**- Skip migration files - they're only for upgrading existing databases
 
-
-
-```typescript#### 4. **stats_cache** (opzionale)
+````typescript#### 4. **stats_cache** (opzionale)
 
 {
 
@@ -292,7 +270,7 @@ L'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:
 
 }}>
 
-```
+````
 
 updated_at: string### 4. Run the Application - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
 
@@ -316,21 +294,13 @@ updated_at: string### 4. Run the Application - `MIGRATION_v1.10_REUSABLE_INVITE_
 
 - **UI Icons**: Lucide React
 
-
-
 ---## 🔄 Sincronizzazione (Opzionale)# Development mode
-
-
 
 ## 🚀 Avvia l'app
 
-
-
 ### Development mode### Come funziona?pnpm devGo to **Supabase → SQL Editor** and run the following SQL in order:
 
-
-
-```bash
+````bash
 
 pnpm dev
 
@@ -700,13 +670,11 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 
 VITE_SUPABASE_ANON_KEY=your-anon-key  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 
-```
+````
 
 );| `group_members` | Group membership | ✅ |CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
 
 ### 5. Riavvia l'app
-
-
 
 ```bash
 
@@ -736,15 +704,9 @@ CREATE INDEX idx_expenses_date ON expenses(date);CREATE INDEX idx_categories_use
 
 4. Configure email templates (optional)### Local-Only Collections
 
-
-
 ### Optional: Social Login-- Enable RLS
 
-
-
 To enable Google/GitHub/etc:ALTER TABLE users ENABLE ROW LEVEL SECURITY;-- 4. Expenses table (depends on users and groups)
-
-
 
 1. **Authentication** → **Providers**ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
@@ -758,9 +720,9 @@ ALTER TABLE stats_cache ENABLE ROW LEVEL SECURITY;
 
 **Redirect URL format:**
 
-|------------|---------|  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+|------------|---------| id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-```
+````
 
 https://your-domain.com/auth/callback          # for production-- Create RLS Policies for users
 
@@ -908,57 +870,55 @@ ON stats_cache FOR SELECT USING (auth.uid() = user_id);  created_at TIMESTAMP WI
 
 
 
-```
+````
 
-frontend-starter-kit/CREATE POLICY "Users can insert own stats"```  UNIQUE(group_id, user_id)
-
-
+frontend-starter-kit/CREATE POLICY "Users can insert own stats"``` UNIQUE(group_id, user_id)
 
 ├── src/ON stats_cache FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-│   ├── components/              # Componenti React
+│ ├── components/ # Componenti React
 
-│   │   ├── ui/                  # Radix UI components- Live sync: Changes replicate automatically);
+│ │ ├── ui/ # Radix UI components- Live sync: Changes replicate automatically);
 
-│   │   ├── expense/             # Expense form
+│ │ ├── expense/ # Expense form
 
-│   │   └── layout/              # Layout componentsCREATE POLICY "Users can update own stats"
+│ │ └── layout/ # Layout componentsCREATE POLICY "Users can update own stats"
 
-│   ├── pages/                   # Pagine (Login, Dashboard, etc)
+│ ├── pages/ # Pagine (Login, Dashboard, etc)
 
-│   ├── hooks/                   # Custom hooksON stats_cache FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);- Conflict resolution: Last-write-wins based on updated_at
+│ ├── hooks/ # Custom hooksON stats_cache FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);- Conflict resolution: Last-write-wins based on updated_at
 
-│   │   ├── useQuery.ts          # Dexie query hook (reattivo)
+│ │ ├── useQuery.ts # Dexie query hook (reattivo)
 
-│   │   └── useTheme.ts          # Dark mode hook
+│ │ └── useTheme.ts # Dark mode hook
 
-│   ├── lib/
+│ ├── lib/
 
-│   │   ├── db.ts                # Dexie database setupCREATE POLICY "Users can delete own stats"- Soft deletes: Items marked as deleted_at, not hard-deleted-- 6. Shared expenses table (depends on groups, expenses, and users)
+│ │ ├── db.ts # Dexie database setupCREATE POLICY "Users can delete own stats"- Soft deletes: Items marked as deleted_at, not hard-deleted-- 6. Shared expenses table (depends on groups, expenses, and users)
 
-│   │   ├── db-schemas.ts        # TypeScript types
+│ │ ├── db-schemas.ts # TypeScript types
 
-│   │   ├── supabase.ts          # Supabase clientON stats_cache FOR DELETE USING (auth.uid() = user_id);
+│ │ ├── supabase.ts # Supabase clientON stats_cache FOR DELETE USING (auth.uid() = user_id);
 
-│   │   ├── auth.store.ts        # Zustand auth store
+│ │ ├── auth.store.ts # Zustand auth store
 
-│   │   └── logger.ts            # Logging utilities```- Leader election: Only one tab syncs at a timeCREATE TABLE public.shared_expenses (
+│ │ └── logger.ts # Logging utilities```- Leader election: Only one tab syncs at a timeCREATE TABLE public.shared_expenses (
 
-│   ├── services/
+│ ├── services/
 
-│   │   ├── sync.service.ts      # Sync logic con Supabase
+│ │ ├── sync.service.ts # Sync logic con Supabase
 
-│   │   └── stats.service.ts     # Calcolo statistiche
+│ │ └── stats.service.ts # Calcolo statistiche
 
-│   └── translations/            # i18n (Italiano/Inglese)### 4. Copia le credenziali```  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+│ └── translations/ # i18n (Italiano/Inglese)### 4. Copia le credenziali``` id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-├── public/                      # Static files
+├── public/ # Static files
 
-├── dist/                        # Build output (produzione)
+├── dist/ # Build output (produzione)
 
-└── docs/                        # Documentation
+└── docs/ # Documentation
 
-```Dalla dashboard Supabase:  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+```````Dalla dashboard Supabase:  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
 
 
 
@@ -1088,18 +1048,12 @@ If you get foreign key constraint errors during sync:
 
    SELECT * FROM public.users WHERE id = 'your-user-id';   - 🏠 Casa1. **Check cache first**: 30-minute validityCREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
 
-   ```
-
-
+```````
 
 2. **Check RLS is enabled**:
-
    - Go to **Table Editor → Select table → Check RLS toggle**### Step 3: Aggiungi spese2. **Calculate from local data**: If cache expired/missingCREATE INDEX idx_groups_owner ON public.groups(owner_id);
 
-
-
 3. **If user creation fails at signup**:1. Vai a **"Spese"** o clicca **"Nuova spesa"**
-
    - Check browser console for error messages
 
    - Verify RLS policies are PERMISSIVE (use `WITH CHECK (true)`)2. Compila il form:3. **Update cache**: Store results locallyCREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
@@ -1110,29 +1064,23 @@ If you get foreign key constraint errors during sync:
 
 ### RLS Policy Errors Reference
 
-   - Importo4. **Invalidate on change**: Recalculate when expenses changeCREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
+- Importo4. **Invalidate on change**: Recalculate when expenses changeCREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
 
-| Error     | Cause                              | Solution                                                       |
+| Error | Cause | Solution |
 
-| --------- | ---------------------------------- | --------------------------------------------------------------- |   - Categoria
+| --------- | ---------------------------------- | --------------------------------------------------------------- | - Categoria
 
-| **42501** | Row Level Security policy violated | Use `WITH CHECK (true)` for INSERT; app validates permissions   |
+| **42501** | Row Level Security policy violated | Use `WITH CHECK (true)` for INSERT; app validates permissions |
 
-| **406**   | Malformed query                    | Check `.select("*")` instead of `.select("id")`                 |   - DataCREATE INDEX idx_group_members_group ON public.group_members(group_id);
+| **406** | Malformed query | Check `.select("*")` instead of `.select("id")` | - DataCREATE INDEX idx_group_members_group ON public.group_members(group_id);
 
-| **401**   | Unauthorized                       | Verify auth token is valid; check CORS settings                 |
+| **401** | Unauthorized | Verify auth token is valid; check CORS settings |
 
-| **23503** | Foreign key constraint             | User must exist in `public.users`; verify in signup.tsx         |3. Clicca **"Salva"**
-
-
+| **23503** | Foreign key constraint | User must exist in `public.users`; verify in signup.tsx |3. Clicca **"Salva"**
 
 ### If RLS Still Causes Issues### PerformanceCREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
 
-
-
 As a temporary diagnostic step, you can disable RLS on specific tables to test:### Step 4: Visualizza statistiche
-
-
 
 ```sql1. Vai a **"Statistiche"**`````
 
@@ -1154,7 +1102,7 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;- **No network latency\*
 
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 
-```## 🔧 Comandi disponibili
+```````## 🔧 Comandi disponibili
 
 
 
@@ -1244,15 +1192,15 @@ pnpm install -g netlify-cli
 
 netlify deploy --prod --dir=dist- ✅ Splash screen al launch
 
-```
+```````
 
-  --primary: 240 5.9% 10%;In **Supabase → SQL Editor**, run:
+--primary: 240 5.9% 10%;In **Supabase → SQL Editor**, run:
 
 ### Docker
 
 ### Come installare:
 
-```dockerfile
+``````dockerfile
 
 FROM node:18-alpine1. Apri MyMoney su Chrome/Edge --primary-foreground: 0 0% 98%;
 
@@ -1388,9 +1336,7 @@ Categories are unique per user by name. The database enforces:
 
 UNIQUE(user_id, name)  -- One category name per user## 🚨 Troubleshooting-- NOTE: Uses permissive policy (WITH CHECK true) because auth.uid() isn't fully linked yet
 
-```
-
-
+``````
 
 **Important**: The app must:
 
@@ -1412,31 +1358,23 @@ When a duplicate is detected:
 
 - **DB Level**: PostgreSQL will reject with constraint violation (safety net)```typescriptON public.users
 
-
-
 ### Hierarchical Categories### "Dexie database not initialized"
 
-
-
 Categories support **parent-child relationships** for better organization:❌ Il database non si è avviatoimport de from './de';FOR INSERT
-
-
 
 - **Top-level categories**: `parent_id = NULL` (e.g., "Shopping", "Transportation")✅ Controlla la console per errori
 
 - **Sub-categories**: `parent_id = <parent-uuid>` (e.g., "Groceries" under "Shopping")
 
-- **Tree structure**: Unlimited depth (but recommended max 2-3 levels for UX)✅ Cancella localStorage/IndexedDB: F12 → Application → Clear storageWITH CHECK (true);  -- Allow insertion, app validates user_id match
+- **Tree structure**: Unlimited depth (but recommended max 2-3 levels for UX)✅ Cancella localStorage/IndexedDB: F12 → Application → Clear storageWITH CHECK (true); -- Allow insertion, app validates user_id match
 
 - **Cascade delete**: When parent deleted, children become top-level (`ON DELETE SET NULL`)
-
-
 
 **Example tree:**
 
 ### App offline ma non sincronizzaexport const translations = {
 
-```
+`````
 
 📌 Shopping (parent_id: null)❌ Credenziali Supabase non configurate
 
@@ -1476,9 +1414,7 @@ const result = await syncService.sync({
 
 });✅ Cambia in `@/lib/db````USING (auth.uid() = id)
 
-```
-
-
+`````
 
 Monitor browser console for:
 
@@ -1488,15 +1424,9 @@ Monitor browser console for:
 
 - `[ServiceWorker]` logs from service worker
 
-
-
 ---## 📖 Documentazione---
 
-
-
 ## 📚 Additional Resources
-
-
 
 - **Dexie**: https://dexie.org/docsPer approfondire:-- ====== CATEGORIES TABLE POLICIES ======
 
@@ -1508,19 +1438,11 @@ Monitor browser console for:
 
 - **TypeScript**: https://www.typescriptlang.org/docs- **Dexie.Observable**: https://dexie.org/docs/Observable## 🧪 Testing-- Users can read own and group categories (v1.12)
 
-
-
 ---- **Supabase**: https://supabase.com/docs
-
-
 
 ## 📝 Changelog- **React**: https://react.devCREATE POLICY "Users can read own and group categories"
 
-
-
 ### v3.0 (Attuale)- **TypeScript**: https://www.typescriptlang.org/docs
-
-
 
 - ✨ Migrazione da RxDB a Dexie### Run TestsON public.categories
 
@@ -1538,7 +1460,7 @@ Monitor browser console for:
 
 ### v2.x
 
-```bashUSING (
+````bashUSING (
 
 - ❌ Removed in v3.0
 
@@ -1682,7 +1604,7 @@ FOR DELETE
 
 }USING (auth.uid() = user_id);
 
-`````
+````
 
 -- Users can create expenses
 
