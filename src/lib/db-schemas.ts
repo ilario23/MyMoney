@@ -9,7 +9,7 @@
 export interface UserDocType {
   id: string;
   email: string;
-  full_name?: string | null;
+  full_name?: string | null;  // Local field name (mapped from display_name in Supabase)
   avatar_url?: string | null;
   preferred_language: string;
   created_at: string;
@@ -22,13 +22,13 @@ export interface UserDocType {
  */
 export interface CategoryDocType {
   id: string;
-  user_id?: string | null;
+  user_id: string;
   name: string;
-  icon?: string | null;
+  icon: string;
   color?: string | null;
-  type: "expense" | "income";
   parent_id?: string | null;
-  is_active: boolean;
+  is_custom: boolean;         // true = created by user, false = default
+  is_active: boolean;         // true = shown in expense form
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -40,10 +40,9 @@ export interface CategoryDocType {
 export interface ExpenseDocType {
   id: string;
   user_id: string;
-  category_id?: string | null;
+  category_id: string;
   amount: number;
   description?: string | null;
-  notes?: string | null;
   date: string;
   created_at: string;
   updated_at: string;
@@ -51,16 +50,14 @@ export interface ExpenseDocType {
 }
 
 /**
- * Stats cache document type (local-only, not synced)
+ * Stats cache document type (local-only, not synced with Supabase)
  */
 export interface StatsCacheDocType {
   id: string;
   user_id: string;
-  period: string; // e.g., '2025-10', 'all-time'
+  period: string; // e.g., '2025-10'
   total_expenses: number;
-  total_income: number;
   expense_count: number;
-  income_count: number;
   top_categories?: Array<{
     category_id: string;
     category_name: string;
@@ -69,6 +66,5 @@ export interface StatsCacheDocType {
   }>;
   daily_average: number;
   monthly_average: number;
-  calculated_at: string;
   updated_at: string;
 }

@@ -6,7 +6,6 @@ import { startOfMonth, endOfMonth, format } from "date-fns";
 export interface StatsData {
   period: string;
   totalExpenses: number;
-  totalIncome: number;
   expenseCount: number;
   topCategories: Array<{
     categoryId: string;
@@ -59,15 +58,10 @@ class StatsService {
     period: string
   ): StatsData {
     let totalExpenses = 0;
-    let totalIncome = 0;
     const categoryMap = new Map();
 
     for (const expense of expenses) {
-      if (expense.amount > 0) {
-        totalExpenses += expense.amount;
-      } else {
-        totalIncome += Math.abs(expense.amount);
-      }
+      totalExpenses += expense.amount;
 
       const catId = expense.category_id || "uncategorized";
       const existing = categoryMap.get(catId) || {
@@ -96,7 +90,6 @@ class StatsService {
     return {
       period,
       totalExpenses,
-      totalIncome,
       expenseCount: expenses.length,
       topCategories,
       dailyAverage,
@@ -121,7 +114,6 @@ class StatsService {
     return {
       period: cached.period,
       totalExpenses: cached.total_expenses,
-      totalIncome: cached.total_income,
       expenseCount: cached.expense_count,
       topCategories,
       dailyAverage: cached.daily_average,
@@ -138,8 +130,6 @@ class StatsService {
       user_id: userId,
       period: stats.period,
       total_expenses: stats.totalExpenses,
-      total_income: stats.totalIncome,
-      income_count: 0, // Not calculated
       expense_count: stats.expenseCount,
       top_categories: stats.topCategories.map((cat) => ({
         category_id: cat.categoryId,
@@ -149,7 +139,6 @@ class StatsService {
       })),
       daily_average: stats.dailyAverage,
       monthly_average: stats.monthlyAverage,
-      calculated_at: now,
       updated_at: now,
     });
   }
