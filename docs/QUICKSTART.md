@@ -9,6 +9,7 @@ Vuoi iniziare subito? Segui questi 5 step!
 Perfetto se vuoi solo provare l'app localmente, senza sincronizzazione cloud.
 
 ### Step 1: Installa
+
 ```bash
 git clone https://github.com/ilario23/MyMoney.git
 cd MyMoney
@@ -16,19 +17,23 @@ pnpm install
 ```
 
 ### Step 2: Avvia
+
 ```bash
 pnpm dev
 ```
 
 ### Step 3: Apri
+
 Vai a **http://localhost:5173**
 
 ### Step 4: Crea un account
+
 - Clicca "Registra"
 - Inserisci email e password
 - ✅ Sei dentro!
 
 ### Step 5: Usa l'app
+
 - Crea categorie
 - Aggiungi spese
 - Vedi statistiche
@@ -42,9 +47,11 @@ Vai a **http://localhost:5173**
 Aggiungi sincronizzazione opzionale con il cloud.
 
 ### Step 1-5: Come sopra
+
 (Segui i step 1-5 dell'opzione 1)
 
 ### Step 6: Crea progetto Supabase
+
 1. Vai a https://supabase.com/dashboard
 2. Clicca "New Project"
 3. Compila:
@@ -54,6 +61,7 @@ Aggiungi sincronizzazione opzionale con il cloud.
 4. Clicca "Create new project"
 
 ### Step 7: Crea le tabelle
+
 1. Nel dashboard Supabase, clicca **"SQL Editor"**
 2. Clicca **"New Query"**
 3. Copia e incolla questo script:
@@ -154,12 +162,14 @@ CREATE POLICY "Users can delete own stats" ON stats_cache FOR DELETE USING (auth
 4. Clicca **"Run"** (oppure Ctrl+Enter)
 
 ### Step 8: Copia le credenziali
+
 1. Nel dashboard Supabase, clicca **"Settings"** → **"API"**
 2. Copia:
    - `Project URL`
    - `anon public key`
 
 ### Step 9: Crea `.env.local`
+
 Nella root del progetto MyMoney, crea un file `.env.local`:
 
 ```env
@@ -170,25 +180,27 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 (Sostituisci con i valori da Step 8)
 
 ### Step 10: Riavvia l'app
+
 ```bash
 pnpm dev
 ```
 
 ### ✅ Fatto!
+
 Ora MyMoney sincronizza i tuoi dati con Supabase quando sei online! 🎉
 
 ---
 
 ## 🤔 Quale opzione scelgo?
 
-| | **Solo Local** | **Con Supabase** |
-|---|---|---|
-| **Privacy** | 🔒 Massima | 🔒 Buona (account personale) |
-| **Offline** | ✅ Sì | ✅ Sì |
-| **Sync** | ❌ No | ✅ Automatico |
-| **Setup** | ⚡ 2 min | ⚡ 10 min |
-| **Costo** | 💲 Gratuito | 💲 Gratuito (Supabase free tier) |
-| **Backup** | ❌ Solo locale | ✅ Cloud backup |
+|             | **Solo Local** | **Con Supabase**                 |
+| ----------- | -------------- | -------------------------------- |
+| **Privacy** | 🔒 Massima     | 🔒 Buona (account personale)     |
+| **Offline** | ✅ Sì          | ✅ Sì                            |
+| **Sync**    | ❌ No          | ✅ Automatico                    |
+| **Setup**   | ⚡ 2 min       | ⚡ 10 min                        |
+| **Costo**   | 💲 Gratuito    | 💲 Gratuito (Supabase free tier) |
+| **Backup**  | ❌ Solo locale | ✅ Cloud backup                  |
 
 **Consiglio**: Inizia con "Solo Local" per provare, poi aggiungi Supabase se ti piace! ✨
 
