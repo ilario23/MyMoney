@@ -1,8 +1,10 @@
-﻿// Sync Service v3.0
-import { replicateRxCollection } from "rxdb/plugins/replication";
-import { Subject } from "rxjs";
+﻿/**
+ * Sync Service - Local-First with Dexie
+ * Syncs data with Supabase when available, local-first approach
+ */
+
 import { supabase } from "@/lib/supabase";
-import { getDatabase } from "@/lib/rxdb";
+import { getDatabase } from "@/lib/db";
 import { syncLogger } from "@/lib/logger";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "completed";
@@ -14,119 +16,198 @@ export interface SyncState {
 }
 
 class SyncService {
-  private replications = new Map();
-  private syncStateSubject = new Subject();
-  private currentState = {
-    status: "idle" as SyncStatus,
-    lastSync: null as Date | null,
-    error: null as string | null,
+  private listeners: Set<(state: SyncState) => void> = new Set();
+  private currentState: SyncState = {
+    status: "idle",
+    lastSync: null,
+    error: null,
   };
+  private isOnline = navigator.onLine;
 
-  get stateObservable() {
-    return this.syncStateSubject.asObservable();
+  subscribe(listener: (state: SyncState) => void): () => void {
+    this.listeners.add(listener);
+    // Return unsubscribe function
+    return () => this.listeners.delete(listener);
   }
 
-  getCurrentState() {
+  private notifyListeners(): void {
+    this.listeners.forEach((listener) => listener(this.getCurrentState()));
+  }
+
+  getCurrentState(): SyncState {
     return { ...this.currentState };
   }
 
-  async startSync(userId: string) {
-    syncLogger.info("Starting sync for user:", userId);
-    try {
-      const db = getDatabase();
-      this.currentState.status = "syncing";
-      this.syncStateSubject.next(this.currentState);
+  constructor() {
+    // Listen for online/offline events
+    window.addEventListener("online", () => {
+      this.isOnline = true;
+      syncLogger.info("App is online");
+    });
 
-      const collections = [
-        "users",
-        "categories",
-        "expenses",
-        "groups",
-        "group_members",
-        "shared_expenses",
-      ] as const;
+    window.addEventListener("offline", () => {
+      this.isOnline = false;
+      syncLogger.warn("App is offline - working locally only");
+    });
+  }
+
+  /**
+   * Start sync - pulls from Supabase and pushes local changes
+   */
+  async startSync(userId: string): Promise<void> {
+    if (!this.isOnline) {
+      syncLogger.warn("Offline - skipping sync");
+      return;
+    }
+
+    syncLogger.info("Starting sync for user:", userId);
+    this.currentState.status = "syncing";
+    this.notifyListeners();
+
+    try {
+      const collections = ["users", "categories", "expenses"] as const;
 
       for (const collectionName of collections) {
-        const collection = db[collectionName];
-        if (!collection) continue;
-
-        const replicationState = replicateRxCollection({
-          collection,
-          replicationIdentifier: `supabase-${collectionName}-${userId}`,
-          live: true,
-          pull: {
-            async handler(
-              checkpoint: { updated_at: string } | undefined,
-              batchSize: number
-            ) {
-              const minTimestamp =
-                checkpoint?.updated_at || new Date(0).toISOString();
-              const result = await supabase
-                .from(collectionName)
-                .select("*")
-                .gte("updated_at", minTimestamp)
-                .order("updated_at", { ascending: true })
-                .limit(batchSize);
-
-              if (result.error) throw result.error;
-              const documents = result.data || [];
-              const lastDoc = documents[documents.length - 1];
-
-              return {
-                documents,
-                checkpoint: lastDoc
-                  ? { updated_at: lastDoc.updated_at }
-                  : checkpoint,
-              };
-            },
-            batchSize: 100,
-          },
-          push: {
-            async handler(rows) {
-              const documents = rows.map((row) => row.newDocumentState);
-              for (const doc of documents) {
-                await supabase
-                  .from(collectionName)
-                  .upsert(doc, { onConflict: "id" });
-              }
-              return [];
-            },
-            batchSize: 50,
-          },
-        });
-
-        this.replications.set(collectionName, replicationState);
+        await this.syncCollection(collectionName, userId);
       }
 
       this.currentState.status = "completed";
       this.currentState.lastSync = new Date();
-      this.syncStateSubject.next(this.currentState);
+      this.currentState.error = null;
+      this.notifyListeners();
+
+      syncLogger.success("Sync completed");
     } catch (error: unknown) {
       this.currentState.status = "error";
       this.currentState.error =
         error instanceof Error ? error.message : "Unknown error";
-      this.syncStateSubject.next(this.currentState);
+      this.notifyListeners();
+      syncLogger.error("Sync error:", error);
       throw error;
     }
   }
 
-  async stopSync() {
-    for (const replication of this.replications.values()) {
-      await replication.cancel();
+  /**
+   * Sync a single collection
+   */
+  private async syncCollection(
+    collectionName: "users" | "categories" | "expenses",
+    userId: string
+  ): Promise<void> {
+    try {
+      // Pull from Supabase
+      await this.pullFromSupabase(collectionName, userId);
+
+      // Push local changes to Supabase
+      await this.pushToSupabase(collectionName, userId);
+    } catch (error) {
+      syncLogger.error(`Failed to sync ${collectionName}:`, error);
+      throw error;
     }
-    this.replications.clear();
-    this.currentState.status = "idle";
-    this.syncStateSubject.next(this.currentState);
   }
 
-  async triggerManualSync() {
-    for (const replication of this.replications.values()) {
-      await replication.reSync();
+  /**
+   * Pull changes from Supabase
+   */
+  private async pullFromSupabase(
+    collectionName: "users" | "categories" | "expenses",
+    userId: string
+  ): Promise<void> {
+    // Get last sync time from localStorage
+    const lastSyncKey = `last_sync_${collectionName}`;
+    const lastSync = localStorage.getItem(lastSyncKey);
+    const minTimestamp = lastSync || new Date(0).toISOString();
+
+    let query = supabase
+      .from(collectionName)
+      .select("*")
+      .gte("updated_at", minTimestamp)
+      .order("updated_at", { ascending: true });
+
+    // Filter by user_id for collections that have it
+    if (collectionName !== "users") {
+      query = query.eq("user_id", userId);
     }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return;
+    }
+
+    // Upsert data into local database
+    const db = getDatabase();
+    const table = db[collectionName as keyof typeof db] as any;
+    for (const doc of data) {
+      await table.put(doc);
+    }
+
+    // Update last sync time
+    localStorage.setItem(lastSyncKey, new Date().toISOString());
+    syncLogger.info(`Pulled ${data.length} items from ${collectionName}`);
   }
 
-  isSyncing() {
+  /**
+   * Push local changes to Supabase
+   */
+  private async pushToSupabase(
+    collectionName: "users" | "categories" | "expenses",
+    userId: string
+  ): Promise<void> {
+    const db = getDatabase();
+    const table = db[collectionName as keyof typeof db] as any;
+
+    // Get all local documents
+    let localDocs = await table.toArray();
+
+    // Filter by user_id if needed (except for users collection)
+    if (collectionName !== "users") {
+      localDocs = localDocs.filter((doc: any) => doc.user_id === userId);
+    }
+
+    if (localDocs.length === 0) {
+      return;
+    }
+
+    // Upsert to Supabase
+    const { error } = await supabase
+      .from(collectionName)
+      .upsert(localDocs, { onConflict: "id" });
+
+    if (error) {
+      throw error;
+    }
+
+    syncLogger.info(`Pushed ${localDocs.length} items to ${collectionName}`);
+  }
+
+  /**
+   * Trigger manual sync
+   */
+  async triggerManualSync(): Promise<void> {
+    if (!this.isOnline) {
+      syncLogger.warn("Cannot sync while offline");
+      return;
+    }
+    // Will be called by auth store with userId
+  }
+
+  /**
+   * Check if currently syncing
+   */
+  isSyncing(): boolean {
     return this.currentState.status === "syncing";
+  }
+
+  /**
+   * Check if online
+   */
+  isAppOnline(): boolean {
+    return this.isOnline;
   }
 }
 

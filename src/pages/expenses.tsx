@@ -1,79 +1,102 @@
-﻿import { useMemo, useState } from 'react';
-import { useAuthStore } from '@/lib/auth.store';
-import { useLanguage } from '@/lib/language';
-import { useRxDB, useRxQuery } from '@/hooks/useRxDB';
-import { FloatingActionButton } from '@/components/ui/floating-action-button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
-import { format } from 'date-fns';
-import { it, enUS } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
+﻿import { useMemo, useState } from "react";
+import { useAuthStore } from "@/lib/auth.store";
+import { useLanguage } from "@/lib/language";
+import { useRxQuery } from "@/hooks/useRxDB";
+import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { Search, X } from "lucide-react";
+import { format } from "date-fns";
+import { it, enUS } from "date-fns/locale";
+import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
 
 export function ExpensesPage() {
   const { user } = useAuthStore();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
-  const db = useRxDB();
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
-  // Reactive queries
-  const { data: expenseDocs, loading } = useRxQuery(() => 
-    user ? db.expenses.find({
-      selector: {
-        user_id: user.id,
-        deleted_at: null
-      },
-      sort: sortBy === 'date' 
-        ? [{ date: sortOrder }] 
-        : [{ amount: sortOrder }]
-    }) : null
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Reactive queries using Dexie with Observable
+  const { data: expenseDocs, loading } = useRxQuery(
+    (table) =>
+      user
+        ? table
+            .where("user_id")
+            .equals(user.id)
+            .filter((exp: ExpenseDocType) => !exp.deleted_at)
+        : Promise.resolve([]),
+    "expenses"
   );
-  
-  const { data: categoryDocs } = useRxQuery(() =>
-    user ? db.categories.find({
-      selector: { user_id: user.id, deleted_at: null }
-    }) : null
+
+  const { data: categoryDocs } = useRxQuery(
+    (table) =>
+      user
+        ? table
+            .where("user_id")
+            .equals(user.id)
+            .filter((cat: CategoryDocType) => !cat.deleted_at)
+        : Promise.resolve([]),
+    "categories"
   );
-  
-  // Convert to plain objects
-  const allExpenses = useMemo(() => expenseDocs.map(doc => doc.toJSON()), [expenseDocs]);
+
+  // Convert to map
   const categories = useMemo(() => {
     const map = new Map();
-    categoryDocs.forEach(doc => {
-      const data = doc.toJSON();
-      map.set(data.id, data);
+    categoryDocs.forEach((cat) => {
+      map.set(cat.id, cat);
     });
     return map;
   }, [categoryDocs]);
-  
+
+  // Sort expenses
+  const sortedExpenses = useMemo(() => {
+    const sorted = [...expenseDocs];
+    sorted.sort((a, b) => {
+      let aVal: number;
+      let bVal: number;
+
+      if (sortBy === "date") {
+        aVal = new Date(a.date).getTime();
+        bVal = new Date(b.date).getTime();
+      } else {
+        aVal = a.amount;
+        bVal = b.amount;
+      }
+
+      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [expenseDocs, sortBy, sortOrder]);
+
   // Filter expenses by search query
   const filteredExpenses = useMemo(() => {
-    if (!searchQuery) return allExpenses;
-    
+    if (!searchQuery) return sortedExpenses;
+
     const query = searchQuery.toLowerCase();
-    return allExpenses.filter(expense => {
-      const description = expense.description?.toLowerCase() || '';
+    return sortedExpenses.filter((expense) => {
+      const description = expense.description?.toLowerCase() || "";
       const category = categories.get(expense.category_id);
-      const categoryName = category?.name?.toLowerCase() || '';
+      const categoryName = category?.name?.toLowerCase() || "";
       const amount = expense.amount.toString();
-      
-      return description.includes(query) || 
-             categoryName.includes(query) || 
-             amount.includes(query);
+
+      return (
+        description.includes(query) ||
+        categoryName.includes(query) ||
+        amount.includes(query)
+      );
     });
-  }, [allExpenses, searchQuery, categories]);
-  
+  }, [sortedExpenses, searchQuery, categories]);
+
   if (!user) {
     return null;
   }
-  
-  const dateLocale = language === 'it' ? it : enUS;
+
+  const dateLocale = language === "it" ? it : enUS;
 
   return (
     <div className="space-y-6 pb-20">
@@ -82,7 +105,8 @@ export function ExpensesPage() {
         <div>
           <h1 className="text-3xl font-bold">Spese</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filteredExpenses.length} {filteredExpenses.length === 1 ? 'spesa' : 'spese'}
+            {filteredExpenses.length}{" "}
+            {filteredExpenses.length === 1 ? "spesa" : "spese"}
           </p>
         </div>
         <FloatingActionButton href="/expense/new" label="Add expense" />
@@ -102,7 +126,7 @@ export function ExpensesPage() {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2"
               >
                 <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
@@ -113,25 +137,25 @@ export function ExpensesPage() {
           {/* Sort */}
           <div className="flex gap-2">
             <Button
-              variant={sortBy === 'date' ? 'default' : 'outline'}
+              variant={sortBy === "date" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy('date')}
+              onClick={() => setSortBy("date")}
             >
               Data
             </Button>
             <Button
-              variant={sortBy === 'amount' ? 'default' : 'outline'}
+              variant={sortBy === "amount" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy('amount')}
+              onClick={() => setSortBy("amount")}
             >
               Importo
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
             >
-              {sortOrder === 'asc' ? '' : ''}
+              {sortOrder === "asc" ? "↑" : "↓"}
             </Button>
           </div>
         </CardContent>
@@ -142,17 +166,19 @@ export function ExpensesPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">{t('common.loading') || 'Caricamento...'}</p>
+            <p className="text-muted-foreground">
+              {t("common.loading") || "Caricamento..."}
+            </p>
           </CardContent>
         </Card>
       ) : filteredExpenses.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? 'Nessuna spesa trovata' : 'Nessuna spesa'}
+              {searchQuery ? "Nessuna spesa trovata" : "Nessuna spesa"}
             </p>
             {!searchQuery && (
-              <Button onClick={() => navigate('/expense/new')}>
+              <Button onClick={() => navigate("/expense/new")}>
                 Aggiungi la prima spesa
               </Button>
             )}
@@ -162,7 +188,7 @@ export function ExpensesPage() {
         <div className="space-y-3">
           {filteredExpenses.map((expense) => {
             const category = categories.get(expense.category_id);
-            
+
             return (
               <Card
                 key={expense.id}
@@ -173,24 +199,28 @@ export function ExpensesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{category?.icon || ''}</span>
-                        <h3 className="font-medium truncate">{expense.description}</h3>
+                        <span className="text-lg">{category?.icon || ""}</span>
+                        <h3 className="font-medium truncate">
+                          {expense.description}
+                        </h3>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{category?.name || 'Senza categoria'}</span>
-                        <span></span>
-                        <span>{format(new Date(expense.date), 'd MMM yyyy', { locale: dateLocale })}</span>
+                        <span>{category?.name || "Senza categoria"}</span>
+                        <span>•</span>
+                        <span>
+                          {format(new Date(expense.date), "d MMM yyyy", {
+                            locale: dateLocale,
+                          })}
+                        </span>
                       </div>
                     </div>
                     <div className="text-right ml-4">
-                      <p className={`text-xl font-bold ${expense.amount > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        {expense.amount > 0 ? '-' : '+'}{Math.abs(expense.amount).toFixed(2)}
+                      <p
+                        className={`text-xl font-bold ${expense.amount > 0 ? "text-destructive" : "text-green-600"}`}
+                      >
+                        {expense.amount > 0 ? "-" : "+"}
+                        {Math.abs(expense.amount).toFixed(2)}
                       </p>
-                      {expense.group_id && (
-                        <Badge variant="secondary" className="mt-1">
-                          Gruppo
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </CardContent>

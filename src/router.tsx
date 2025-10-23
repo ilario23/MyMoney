@@ -1,18 +1,21 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useAuthStore } from '@/lib/auth.store';
-import { supabase } from '@/lib/supabase';
-import { Layout } from '@/components/layout/layout';
-import { LoginPage } from '@/pages/login';
-import { SignupPage } from '@/pages/signup';
-import { DashboardPage } from '@/pages/dashboard';
-import { ProfilePage } from '@/pages/profile';
-import { CategoriesPage } from '@/pages/categories';
-import { GroupsPage } from '@/pages/groups';
-import { SharedExpensesPage } from '@/pages/shared-expenses';
-import { StatisticsPage } from '@/pages/statistics';
-import { ExpenseForm } from '@/components/expense/expense-form';
-import { ExpensesPage } from '@/pages/expenses';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthStore } from "@/lib/auth.store";
+import { supabase } from "@/lib/supabase";
+import { Layout } from "@/components/layout/layout";
+import { LoginPage } from "@/pages/login";
+import { SignupPage } from "@/pages/signup";
+import { DashboardPage } from "@/pages/dashboard";
+import { ProfilePage } from "@/pages/profile";
+import { CategoriesPage } from "@/pages/categories";
+import { StatisticsPage } from "@/pages/statistics";
+import { ExpenseForm } from "@/components/expense/expense-form";
+import { ExpensesPage } from "@/pages/expenses";
 
 function NotFound() {
   return <div className="text-center py-12">Pagina non trovata</div>;
@@ -38,7 +41,7 @@ export function AppRoutes() {
           });
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error("Auth check error:", error);
       } finally {
         setLoading(false);
       }
@@ -115,22 +118,6 @@ export function AppRoutes() {
               element={
                 <Layout>
                   <ExpensesPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/groups"
-              element={
-                <Layout>
-                  <GroupsPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/shared-expenses"
-              element={
-                <Layout>
-                  <SharedExpensesPage />
                 </Layout>
               }
             />

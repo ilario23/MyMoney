@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Wallet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/auth.store";
-import { getDatabase } from "@/lib/rxdb";
+import { getDatabase } from "@/lib/db";
 import { authLogger } from "@/lib/logger";
 
 export function LoginPage() {
@@ -76,9 +76,9 @@ export function LoginPage() {
           }
         }
 
-        // Salva nel database locale RxDB
+        // Salva nel database locale Dexie
         const db = getDatabase();
-        await db.users.upsert({
+        await db.users.put({
           id: data.user.id,
           email: data.user.email!,
           full_name: displayName,

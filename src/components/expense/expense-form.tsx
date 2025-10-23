@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
-import { getDatabase } from "@/lib/rxdb";
-import type { CategoryDocType, GroupDocType } from "@/lib/rxdb-schemas";
+import { getDatabase } from "@/lib/db";
+import type { CategoryDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,14 +33,12 @@ export function ExpenseForm() {
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [groupId, setGroupId] = useState<string>("personal"); // 'personal' or group UUID
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryDocType[]>([]);
-  const [groups, setGroups] = useState<GroupDocType[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Load custom categories and groups from RxDB
+  // Load categories from Dexie
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
@@ -49,42 +47,10 @@ export function ExpenseForm() {
 
         // Load categories
         const userCategories = await db.categories
-          .find({ selector: { user_id: user.id, deleted_at: null } })
-          .exec();
-        setCategories(userCategories.map((c) => c.toJSON()));
-
-        // Load groups where user is owner
-        const ownedGroups = await db.groups
-          .find({ selector: { owner_id: user.id, deleted_at: null } })
-          .exec();
-
-        // Load groups where user is member
-        const memberships = await db.group_members
-          .find({ selector: { user_id: user.id, deleted_at: null } })
-          .exec();
-        const memberGroupIds = memberships.map((m) => m.group_id);
-
-        const memberGroups =
-          memberGroupIds.length > 0
-            ? await db.groups
-                .find({
-                  selector: {
-                    id: { $in: memberGroupIds },
-                    deleted_at: null,
-                  },
-                })
-                .exec()
-            : [];
-
-        // Combine and deduplicate
-        const allGroups = [...ownedGroups];
-        memberGroups.forEach((group) => {
-          if (!allGroups.find((g) => g.id === group.id)) {
-            allGroups.push(group);
-          }
-        });
-
-        setGroups(allGroups.map((g) => g.toJSON()));
+          .where("user_id")
+          .equals(user.id)
+          .toArray();
+        setCategories(userCategories);
       } catch (error) {
         dbLogger.error("Error loading data:", error);
       }
@@ -93,21 +59,8 @@ export function ExpenseForm() {
   }, [user]);
 
   // Helper: Build grouped category structure (only active categories)
-  // Filter by selected group: personal categories for personal expenses, group categories for group expenses
   const getGroupedCategories = () => {
-    let activeCategories = categories.filter((c) => !c.deleted_at); // Show only active
-
-    // Filter by expense type
-    if (groupId === "personal") {
-      // Personal expense: show only personal categories (no group_id)
-      activeCategories = activeCategories.filter((c) => !c.group_id);
-    } else {
-      // Group expense: show both personal and that group's categories
-      activeCategories = activeCategories.filter(
-        (c) => !c.group_id || c.group_id === groupId
-      );
-    }
-
+    const activeCategories = categories.filter((c) => !c.deleted_at);
     const topLevel = activeCategories.filter((c) => !c.parent_id);
     const childrenMap = new Map<string, CategoryDocType[]>();
 
@@ -137,7 +90,6 @@ export function ExpenseForm() {
       const expense = {
         id: uuidv4(),
         user_id: user.id,
-        group_id: groupId === "personal" ? null : groupId,
         amount: parseFloat(amount),
         category_id: categoryId,
         description,
@@ -147,9 +99,8 @@ export function ExpenseForm() {
         deleted_at: null,
       };
 
-      await db.expenses.insert(expense);
+      await db.expenses.put(expense);
 
-      // Sync happens automatically via RxDB replication
       syncLogger.success("Expense saved - will sync automatically");
 
       setSuccess(true);
@@ -157,7 +108,6 @@ export function ExpenseForm() {
       setDescription("");
       setAmount("");
       setCategoryId("");
-      setGroupId("personal");
       setDate(new Date().toISOString().split("T")[0]);
 
       // Redirect after 2s (give time to read any error message)
@@ -240,33 +190,6 @@ export function ExpenseForm() {
                 required
               />
             </div>
-
-            {groups.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t("expense.group")}
-                </label>
-                <Select
-                  value={groupId}
-                  onValueChange={setGroupId}
-                  disabled={isLoading || success}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("expense.personalExpense")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="personal">
-                      {t("expense.personalExpense")}
-                    </SelectItem>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">

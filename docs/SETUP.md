@@ -1,502 +1,982 @@
-# MyMoney v3.0 - Complete Setup Guide# Spendix PWA - Setup Guide
+# 🚀 MyMoney Setup Guide v3.0 - Dexie + Local-First# MyMoney v3.0 - Complete Setup Guide# Spendix PWA - Setup Guide
 
-Welcome to MyMoney v3.0! This guide will help you set up a fresh installation from scratch.A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
+Benvenuto! Questa guida ti aiuterà a configurare MyMoney da zero con la nuova architettura **Dexie + Local-First**.Welcome to MyMoney v3.0! This guide will help you set up a fresh installation from scratch.A mobile-first Progressive Web App for managing personal and shared expenses, built with React, Vite, TypeScript, Tailwind CSS, and ShadCN UI.
 
----## 🎯 Features
+## 📋 Cosa è MyMoney?---## 🎯 Features
 
-## 🎯 What's New in v3.0### Version 1 (Personal)
+**MyMoney** è un'app **locale-first** per la gestione delle spese personali:## 🎯 What's New in v3.0### Version 1 (Personal)
 
-### Major Changes- ✅ Secure registration and login (Supabase Auth)
+- 💾 **Dati salvati localmente** in IndexedDB via Dexie
 
-- ✅ Create custom categories on-demand
+- 🔄 **Sincronizzazione opzionale** con Supabase quando sei online### Major Changes- ✅ Secure registration and login (Supabase Auth)
+
+- 📱 **Funziona offline** - tutte le operazioni funzionano senza connessione
+
+- ⚡ **Reattivo** - aggiornamenti in tempo reale via Dexie.Observable- ✅ Create custom categories on-demand
+
+- 🔐 **Privato** - controllo totale dei tuoi dati
 
 - **🔄 RxDB Instead of Dexie**: Reactive, observable database with automatic UI updates- ✅ Add and manage personal expenses
 
+**Non più gruppi o spese condivise** - Questa versione è semplificata per uso personale.
+
 - **📊 Local-First Statistics**: Calculate stats on the client with intelligent caching- ✅ Customizable categories (name, color, icon)
-
-- **🚀 Improved Sync**: Bidirectional replication protocol with better conflict resolution- ✅ Dashboard with monthly summary
-
-- **🗄️ Cleaner Backend**: Removed database views and aggregate tables - everything computed locally- ✅ Local import/export data
-
-- **✨ Better Performance**: Faster queries, reactive subscriptions, leader election for multi-tab- ✅ Offline mode with Dexie cache
-
-- ✅ Bidirectional sync with Supabase
-
-### Breaking Changes from v2.x
-
-### Version 2 (Multi-user)
-
-- **Database migration required** - v3.0 uses a completely new local database structure
-
-- **No backward compatibility** - Export your data from v2.x before upgrading- ✅ Group creation and management
-
-- **New Supabase schema** - Run the v3.0 SQL setup script for fresh installations- ✅ Shared expenses visible to all members
-
-- ✅ Recurring expenses (editable only by creator)
-
----- ✅ Group member CRUD operations
-
-- ✅ Local notifications for invites and changes
-
-## 📋 Prerequisites- ✅ Bidirectional synchronization with Supabase
-
-- **Node.js** 18 or higher## 🛠️ Tech Stack
-
-- **pnpm** (recommended) or npm
-
-- **Supabase account** (free tier works fine)- **Frontend**: React 19 + Vite + TypeScript
-
-- Modern browser with IndexedDB support- **Styling**: Tailwind CSS v4 + ShadCN UI
-
-- **State Management**: Zustand
-
----- **Local Database**: Dexie.js (IndexedDB)
-
-- **Backend**: Supabase (Auth, PostgreSQL, Real-time)
-
-## 🚀 Quick Start- **PWA**: vite-plugin-pwa, Service Worker
-
-- **Date Handling**: date-fns
-
-### 1. Clone and Install- **UI Icons**: Lucide React
-
-- **Animations**: Framer Motion
-
-```bash
-
-git clone https://github.com/yourusername/mymoney.git## 📦 Installation
-
-cd mymoney
-
-pnpm install### Prerequisites
-
-```
-
-- Node.js 18+
-
-### 2. Environment Configuration- npm or pnpm
-
-- Supabase account
-
-Create a `.env.local` file in the project root:
-
-### Step 1: Clone and Install
-
-`````env
-
-VITE_SUPABASE_URL=https://your-project.supabase.co```bash
-
-VITE_SUPABASE_ANON_KEY=your-anon-key-heregit clone <repo>
-
-```cd frontend-starter-kit
-
-pnpm install
-
-**Getting Supabase Credentials:**```
-
-
-
-1. Go to [supabase.com](https://supabase.com)### Step 2: Configure Environment
-
-2. Create a new project (or use existing)
-
-3. Go to **Settings** → **API**```bash
-
-4. Copy:cp .env.example .env.local
-
-   - **Project URL** → `VITE_SUPABASE_URL````
-
-   - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
-
-Add your Supabase credentials:
-
-### 3. Database Setup
-
-```env
-
-#### Option A: Fresh Installation (Recommended)VITE_SUPABASE_URL=https://your-project.supabase.co
-
-VITE_SUPABASE_ANON_KEY=your-anon-key
-
-1. Open your Supabase project```
-
-2. Go to **SQL Editor**
-
-3. Copy the entire content of `docs/SETUP_v3.0.sql`### Step 3: Setup Supabase Database
-
-4. Paste and run the script
-
-5. Wait for completion (should take 5-10 seconds)#### 📌 Important: Fresh Install vs Migration
-
-
-
-#### Option B: Migrate from v2.x**If you're setting up for the FIRST TIME:**
-
-
-
-⚠️ **Important:** Export your data first!- Follow **Step 3a** below - the schema already includes all v1.10 features
-
-- Skip migration files - they're only for upgrading existing databases
-
-```bash
-
-# In your v2.x app, export data**If you're UPGRADING from an older version:**
-
-# Settings → Export Data → Download JSON
-
-- Your database already exists
-
-# Then follow Option A for fresh install- Run the migration SQL files in order:
-
-# Afterward, import your data via the app UI  - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
-
-```  - `MIGRATION_v1.8.1_ACTIVE_CATEGORIES.sql` (if coming from < v1.8.1)
-
-  - `MIGRATION_v1.9_GROUP_INVITE_CODES.sql` (if coming from < v1.9)
-
-### 4. Run the Application  - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
-
-
-
-```bash#### 3a. Create Tables
-
-# Development mode
-
-pnpm devGo to **Supabase → SQL Editor** and run the following SQL in order:
-
-
-
-# Production build⚠️ **IMPORTANT**: Execute SQL **in exact order** - some tables have foreign keys on others.
-
-pnpm build
-
-pnpm preview```sql
-
-```-- 1. Users table (no dependencies)
-
-CREATE TABLE public.users (
-
-Open [http://localhost:5173](http://localhost:5173)  id UUID PRIMARY KEY,
-
-  email TEXT UNIQUE NOT NULL,
-
----  display_name TEXT,
-
-  avatar_url TEXT,
-
-## 🔐 Authentication Setup  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-
-### Enable Email Authentication);
-
-
-
-1. Go to Supabase Dashboard-- 2. Groups table (depends on users)
-
-2. **Authentication** → **Providers**CREATE TABLE public.groups (
-
-3. Enable **Email** provider  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-4. Configure email templates (optional)  name TEXT NOT NULL,
-
-  owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-
-### Optional: Social Login  description TEXT,
-
-  color TEXT,
-
-To enable Google/GitHub/etc:  invite_code TEXT UNIQUE,  -- Reusable invite code (v1.10)
-
-  allow_new_members BOOLEAN DEFAULT TRUE NOT NULL,  -- Owner can control if group accepts new members (v1.10)
-
-1. **Authentication** → **Providers**  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- DEPRECATED (kept for backwards compatibility)
-
-2. Enable desired provider  used_at TIMESTAMP WITH TIME ZONE,  -- DEPRECATED (kept for backwards compatibility)
-
-3. Add OAuth credentials  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-4. Update redirect URLs  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-
-);
-
-**Redirect URL format:**
-
-```-- 3. Categories table (depends on users)
-
-https://your-domain.com/auth/callbackCREATE TABLE public.categories (
-
-http://localhost:5173/auth/callback  # for development  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-```  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-
-  group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,  -- Shared group categories (v1.12)
-
----  name TEXT NOT NULL,
-
-  color TEXT,
-
-## 🗄️ Database Schema Overview  icon TEXT,
-
-  parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
-
-### Core Tables  is_active BOOLEAN DEFAULT TRUE NOT NULL,  -- Hide from expense form (v1.8.1)
-
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-| Table | Purpose | Synced |  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-|-------|---------|--------|  UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
-
-| `users` | User profiles | ✅ |);
-
-| `categories` | Expense categories | ✅ |
-
-| `expenses` | Personal expenses | ✅ |-- Create indexes for categories
-
-| `groups` | Shared expense groups | ✅ |CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
-
-| `group_members` | Group membership | ✅ |CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
-
-| `shared_expenses` | Group expenses | ✅ |CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
-
-| `shared_expense_splits` | Split calculations | ✅ |CREATE INDEX idx_categories_group_id ON public.categories(group_id);
-
-CREATE INDEX idx_categories_user_group ON public.categories(user_id, group_id);
-
-### Local-Only Collections
-
--- 4. Expenses table (depends on users and groups)
-
-| Collection | Purpose |CREATE TABLE public.expenses (
-
-|------------|---------|  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-| `stats_cache` | Cached statistics (not synced) |  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-
-  group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
-
----  amount DECIMAL(10, 2) NOT NULL,
-
-  category TEXT NOT NULL,  -- Foreign key to categories.id (stored as text for flexibility)
-
-## 🔄 How Synchronization Works  description TEXT,
-
-  date DATE NOT NULL,
-
-### Initial Load  deleted_at TIMESTAMP WITH TIME ZONE,
-
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-```  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-
-1. User logs in);
-
-2. RxDB initializes local database
-
-3. UI loads immediately from cache (if available)-- 5. Group members table (depends on groups and users)
-
-4. Sync starts in backgroundCREATE TABLE public.group_members (
-
-5. UI updates reactively as data syncs  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-```  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
-
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-
-### Ongoing Sync  role TEXT DEFAULT 'member',
-
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-```  UNIQUE(group_id, user_id)
-
-- Live sync: Changes replicate automatically);
-
-- Conflict resolution: Last-write-wins based on updated_at
-
-- Soft deletes: Items marked as deleted_at, not hard-deleted-- 6. Shared expenses table (depends on groups, expenses, and users)
-
-- Leader election: Only one tab syncs at a timeCREATE TABLE public.shared_expenses (
-
-```  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
-
-### Offline Mode  expense_id UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
-
-  creator_id UUID NOT NULL REFERENCES public.users(id),
-
-```  participants JSONB DEFAULT '[]',
-
-- All data cached locally in IndexedDB  is_recurring BOOLEAN DEFAULT FALSE,
-
-- Full CRUD operations work offline  recurring_rule TEXT,
-
-- Changes queued automatically  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-- Sync resumes when connection restored  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-
-```);
-
-
-
------ 7. Create indexes per performance
-
-CREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
-
-## 📊 Local StatisticsCREATE INDEX idx_expenses_group ON public.expenses(group_id);
-
-CREATE INDEX idx_categories_user ON public.categories(user_id);
-
-### How It WorksCREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
-
-CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
-
-1. **Check cache first**: 30-minute validityCREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
-
-2. **Calculate from local data**: If cache expired/missingCREATE INDEX idx_groups_owner ON public.groups(owner_id);
-
-3. **Update cache**: Store results locallyCREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
-
-4. **Invalidate on change**: Recalculate when expenses changeCREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
-
-CREATE INDEX idx_group_members_group ON public.group_members(group_id);
-
-### PerformanceCREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
-
-`````
-
-- **Instant results** for cached periods
-
-- **No network latency\*\***Creation order summary:\*\*
-
-- **Works completely offline**
-
-- **Scales to thousands of expenses**1. ✅ `users` (no dependencies)
-
-2. ✅ `groups` (FK → users)
-
----3. ✅ `categories` (FK → users)
-
-4. ✅ `expenses` (FK → users, groups)
-
-## 🎨 Customization5. ✅ `group_members` (FK → groups, users)
-
-6. ✅ `shared_expenses` (FK → groups, expenses, users)
-
-### Theme7. ✅ Indexes
-
-Edit `src/index.css` to customize colors:#### 3b. Enable Row Level Security (RLS) Policies
-
-````css**⚠️ CRITICAL**: RLS policies are required to prevent unauthorized access to user data.
-
-:root {
-
-  --primary: 240 5.9% 10%;In **Supabase → SQL Editor**, run:
-
-  --primary-foreground: 0 0% 98%;
-
-  /* ... more variables */```sql
-
-}-- Enable RLS on all tables
-
-```ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
-
-### TranslationsALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
-
-Add new languages in `src/translations/`:ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE public.shared_expenses ENABLE ROW LEVEL SECURITY;
-
-```typescript
-
-// src/translations/de.ts-- ====== USERS TABLE POLICIES ======
-
-export default {-- Users can read own record
-
-  common: {CREATE POLICY "Users can read own record"
-
-    appName: 'MeinGeld',ON public.users
-
-    // ... translationsFOR SELECT
-
-  }USING (auth.uid() = id);
-
-}
-
-```-- Users can insert their own record (NEW USERS at signup)
-
--- NOTE: Uses permissive policy (WITH CHECK true) because auth.uid() isn't fully linked yet
-
-Register in `src/translations/index.ts`:-- during user creation. App logic validates user_id = auth.uid() in signup.tsx
-
-CREATE POLICY "Users can insert their own record"
-
-```typescriptON public.users
-
-import de from './de';FOR INSERT
-
-WITH CHECK (true);  -- Allow insertion, app validates user_id match
-
-export const translations = {
-
-  en,-- Users can update own record
-
-  it,CREATE POLICY "Users can update own record"
-
-  de  // Add hereON public.users
-
-};FOR UPDATE
-
-```USING (auth.uid() = id)
-
-WITH CHECK (auth.uid() = id);
 
 ---
 
--- ====== CATEGORIES TABLE POLICIES ======
+- **🚀 Improved Sync**: Bidirectional replication protocol with better conflict resolution- ✅ Dashboard with monthly summary
 
-## 🧪 Testing-- Users can read own and group categories (v1.12)
+## 🛠️ Prerequisiti
 
-CREATE POLICY "Users can read own and group categories"
+- **🗄️ Cleaner Backend**: Removed database views and aggregate tables - everything computed locally- ✅ Local import/export data
+
+Prima di iniziare, assicurati di avere:
+
+- **✨ Better Performance**: Faster queries, reactive subscriptions, leader election for multi-tab- ✅ Offline mode with Dexie cache
+
+- **Node.js** v18 o superiore
+
+- **pnpm** v10 o superiore (o npm/yarn)- ✅ Bidirectional sync with Supabase
+
+- **Git**
+
+- Un account **Supabase** (opzionale, solo per sync online)### Breaking Changes from v2.x
+
+### Verifica versioni### Version 2 (Multi-user)
+
+````bash
+
+node --version  # v18+- **Database migration required** - v3.0 uses a completely new local database structure
+
+pnpm --version  # v10+
+
+```- **No backward compatibility** - Export your data from v2.x before upgrading- ✅ Group creation and management
+
+
+
+---- **New Supabase schema** - Run the v3.0 SQL setup script for fresh installations- ✅ Shared expenses visible to all members
+
+
+
+## 📦 Installazione- ✅ Recurring expenses (editable only by creator)
+
+
+
+### 1. Clone il repository---- ✅ Group member CRUD operations
+
+```bash
+
+git clone https://github.com/ilario23/MyMoney.git- ✅ Local notifications for invites and changes
+
+cd MyMoney
+
+```## 📋 Prerequisites- ✅ Bidirectional synchronization with Supabase
+
+
+
+### 2. Installa dipendenze- **Node.js** 18 or higher## 🛠️ Tech Stack
+
+```bash
+
+pnpm install- **pnpm** (recommended) or npm
+
+````
+
+- **Supabase account** (free tier works fine)- **Frontend**: React 19 + Vite + TypeScript
+
+Questo installerà:
+
+- **React 19** - Framework UI- Modern browser with IndexedDB support- **Styling**: Tailwind CSS v4 + ShadCN UI
+
+- **Dexie 4.2.1** - IndexedDB wrapper
+
+- **dexie-observable 4.0.1** - Reattività real-time- **State Management**: Zustand
+
+- **Supabase** - Backend opzionale per sync
+
+- **TypeScript 5.8** - Type-safety---- **Local Database**: Dexie.js (IndexedDB)
+
+- **Tailwind CSS** - Styling
+
+- E altre librerie- **Backend**: Supabase (Auth, PostgreSQL, Real-time)
+
+### 3. Configura variabili d'ambiente (opzionale)## 🚀 Quick Start- **PWA**: vite-plugin-pwa, Service Worker
+
+Crea un file `.env.local` nella root del progetto:- **Date Handling**: date-fns
+
+```````env### 1. Clone and Install- **UI Icons**: Lucide React
+
+# Supabase (opzionale - solo per sincronizzazione online)
+
+VITE_SUPABASE_URL=https://your-project.supabase.co- **Animations**: Framer Motion
+
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+``````bash
+
+
+
+Se **non usi Supabase**, l'app funzionerà comunque 100% localmente!git clone https://github.com/yourusername/mymoney.git## 📦 Installation
+
+
+
+---cd mymoney
+
+
+
+## 🚀 Avvia l'apppnpm install### Prerequisites
+
+
+
+### Development mode```
+
+```bash
+
+pnpm dev- Node.js 18+
+
+```````
+
+### 2. Environment Configuration- npm or pnpm
+
+L'app sarà disponibile a: **http://localhost:5173**
+
+- Supabase account
+
+### Build per produzione
+
+```bashCreate a `.env.local` file in the project root:
+
+pnpm build
+
+``````### Step 1: Clone and Install
+
+
+
+Output sarà in `dist/` pronto per il deploy.`````env
+
+
+
+---VITE_SUPABASE_URL=https://your-project.supabase.co```bash
+
+
+
+## 📁 Architettura dei DatiVITE_SUPABASE_ANON_KEY=your-anon-key-heregit clone <repo>
+
+
+
+### Database Locale (Dexie - IndexedDB)```cd frontend-starter-kit
+
+
+
+L'app usa **Dexie** per gestire i dati in IndexedDB. 4 tabelle principali:pnpm install
+
+
+
+#### 1. **users****Getting Supabase Credentials:**```
+
+```typescript
+
+{
+
+  id: string                    // UUID (da Supabase Auth)
+
+  email: string                 // Email dell'utente1. Go to [supabase.com](https://supabase.com)### Step 2: Configure Environment
+
+  full_name?: string            // Nome completo
+
+  avatar_url?: string           // URL avatar2. Create a new project (or use existing)
+
+  preferred_language: string    // "it" | "en"
+
+  created_at: string            // ISO timestamp3. Go to **Settings** → **API**```bash
+
+  updated_at: string            // ISO timestamp
+
+  deleted_at?: string           // Soft delete flag4. Copy:cp .env.example .env.local
+
+}
+
+```   - **Project URL** → `VITE_SUPABASE_URL````
+
+
+
+#### 2. **categories**   - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
+
+```typescript
+
+{Add your Supabase credentials:
+
+  id: string                    // UUID
+
+  user_id: string               // Link all'utente### 3. Database Setup
+
+  name: string                  // Es: "Cibo", "Trasporto"
+
+  icon: string                  // Emoji: "🍕"```env
+
+  color?: string                // Hex color
+
+  parent_id?: string            // Per categorie annidate#### Option A: Fresh Installation (Recommended)VITE_SUPABASE_URL=https://your-project.supabase.co
+
+  is_custom: boolean            // true = creata dall'utente
+
+  created_at: stringVITE_SUPABASE_ANON_KEY=your-anon-key
+
+  updated_at: string
+
+  deleted_at?: string1. Open your Supabase project```
+
+}
+
+```2. Go to **SQL Editor**
+
+
+
+#### 3. **expenses**3. Copy the entire content of `docs/SETUP_v3.0.sql`### Step 3: Setup Supabase Database
+
+```typescript
+
+{4. Paste and run the script
+
+  id: string                    // UUID
+
+  user_id: string               // Link all'utente5. Wait for completion (should take 5-10 seconds)#### 📌 Important: Fresh Install vs Migration
+
+  category_id: string           // Link alla categoria
+
+  amount: number                // Importo (positivo = spesa)
+
+  description: string           // Es: "Colazione al bar"
+
+  date: string                  // ISO timestamp#### Option B: Migrate from v2.x**If you're setting up for the FIRST TIME:**
+
+  created_at: string
+
+  updated_at: string
+
+  deleted_at?: string           // Soft delete
+
+}⚠️ **Important:** Export your data first!- Follow **Step 3a** below - the schema already includes all v1.10 features
+
+``````
+
+- Skip migration files - they're only for upgrading existing databases
+
+#### 4. **stats_cache** (opzionale)
+
+`typescript`bash
+
+{
+
+id: string // "${userId}-${period}"# In your v2.x app, export data**If you're UPGRADING from an older version:**
+
+user_id: string
+
+period: string // "YYYY-MM"# Settings → Export Data → Download JSON
+
+total_expenses: number
+
+total_income: number- Your database already exists
+
+expense_count: number
+
+daily_average: number# Then follow Option A for fresh install- Run the migration SQL files in order:
+
+monthly_average: number
+
+top_categories: Array<{ // Top 5 categorie# Afterward, import your data via the app UI - `MIGRATION_v1.7_HIERARCHICAL_CATEGORIES.sql` (if coming from < v1.7)
+
+    category_id: string
+
+    category_name: string```  - `MIGRATION_v1.8.1_ACTIVE_CATEGORIES.sql` (if coming from < v1.8.1)
+
+    amount: number
+
+    count: number  - `MIGRATION_v1.9_GROUP_INVITE_CODES.sql` (if coming from < v1.9)
+
+}>
+
+updated_at: string### 4. Run the Application - `MIGRATION_v1.10_REUSABLE_INVITE_CODES.sql` (if coming from < v1.10)
+
+}
+
+````
+
+
+
+---```bash#### 3a. Create Tables
+
+
+
+## 🔄 Sincronizzazione (Opzionale)# Development mode
+
+
+
+### Come funziona?pnpm devGo to **Supabase → SQL Editor** and run the following SQL in order:
+
+
+
+Se configuri Supabase, MyMoney sincronizza i tuoi dati:
+
+
+
+1. **Pull** - Scarica i dati aggiornati da Supabase# Production build⚠️ **IMPORTANT**: Execute SQL **in exact order** - some tables have foreign keys on others.
+
+2. **Push** - Carica i tuoi nuovi record su Supabase
+
+3. **Checkpoint** - Ricorda quando è avvenuta l'ultima sincronizzazione (localStorage)pnpm build
+
+
+
+### Quando si sincronizza?pnpm preview```sql
+
+
+
+- ✅ Automaticamente al login```-- 1. Users table (no dependencies)
+
+- ✅ Ogni 30 minuti se sei online
+
+- ✅ Quando la connessione ritorna dopo offlineCREATE TABLE public.users (
+
+
+
+### Cosa succede offline?Open [http://localhost:5173](http://localhost:5173)  id UUID PRIMARY KEY,
+
+
+
+**Niente cambia!** Puoi:  email TEXT UNIQUE NOT NULL,
+
+- ✅ Aggiungere spese
+
+- ✅ Creare categorie---  display_name TEXT,
+
+- ✅ Visualizzare dati
+
+- ✅ Cancellare record  avatar_url TEXT,
+
+
+
+Tutto funziona localmente. Quando torni online, si sincronizza automaticamente.## 🔐 Authentication Setup  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+
+
+---  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+
+
+## 🗄️ Setup Database Supabase (Opzionale)### Enable Email Authentication);
+
+
+
+Se vuoi la sincronizzazione, crea il database in Supabase:
+
+
+
+### 1. Accedi a Supabase1. Go to Supabase Dashboard-- 2. Groups table (depends on users)
+
+https://supabase.com/dashboard
+
+2. **Authentication** → **Providers**CREATE TABLE public.groups (
+
+### 2. Crea nuovo progetto o usa uno esistente
+
+3. Enable **Email** provider  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+### 3. Vai a **SQL Editor** e crea le tabelle
+
+4. Configure email templates (optional)  name TEXT NOT NULL,
+
+Esegui questo SQL:
+
+  owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
+```sql
+
+-- Create users table### Optional: Social Login  description TEXT,
+
+CREATE TABLE users (
+
+  id UUID PRIMARY KEY REFERENCES auth.users(id),  color TEXT,
+
+  email TEXT UNIQUE NOT NULL,
+
+  full_name TEXT,To enable Google/GitHub/etc:  invite_code TEXT UNIQUE,  -- Reusable invite code (v1.10)
+
+  avatar_url TEXT,
+
+  preferred_language TEXT DEFAULT 'it',  allow_new_members BOOLEAN DEFAULT TRUE NOT NULL,  -- Owner can control if group accepts new members (v1.10)
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),1. **Authentication** → **Providers**  used_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,  -- DEPRECATED (kept for backwards compatibility)
+
+  deleted_at TIMESTAMP WITH TIME ZONE
+
+);2. Enable desired provider  used_at TIMESTAMP WITH TIME ZONE,  -- DEPRECATED (kept for backwards compatibility)
+
+
+
+-- Create categories table3. Add OAuth credentials  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+CREATE TABLE categories (
+
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),4. Update redirect URLs  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+  name TEXT NOT NULL,);
+
+  icon TEXT NOT NULL,
+
+  color TEXT,**Redirect URL format:**
+
+  parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+
+  is_custom BOOLEAN DEFAULT true,```-- 3. Categories table (depends on users)
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),https://your-domain.com/auth/callbackCREATE TABLE public.categories (
+
+  deleted_at TIMESTAMP WITH TIME ZONE,
+
+  UNIQUE(user_id, name)http://localhost:5173/auth/callback  # for development  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+);
+
+```  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
+-- Create expenses table
+
+CREATE TABLE expenses (  group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,  -- Shared group categories (v1.12)
+
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,---  name TEXT NOT NULL,
+
+  category_id UUID NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+
+  amount DECIMAL(12, 2) NOT NULL,  color TEXT,
+
+  description TEXT,
+
+  date TIMESTAMP WITH TIME ZONE NOT NULL,## 🗄️ Database Schema Overview  icon TEXT,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),  parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,  -- Hierarchical categories (v1.7.0)
+
+  deleted_at TIMESTAMP WITH TIME ZONE
+
+);### Core Tables  is_active BOOLEAN DEFAULT TRUE NOT NULL,  -- Hide from expense form (v1.8.1)
+
+
+
+-- Create stats_cache table  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+CREATE TABLE stats_cache (
+
+  id TEXT PRIMARY KEY,| Table | Purpose | Synced |  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+  period TEXT NOT NULL,|-------|---------|--------|  UNIQUE(user_id, name)  -- One category name per user (case-sensitive, must trim spaces before INSERT)
+
+  total_expenses DECIMAL(12, 2) DEFAULT 0,
+
+  total_income DECIMAL(12, 2) DEFAULT 0,| `users` | User profiles | ✅ |);
+
+  income_count INTEGER DEFAULT 0,
+
+  expense_count INTEGER DEFAULT 0,| `categories` | Expense categories | ✅ |
+
+  top_categories JSONB,
+
+  daily_average DECIMAL(12, 2) DEFAULT 0,| `expenses` | Personal expenses | ✅ |-- Create indexes for categories
+
+  monthly_average DECIMAL(12, 2) DEFAULT 0,
+
+  calculated_at TIMESTAMP WITH TIME ZONE,| `groups` | Shared expense groups | ✅ |CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+
+);| `group_members` | Group membership | ✅ |CREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
+
+
+
+-- Create indexes| `shared_expenses` | Group expenses | ✅ |CREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
+
+CREATE INDEX idx_categories_user_id ON categories(user_id);
+
+CREATE INDEX idx_expenses_user_id ON expenses(user_id);| `shared_expense_splits` | Split calculations | ✅ |CREATE INDEX idx_categories_group_id ON public.categories(group_id);
+
+CREATE INDEX idx_expenses_category_id ON expenses(category_id);
+
+CREATE INDEX idx_expenses_date ON expenses(date);CREATE INDEX idx_categories_user_group ON public.categories(user_id, group_id);
+
+CREATE INDEX idx_stats_cache_user_id ON stats_cache(user_id);
+
+### Local-Only Collections
+
+-- Enable RLS
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;-- 4. Expenses table (depends on users and groups)
+
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;| Collection | Purpose |CREATE TABLE public.expenses (
+
+ALTER TABLE stats_cache ENABLE ROW LEVEL SECURITY;
+
+|------------|---------|  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+-- Create RLS Policies for users
+
+CREATE POLICY "Users can read own data"| `stats_cache` | Cached statistics (not synced) |  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
+ON users FOR SELECT USING (auth.uid() = id);
+
+  group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
+
+CREATE POLICY "Users can update own data"
+
+ON users FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);---  amount DECIMAL(10, 2) NOT NULL,
+
+
+
+-- Create RLS Policies for categories  category TEXT NOT NULL,  -- Foreign key to categories.id (stored as text for flexibility)
+
+CREATE POLICY "Users can read own categories"
+
+ON categories FOR SELECT USING (auth.uid() = user_id);## 🔄 How Synchronization Works  description TEXT,
+
+
+
+CREATE POLICY "Users can insert own categories"  date DATE NOT NULL,
+
+ON categories FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+### Initial Load  deleted_at TIMESTAMP WITH TIME ZONE,
+
+CREATE POLICY "Users can update own categories"
+
+ON categories FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+
+
+CREATE POLICY "Users can delete own categories"```  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+ON categories FOR DELETE USING (auth.uid() = user_id);
+
+1. User logs in);
+
+-- Create RLS Policies for expenses
+
+CREATE POLICY "Users can read own expenses"2. RxDB initializes local database
+
+ON expenses FOR SELECT USING (auth.uid() = user_id);
+
+3. UI loads immediately from cache (if available)-- 5. Group members table (depends on groups and users)
+
+CREATE POLICY "Users can insert own expenses"
+
+ON expenses FOR INSERT WITH CHECK (auth.uid() = user_id);4. Sync starts in backgroundCREATE TABLE public.group_members (
+
+
+
+CREATE POLICY "Users can update own expenses"5. UI updates reactively as data syncs  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+ON expenses FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+```  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+
+CREATE POLICY "Users can delete own expenses"
+
+ON expenses FOR DELETE USING (auth.uid() = user_id);  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+
+
+
+-- Create RLS Policies for stats_cache### Ongoing Sync  role TEXT DEFAULT 'member',
+
+CREATE POLICY "Users can read own stats"
+
+ON stats_cache FOR SELECT USING (auth.uid() = user_id);  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+
+
+CREATE POLICY "Users can insert own stats"```  UNIQUE(group_id, user_id)
+
+ON stats_cache FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+- Live sync: Changes replicate automatically);
+
+CREATE POLICY "Users can update own stats"
+
+ON stats_cache FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);- Conflict resolution: Last-write-wins based on updated_at
+
+
+
+CREATE POLICY "Users can delete own stats"- Soft deletes: Items marked as deleted_at, not hard-deleted-- 6. Shared expenses table (depends on groups, expenses, and users)
+
+ON stats_cache FOR DELETE USING (auth.uid() = user_id);
+
+```- Leader election: Only one tab syncs at a timeCREATE TABLE public.shared_expenses (
+
+
+
+### 4. Copia le credenziali```  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+
+
+Dalla dashboard Supabase:  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+
+- Vai a **Settings** → **API**
+
+- Copia `Project URL` e `anon public key`### Offline Mode  expense_id UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
+
+- Aggiungi a `.env.local`:
+
+  creator_id UUID NOT NULL REFERENCES public.users(id),
+
+```env
+
+VITE_SUPABASE_URL=https://your-project.supabase.co```  participants JSONB DEFAULT '[]',
+
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+```- All data cached locally in IndexedDB  is_recurring BOOLEAN DEFAULT FALSE,
+
+
+
+### 5. Riavvia l'app- Full CRUD operations work offline  recurring_rule TEXT,
+
+```bash
+
+pnpm dev- Changes queued automatically  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+````
+
+- Sync resumes when connection restored updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+---
+
+``````);
+
+## 🎯 Prima volta che usi l'app
+
+
+
+### Step 1: Signup
+
+1. Vai a http://localhost:5173----- 7. Create indexes per performance
+
+2. Clicca **"Non hai un account? Registrati"**
+
+3. Inserisci email e passwordCREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
+
+4. Clicca **"Registra"**
+
+## 📊 Local StatisticsCREATE INDEX idx_expenses_group ON public.expenses(group_id);
+
+### Step 2: Crea categorie
+
+1. Vai a **"Categorie"** nel menuCREATE INDEX idx_categories_user ON public.categories(user_id);
+
+2. Clicca **"Nuova categoria"**
+
+3. Aggiungi categorie come:### How It WorksCREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
+
+   - 🍕 Cibo
+
+   - 🚗 TrasportoCREATE INDEX idx_categories_user_parent ON public.categories(user_id, parent_id);
+
+   - 🎬 Entertainment
+
+   - 🏠 Casa1. **Check cache first**: 30-minute validityCREATE INDEX idx_categories_active ON public.categories(user_id, is_active);
+
+
+
+### Step 3: Aggiungi spese2. **Calculate from local data**: If cache expired/missingCREATE INDEX idx_groups_owner ON public.groups(owner_id);
+
+1. Vai a **"Spese"** o clicca **"Nuova spesa"**
+
+2. Compila il form:3. **Update cache**: Store results locallyCREATE INDEX idx_groups_invite_code ON public.groups(invite_code);
+
+   - Descrizione (es: "Colazione al bar")
+
+   - Importo4. **Invalidate on change**: Recalculate when expenses changeCREATE INDEX idx_groups_allow_new_members ON public.groups(allow_new_members);
+
+   - Categoria
+
+   - DataCREATE INDEX idx_group_members_group ON public.group_members(group_id);
+
+3. Clicca **"Salva"**
+
+### PerformanceCREATE INDEX idx_shared_expenses_group ON public.shared_expenses(group_id);
+
+### Step 4: Visualizza statistiche
+
+1. Vai a **"Statistiche"**`````
+
+2. Vedi il totale del mese e le categorie top
+
+- **Instant results** for cached periods
+
+---
+
+- **No network latency\*\***Creation order summary:\*\*
+
+## 🔧 Comandi disponibili
+
+- **Works completely offline**
+
+```bash
+
+# Development- **Scales to thousands of expenses**1. ✅ `users` (no dependencies)
+
+pnpm dev              # Avvia dev server
+
+2. ✅ `groups` (FK → users)
+
+# Build
+
+pnpm build            # Build per produzione---3. ✅ `categories` (FK → users)
+
+pnpm preview          # Anteprima build locale
+
+4. ✅ `expenses` (FK → users, groups)
+
+# Lint
+
+pnpm lint             # Controlla errori di codice## 🎨 Customization5. ✅ `group_members` (FK → groups, users)
+
+``````
+
+6. ✅ `shared_expenses` (FK → groups, expenses, users)
+
+---
+
+### Theme7. ✅ Indexes
+
+## 📱 Progressive Web App (PWA)
+
+Edit `src/index.css` to customize colors:#### 3b. Enable Row Level Security (RLS) Policies
+
+MyMoney è una **PWA completa**:
+
+- ✅ Installa come app sul desktop/mobile````css**⚠️ CRITICAL**: RLS policies are required to prevent unauthorized access to user data.
+
+- ✅ Funziona offline (con service worker)
+
+- ✅ Icona nella home screen:root {
+
+- ✅ Splash screen al launch
+
+  --primary: 240 5.9% 10%;In **Supabase → SQL Editor**, run:
+
+### Come installare:
+
+1. Apri MyMoney su Chrome/Edge --primary-foreground: 0 0% 98%;
+
+2. Clicca sull'icona "Installa" nella barra indirizzi
+
+3. Oppure menu → "Installa app" /_ ... more variables _/```sql
+
+---}-- Enable RLS on all tables
+
+## 🗂️ Struttura cartelle```ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+`````ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+
+frontend-starter-kit/
+
+├── src/### TranslationsALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
+│   ├── components/          # Componenti React
+
+│   │   ├── ui/              # Radix UI componentsALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+
+│   │   ├── expense/         # Expense form
+
+│   │   └── layout/          # Layout componentsAdd new languages in `src/translations/`:ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+
+│   ├── pages/               # Pagine (Login, Dashboard, etc)
+
+│   ├── hooks/               # Custom hooksALTER TABLE public.shared_expenses ENABLE ROW LEVEL SECURITY;
+
+│   │   ├── useQuery.ts      # Dexie query hook (reattivo)
+
+│   │   └── useRxDB.ts       # Compatibility layer```typescript
+
+│   ├── lib/
+
+│   │   ├── db.ts            # Dexie database setup// src/translations/de.ts-- ====== USERS TABLE POLICIES ======
+
+│   │   ├── db-schemas.ts    # TypeScript types
+
+│   │   ├── supabase.ts      # Supabase clientexport default {-- Users can read own record
+
+│   │   ├── auth.store.ts    # Zustand auth store
+
+│   │   └── logger.ts        # Logging utilities  common: {CREATE POLICY "Users can read own record"
+
+│   ├── services/
+
+│   │   ├── sync.service.ts  # Sync logic con Supabase    appName: 'MeinGeld',ON public.users
+
+│   │   └── stats.service.ts # Calcolo statistiche
+
+│   └── translations/        # i18n (Italiano/Inglese)    // ... translationsFOR SELECT
+
+├── public/                  # Static files
+
+├── dist/                    # Build output (produzione)  }USING (auth.uid() = id);
+
+└── docs/                    # Documentation
+
+```}
+
+
+
+---```-- Users can insert their own record (NEW USERS at signup)
+
+
+
+## 🚨 Troubleshooting-- NOTE: Uses permissive policy (WITH CHECK true) because auth.uid() isn't fully linked yet
+
+
+
+### "Cannot read property 'users' of undefined"Register in `src/translations/index.ts`:-- during user creation. App logic validates user_id = auth.uid() in signup.tsx
+
+❌ Database Dexie non inizializzato
+
+✅ Controlla che `src/lib/db.ts` sia correttoCREATE POLICY "Users can insert their own record"
+
+✅ Vedi la console (F12) per errori di inizializzazione
+
+```typescriptON public.users
+
+### "Dexie database not initialized"
+
+❌ Il database non si è avviatoimport de from './de';FOR INSERT
+
+✅ Controlla la console per errori
+
+✅ Cancella localStorage/IndexedDB: F12 → Application → Clear storageWITH CHECK (true);  -- Allow insertion, app validates user_id match
+
+
+
+### App offline ma non sincronizzaexport const translations = {
+
+❌ Credenziali Supabase non configurate
+
+✅ Aggiunta `.env.local` con VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY  en,-- Users can update own record
+
+
+
+### Password dimenticata  it,CREATE POLICY "Users can update own record"
+
+✅ Usa "Hai dimenticato la password?" nella pagina di login
+
+✅ Ti arriverà un link di reset via email (se Supabase è configurato)  de  // Add hereON public.users
+
+
+
+### Build fallisce con errori TypeScript};FOR UPDATE
+
+❌ Importa da @/lib/rxdb (file vecchio)
+
+✅ Cambia in `@/lib/db````USING (auth.uid() = id)
+
+
+
+---WITH CHECK (auth.uid() = id);
+
+
+
+## 📖 Documentazione---
+
+
+
+Per approfondire:-- ====== CATEGORIES TABLE POLICIES ======
+
+- **Dexie**: https://dexie.org/docs
+
+- **Dexie.Observable**: https://dexie.org/docs/Observable## 🧪 Testing-- Users can read own and group categories (v1.12)
+
+- **Supabase**: https://supabase.com/docs
+
+- **React**: https://react.devCREATE POLICY "Users can read own and group categories"
+
+- **TypeScript**: https://www.typescriptlang.org/docs
 
 ### Run TestsON public.categories
 
+---
+
 FOR SELECT
+
+## 🤝 Contribuisci
 
 ```bashUSING (
 
-# Unit tests  -- Personal categories (no group_id)
+Il progetto è open source su GitHub:
 
-pnpm test  (auth.uid() = user_id AND group_id IS NULL)
+https://github.com/ilario23/MyMoney# Unit tests  -- Personal categories (no group_id)
 
-  OR
 
-# E2E tests  -- Group categories where user is owner of the group
 
-pnpm test:e2e  (group_id IN (
+Bugs, feature requests, PRs sono benvenuti!pnpm test  (auth.uid() = user_id AND group_id IS NULL)
 
-    SELECT id FROM public.groups WHERE owner_id = auth.uid()
 
-# Coverage report  ))
 
-pnpm test:coverage  OR
+---  OR
 
-```  -- Group categories where user is member of the group
 
-  (group_id IN (
 
-### Test Sync Locally    SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+## 📝 Changelog# E2E tests  -- Group categories where user is owner of the group
+
+
+
+### v3.0 (Attuale)pnpm test:e2e  (group_id IN (
+
+- ✨ Migrazione da RxDB a Dexie
+
+- ✨ Architettura 100% locale-first    SELECT id FROM public.groups WHERE owner_id = auth.uid()
+
+- ✨ Dexie.Observable per reattività
+
+- ❌ Rimossi gruppi e spese condivise# Coverage report  ))
+
+- ✨ Setup semplificato
+
+- ✨ Sincronizzazione opzionale con Supabasepnpm test:coverage  OR
+
+
+
+### v2.x```  -- Group categories where user is member of the group
+
+- RxDB con replicazione
+
+- Supporto gruppi e spese condivise  (group_id IN (
+
+
+
+### v1.x### Test Sync Locally    SELECT group_id FROM public.group_members WHERE user_id = auth.uid()
+
+- Prima versione
 
   ))
 
+---
+
 ```bash);
 
+**Buon divertimento! Happy budgeting! 💰**
+
 # Terminal 1: Start dev server
+
+Se hai domande, apri un issue su GitHub o contatta lo sviluppatore.
 
 pnpm dev-- Users can create categories
 
@@ -552,7 +1032,7 @@ FOR DELETE
 
 }USING (auth.uid() = user_id);
 
-````
+`````
 
 -- Users can create expenses
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage, type Language } from "@/lib/language";
 import { supabase } from "@/lib/supabase";
-import { getDatabase, closeDatabase } from "@/lib/rxdb";
+import { getDatabase } from "@/lib/db";
 import { statsService } from "@/services/stats.service";
 import { authLogger, dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,9 @@ export function ProfilePage() {
 
         // Conta le categorie
         const categories = await db.categories
-          .find({ selector: { user_id: user.id, deleted_at: null } })
-          .exec();
+          .where("user_id")
+          .equals(user.id)
+          .toArray();
 
         setStats({
           totalExpenses: monthlyStats.expenseCount,
@@ -130,9 +131,8 @@ export function ProfilePage() {
 
       // 2. Pulisci completamente IndexedDB
       try {
-        // Chiudi il database RxDB
-        await closeDatabase();
-        dbLogger.success("RxDB database closed");
+        // Chiudi il database Dexie (non è necessario con Dexie)
+        dbLogger.success("Dexie database ready for cleanup");
 
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
@@ -499,15 +499,19 @@ export function ProfilePage() {
                 onClick={async () => {
                   const db = getDatabase();
                   const expenses = await db.expenses
-                    .find({ selector: { user_id: user.id } })
-                    .exec();
+                    .where("user_id")
+                    .equals(user.id)
+                    .toArray();
                   const categories = await db.categories
-                    .find({ selector: { user_id: user.id } })
-                    .exec();
+                    .where("user_id")
+                    .equals(user.id)
+                    .toArray();
                   const data = {
                     user,
-                    expenses: expenses.map((e) => e.toJSON()),
-                    categories: categories.map((c) => c.toJSON()),
+                    expenses: expenses.map((e: (typeof expenses)[0]) => e),
+                    categories: categories.map(
+                      (c: (typeof categories)[0]) => c
+                    ),
                     exportDate: new Date(),
                   };
                   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -549,29 +553,29 @@ export function ProfilePage() {
 
                     // Soft delete: imposta deleted_at invece di eliminare fisicamente
                     const expenses = await db.expenses
-                      .find({ selector: { user_id: user.id } })
-                      .exec();
+                      .where("user_id")
+                      .equals(user.id)
+                      .toArray();
 
                     for (const expense of expenses) {
-                      await expense.update({
-                        $set: {
-                          deleted_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                        },
+                      await db.expenses.put({
+                        ...expense,
+                        deleted_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
                       });
                     }
 
                     // Elimina categorie custom
                     const categories = await db.categories
-                      .find({ selector: { user_id: user.id, is_custom: true } })
-                      .exec();
+                      .where("user_id")
+                      .equals(user.id)
+                      .toArray();
 
                     for (const category of categories) {
-                      await category.update({
-                        $set: {
-                          deleted_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                        },
+                      await db.categories.put({
+                        ...category,
+                        deleted_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
                       });
                     }
 

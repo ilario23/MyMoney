@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Wallet, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/auth.store";
-import { getDatabase } from "@/lib/rxdb";
+import { getDatabase } from "@/lib/db";
 import { authLogger } from "@/lib/logger";
 
 export function SignupPage() {
@@ -89,9 +89,9 @@ export function SignupPage() {
       const userId = data.user.id;
       const userEmail = data.user.email!;
 
-      // 2. Crea l'utente nel database locale RxDB
+      // 2. Crea l'utente nel database locale Dexie
       const db = getDatabase();
-      await db.users.insert({
+      await db.users.put({
         id: userId,
         email: userEmail,
         full_name: displayName,
