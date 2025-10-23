@@ -3,7 +3,7 @@ import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage, type Language } from "@/lib/language";
 import { supabase } from "@/lib/supabase";
 import { getDatabase } from "@/lib/db";
-import { dbLogger, syncLogger, authLogger } from "@/lib/logger";
+import { dbLogger, authLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import {
@@ -31,8 +31,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
 import packageJson from "../../package.json";
+import { Trash2 } from "lucide-react";
 
 export function SettingsPage() {
   const { user, logout } = useAuthStore();
@@ -40,7 +40,82 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const handleDeleteAllData = async () => {
+    try {
+      authLogger.info("Starting clear local cache...");
+
+      // Pulisci completamente IndexedDB
+      try {
+        dbLogger.success("Dexie database ready for cleanup");
+
+        // Elimina tutti i database IndexedDB
+        if (window.indexedDB) {
+          const databases = await window.indexedDB.databases();
+          for (const dbInfo of databases) {
+            if (dbInfo.name) {
+              await new Promise<void>((resolve, reject) => {
+                const deleteRequest = window.indexedDB.deleteDatabase(
+                  dbInfo.name!
+                );
+                deleteRequest.onsuccess = () => {
+                  dbLogger.success(`Deleted IndexedDB: ${dbInfo.name}`);
+                  resolve();
+                };
+                deleteRequest.onerror = () => reject(deleteRequest.error);
+              });
+            }
+          }
+        }
+      } catch (dbError) {
+        dbLogger.warn("Error cleaning IndexedDB:", dbError);
+      }
+
+      // Pulisci localStorage
+      try {
+        localStorage.clear();
+        authLogger.success("localStorage cleared");
+      } catch (lsError) {
+        authLogger.warn("Error clearing localStorage:", lsError);
+      }
+
+      // Pulisci sessionStorage
+      try {
+        sessionStorage.clear();
+        authLogger.success("sessionStorage cleared");
+      } catch (ssError) {
+        authLogger.warn("Error clearing sessionStorage:", ssError);
+      }
+
+      // Pulisci Cache API (Service Worker caches)
+      try {
+        if ("caches" in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+          authLogger.success(`Cleared ${cacheNames.length} cache(s)`);
+        }
+      } catch (cacheError) {
+        authLogger.warn("Error clearing caches:", cacheError);
+      }
+
+      dbLogger.success("All local cache cleared");
+      setSuccess(
+        t("profile.dataDeleted") ||
+          "Cache locale eliminata. Sarai disconnesso e reindirizzato."
+      );
+
+      // Logout dopo il clear
+      setTimeout(() => {
+        handleLogout();
+      }, 1500);
+    } catch (error) {
+      dbLogger.error("Error clearing cache:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      setError(`Error: ${errorMsg}`);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -132,43 +207,6 @@ export function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t("profile.settings")}</h1>
-        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogTrigger asChild>
-            <Button
-              variant="destructive"
-              size="sm"
-              title={t("profile.logout")}
-              className="w-10 h-10 p-0"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("profile.logout")}</DialogTitle>
-              <DialogDescription>
-                {t("profile.confirmLogout")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setShowLogoutDialog(false)}
-              >
-                {t("common.cancel")}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setShowLogoutDialog(false);
-                  handleLogout();
-                }}
-              >
-                {t("profile.logout")}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {error && (
@@ -229,12 +267,12 @@ export function SettingsPage() {
           <div className="space-y-3">
             <div>
               <h3 className="font-medium mb-2">{t("profile.appVersion")}</h3>
-              <Badge variant="outline">v{packageJson.version} - PWA</Badge>
+              <Badge variant="secondary">v{packageJson.version} - PWA</Badge>
             </div>
 
             <div>
               <h3 className="font-medium mb-2">{t("profile.localDatabase")}</h3>
-              <Badge variant="outline">{t("profile.dexieIndexedDB")}</Badge>
+              <Badge variant="secondary">{t("profile.dexieIndexedDB")}</Badge>
             </div>
 
             <div>
@@ -308,64 +346,26 @@ export function SettingsPage() {
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="destructive" className="w-full">
-                {t("profile.deleteAllData")}
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Local Cache
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t("profile.deleteAllData")}</DialogTitle>
+                <DialogTitle>Clear Local Cache</DialogTitle>
                 <DialogDescription className="text-destructive">
-                  ⚠️ {t("profile.confirmDeleteAllData")}
+                  ⚠️ Questo cancellerà la cache locale (IndexedDB,
+                  localStorage). I tuoi dati rimangono in Supabase. Sarai
+                  disconnesso.
                 </DialogDescription>
               </DialogHeader>
               <Button
                 variant="destructive"
-                onClick={async () => {
-                  if (!user) return;
-                  try {
-                    const db = getDatabase();
-
-                    // Soft delete: imposta deleted_at invece di eliminare fisicamente
-                    const expenses = await db.expenses
-                      .where("user_id")
-                      .equals(user.id)
-                      .toArray();
-
-                    for (const expense of expenses) {
-                      await db.expenses.put({
-                        ...expense,
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      });
-                    }
-
-                    // Elimina categorie custom
-                    const categories = await db.categories
-                      .where("user_id")
-                      .equals(user.id)
-                      .toArray();
-
-                    for (const category of categories) {
-                      await db.categories.put({
-                        ...category,
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      });
-                    }
-
-                    // La sincronizzazione avverrà automaticamente
-                    syncLogger.success("Data deletion queued for sync");
-
-                    setSuccess(t("profile.dataDeleted"));
-                    setTimeout(() => navigate("/dashboard"), 1500);
-                  } catch (error) {
-                    dbLogger.error("Error deleting data:", error);
-                    setError(t("profile.anErrorOccurred"));
-                  }
-                }}
+                onClick={() => handleDeleteAllData()}
                 className="w-full"
               >
-                {t("profile.deleteConfirmation")}
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Cache & Logout
               </Button>
             </DialogContent>
           </Dialog>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useLanguage } from "@/lib/language";
+import { renderIcon } from "@/lib/icon-renderer";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,7 @@ export function ExpenseFilterPanel({
   resultCount,
   onSaveFilter,
 }: ExpenseFiltersProps) {
+  const { t } = useLanguage();
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [filterNameInput, setFilterNameInput] = useState("");
 
@@ -66,19 +69,19 @@ export function ExpenseFilterPanel({
     switch (type) {
       case "expense":
         return {
-          label: "Spesa",
+          label: t("categories.type.expense"),
           icon: "📤",
           color: "bg-destructive/10 text-destructive",
         };
       case "income":
         return {
-          label: "Entrata",
+          label: t("categories.type.income"),
           icon: "📥",
           color: "bg-primary/10 text-primary",
         };
       case "investment":
         return {
-          label: "Investimento",
+          label: t("categories.type.investment"),
           icon: "💰",
           color: "bg-accent/10 text-accent",
         };
@@ -91,9 +94,12 @@ export function ExpenseFilterPanel({
     <div className="space-y-3">
       {/* Header with result count */}
       <div className="flex items-center justify-between pb-3 border-b border-border/30">
-        <h2 className="font-semibold text-sm">Filtri</h2>
+        <h2 className="font-semibold text-sm">{t("expenses.filters.title")}</h2>
         <span className="text-xs text-muted-foreground">
-          {resultCount} {resultCount === 1 ? "risultato" : "risultati"}
+          {resultCount}{" "}
+          {resultCount === 1
+            ? t("expenses.filters.results")
+            : t("expenses.filters.resultsPlural")}
         </span>
       </div>
 
@@ -102,11 +108,11 @@ export function ExpenseFilterPanel({
         {/* Search */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Ricerca
+            {t("expenses.filters.search")}
           </label>
           <div className="relative">
             <Input
-              placeholder="Descrizione, categoria, importo..."
+              placeholder={t("expenses.filters.searchPlaceholder")}
               value={filters.searchQuery}
               onChange={(e) => onFilterChange("searchQuery", e.target.value)}
               className="pr-8"
@@ -125,7 +131,7 @@ export function ExpenseFilterPanel({
         {/* Type filter */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Tipo
+            {t("expenses.filters.type")}
           </label>
           <div className="flex gap-2 flex-wrap">
             {availableTypes.map((type) => {
@@ -152,7 +158,7 @@ export function ExpenseFilterPanel({
         {/* Category filter - Dropdown style */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Categorie
+            {t("expenses.filters.categories")}
           </label>
           <div className="relative">
             <button
@@ -161,7 +167,7 @@ export function ExpenseFilterPanel({
             >
               <span className="text-muted-foreground">
                 {filters.selectedCategories.length === 0
-                  ? "Seleziona categorie..."
+                  ? t("expenses.filters.selectCategories")
                   : `${filters.selectedCategories.length} categor${
                       filters.selectedCategories.length === 1 ? "ia" : "ie"
                     } selezionate`}
@@ -178,7 +184,7 @@ export function ExpenseFilterPanel({
               <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-border/30 bg-background rounded-lg shadow-lg max-h-48 overflow-y-auto">
                 {categoryList.length === 0 ? (
                   <div className="p-3 text-xs text-muted-foreground italic">
-                    Nessuna categoria disponibile
+                    {t("expenses.filters.noCategoriesAvailable")}
                   </div>
                 ) : (
                   categoryList.map((cat) => {
@@ -201,7 +207,7 @@ export function ExpenseFilterPanel({
                           className="w-4 h-4 rounded cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
                         />
-                        <span>{cat.icon}</span>
+                        {renderIcon(cat.icon)}
                         <span className="flex-1 text-left">{cat.name}</span>
                       </button>
                     );
@@ -220,9 +226,9 @@ export function ExpenseFilterPanel({
                   <Badge
                     key={catId}
                     variant="secondary"
-                    className="text-xs pl-2"
+                    className="text-xs pl-2 flex items-center gap-1"
                   >
-                    {cat.icon} {cat.name}
+                    {renderIcon(cat.icon)} {cat.name}
                     <button
                       onClick={() => toggleCategory(catId)}
                       className="ml-1 hover:text-destructive"
@@ -239,11 +245,13 @@ export function ExpenseFilterPanel({
         {/* Date range filter */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Periodo
+            {t("expenses.filters.period")}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Da</label>
+              <label className="text-xs text-muted-foreground">
+                {t("expenses.filters.from")}
+              </label>
               <Input
                 type="date"
                 value={filters.dateFrom || ""}
@@ -254,7 +262,9 @@ export function ExpenseFilterPanel({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">A</label>
+              <label className="text-xs text-muted-foreground">
+                {t("expenses.filters.to")}
+              </label>
               <Input
                 type="date"
                 value={filters.dateTo || ""}
@@ -270,11 +280,13 @@ export function ExpenseFilterPanel({
         {/* Amount range filter */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Importo (€)
+            {t("expenses.filters.amount")}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Min</label>
+              <label className="text-xs text-muted-foreground">
+                {t("expenses.filters.min")}
+              </label>
               <Input
                 type="number"
                 placeholder="0"
@@ -291,7 +303,9 @@ export function ExpenseFilterPanel({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Max</label>
+              <label className="text-xs text-muted-foreground">
+                {t("expenses.filters.max")}
+              </label>
               <Input
                 type="number"
                 placeholder="∞"
@@ -313,7 +327,7 @@ export function ExpenseFilterPanel({
         {/* Sort controls */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground">
-            Ordina per
+            {t("expenses.filters.sortBy")}
           </label>
           <div className="grid grid-cols-3 gap-2">
             <Select
@@ -326,9 +340,15 @@ export function ExpenseFilterPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date">Data</SelectItem>
-                <SelectItem value="amount">Importo</SelectItem>
-                <SelectItem value="category">Categoria</SelectItem>
+                <SelectItem value="date">
+                  {t("expenses.filters.sortDate")}
+                </SelectItem>
+                <SelectItem value="amount">
+                  {t("expenses.filters.sortAmount")}
+                </SelectItem>
+                <SelectItem value="category">
+                  {t("expenses.filters.sortCategory")}
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -361,7 +381,7 @@ export function ExpenseFilterPanel({
             className="w-full text-xs"
           >
             <RotateCcw className="w-3 h-3 mr-2" />
-            Ripristina filtri
+            {t("expenses.filters.reset")}
           </Button>
         )}
 
@@ -369,11 +389,11 @@ export function ExpenseFilterPanel({
         {hasActiveFilters && onSaveFilter && (
           <div className="space-y-2 border-t pt-4">
             <label className="text-xs font-semibold uppercase text-muted-foreground">
-              Salva questo filtro
+              {t("expenses.filters.saveFilter")}
             </label>
             <div className="flex gap-2">
               <Input
-                placeholder="Nome filtro..."
+                placeholder={t("expenses.filters.filterName")}
                 value={filterNameInput}
                 onChange={(e) => setFilterNameInput(e.target.value)}
                 className="text-xs"
@@ -390,7 +410,7 @@ export function ExpenseFilterPanel({
                 className="text-xs"
               >
                 <Save className="w-3 h-3 mr-1" />
-                Salva
+                {t("expenses.filters.save")}
               </Button>
             </div>
           </div>

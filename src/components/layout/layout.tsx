@@ -1,17 +1,17 @@
-import type { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Navigation } from './navigation';
-import { SyncIndicator } from './sync-indicator';
-import { ThemeToggle } from './theme-toggle';
-import { OfflineIndicator } from './offline-indicator';
-import { useSync } from '@/hooks/useSync';
-import { Sidebar } from './sidebar';
+import type { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
+import { Navigation } from "./navigation";
+import { SyncIndicator } from "./sync-indicator";
+import { ThemeToggle } from "./theme-toggle";
+import { OfflineIndicator } from "./offline-indicator";
+import { useSync } from "@/hooks/useSync";
+import { Sidebar } from "./sidebar";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-const noLayoutRoutes = ['/login', '/signup', '/'];
+const noLayoutRoutes = ["/login", "/signup", "/"];
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
@@ -33,9 +33,13 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <h1 className="text-xl font-semibold tracking-tight">Spendix</h1>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <SyncIndicator isSyncing={isSyncing} lastSync={lastSync} onSync={sync} />
+            <SyncIndicator
+              isSyncing={isSyncing}
+              lastSync={lastSync}
+              onSync={sync}
+            />
             <ThemeToggle />
           </div>
         </div>
@@ -48,9 +52,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="container max-w-screen-2xl px-4 py-6">
-            {children}
-          </div>
+          <div className="container max-w-screen-2xl px-4 py-6">{children}</div>
         </main>
       </div>
 

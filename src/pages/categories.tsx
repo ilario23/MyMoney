@@ -1,7 +1,14 @@
 import { useState, useCallback } from "react";
 import { useAuthStore } from "@/lib/auth.store";
+import { useLanguage } from "@/lib/language";
 import { useQuery } from "@/hooks/useQuery";
-import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardAction,
+} from "@/components/ui/card";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +20,7 @@ import { getDatabase } from "@/lib/db";
 
 export function CategoriesPage() {
   const { user } = useAuthStore();
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -129,7 +137,7 @@ export function CategoriesPage() {
     }
 
     if (
-      confirm(`Delete category "${cat.name}"? This action cannot be undone.`)
+      confirm(t("categories.deleteConfirmMessage").replace("{name}", cat.name))
     ) {
       try {
         const db = getDatabase();
@@ -155,7 +163,7 @@ export function CategoriesPage() {
     <div className="max-w-4xl mx-auto space-y-6 pb-20 px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
-        <h1 className="text-3xl font-bold">Categorie</h1>
+        <h1 className="text-3xl font-bold">{t("categories.title")}</h1>
         <FloatingActionButton
           onClick={() => {
             resetForm();
@@ -169,7 +177,9 @@ export function CategoriesPage() {
         <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
           <CardHeader>
             <CardTitle>
-              {editingId ? "Edit Category" : "New Category"}
+              {editingId
+                ? t("categories.editCategoryTitle")
+                : t("categories.newCategoryTitle")}
             </CardTitle>
             <CardAction>
               <button
@@ -184,7 +194,9 @@ export function CategoriesPage() {
           <CardContent className="space-y-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Type</label>
+                <label className="text-sm font-medium">
+                  {t("categories.typeLabel")}
+                </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -233,7 +245,9 @@ export function CategoriesPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Name</label>
+                <label className="text-sm font-medium mb-1 block">
+                  {t("categories.nameLabel")}
+                </label>
                 <Input
                   placeholder="Es: Cibo, Trasporto..."
                   value={formData.name}
@@ -252,7 +266,7 @@ export function CategoriesPage() {
 
                 <div className="flex-1">
                   <label className="text-sm font-medium mb-1 block">
-                    Color
+                    {t("categories.colorLabel")}
                   </label>
                   <div className="flex gap-2">
                     <Input
@@ -282,7 +296,7 @@ export function CategoriesPage() {
                     className="w-4 h-4"
                   />
                   <label htmlFor="is_active" className="text-sm font-medium">
-                    Active (show in form)
+                    {t("categories.active")}
                   </label>
                 </div>
               )}
@@ -293,14 +307,16 @@ export function CategoriesPage() {
                   onClick={() => resetForm()}
                   className="flex-1"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={handleSaveCategory}
                   className="flex-1"
                   disabled={!formData.name.trim()}
                 >
-                  {editingId ? "Update" : "Create"} Category
+                  {editingId
+                    ? t("categories.updateButton")
+                    : t("categories.createButton")}
                 </Button>
               </div>
             </div>
@@ -333,13 +349,14 @@ export function CategoriesPage() {
                     </span>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded truncate">
-                        {cat.type === "expense" && "Spesa"}
-                        {cat.type === "income" && "Entrata"}
-                        {cat.type === "investment" && "Investimento"}
+                        {cat.type === "expense" && t("categories.type.expense")}
+                        {cat.type === "income" && t("categories.type.income")}
+                        {cat.type === "investment" &&
+                          t("categories.type.investment")}
                       </span>
                       {!cat.is_active && (
                         <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded whitespace-nowrap">
-                          Archived
+                          {t("categories.archiveButton")}
                         </span>
                       )}
                     </div>

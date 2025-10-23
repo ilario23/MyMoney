@@ -1,7 +1,7 @@
 {
   "name": "mymoney",
   "private": true,
-  "version": "3.2.2",
+  "version": "3.2.3",
   "type": "module",
   "description": "Local-first expense tracking app with Dexie and Supabase",
   "scripts": {
@@ -37,6 +37,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.10",
     "uuid": "^13.0.0",
+    "vaul": "^1.1.2",
     "vite-plugin-pwa": "^1.1.0",
     "zod": "^3.25.67",
     "zustand": "^5.0.8"

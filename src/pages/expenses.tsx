@@ -1,17 +1,24 @@
 ﻿import { useMemo, useCallback, useState } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
+import { renderIcon } from "@/lib/icon-renderer";
 import { useQuery } from "@/hooks/useQuery";
 import { useExpenseFilters } from "@/hooks/useExpenseFilters";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { ExpenseFilterPanel } from "@/components/expense/expense-filters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
-import { Sliders, ChevronDown } from "lucide-react";
+import { Sliders } from "lucide-react";
 import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
 
 export function ExpensesPage() {
@@ -129,20 +136,57 @@ export function ExpensesPage() {
       {/* Header con bottone filtri */}
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <div>
-          <h1 className="text-3xl font-bold">Spese</h1>
+          <h1 className="text-3xl font-bold">{t("nav.expenses")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filteredExpenses.length}{" "}
-            {filteredExpenses.length === 1 ? "spesa" : "spese"}
+            {filteredExpenses.length === 1
+              ? t("expenses.expenseCount").replace("{count}", "1")
+              : t("expenses.expenseCountPlural").replace(
+                  "{count}",
+                  filteredExpenses.length.toString()
+                )}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="p-2 hover:bg-muted rounded-lg transition-colors hidden md:block"
-            title="Filtri"
+            title={t("expenses.filters")}
           >
             <Sliders className="w-5 h-5" />
           </button>
+          {/* Mobile filter drawer button */}
+          <Drawer open={showFilters} onOpenChange={setShowFilters}>
+            <button
+              onClick={() => setShowFilters(true)}
+              className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors text-primary"
+              title={t("expenses.filters")}
+            >
+              <Sliders className="w-5 h-5" />
+            </button>
+            <DrawerContent className="max-h-[80vh]">
+              <DrawerHeader className="border-b border-border/30">
+                <DrawerTitle>{t("expenses.filters.title")}</DrawerTitle>
+              </DrawerHeader>
+              <div className="overflow-y-auto flex-1 px-4 py-4">
+                <ExpenseFilterPanel
+                  filters={filters}
+                  categories={categories}
+                  onFilterChange={updateFilter}
+                  onReset={resetFilters}
+                  hasActiveFilters={hasActiveFilters}
+                  resultCount={filteredExpenses.length}
+                  onSaveFilter={handleSaveFilter}
+                />
+              </div>
+              <div className="border-t border-border/30 p-4">
+                <DrawerClose asChild>
+                  <Button variant="outline" className="w-full">
+                    {t("common.close")}
+                  </Button>
+                </DrawerClose>
+              </div>
+            </DrawerContent>
+          </Drawer>
           <FloatingActionButton href="/expense/new" label="Add expense" />
         </div>
       </div>
@@ -169,39 +213,6 @@ export function ExpensesPage() {
       </div>
 
       {/* Mobile Collapsible Filters */}
-      <div className="md:hidden space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-card rounded-lg border border-input hover:bg-muted transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Sliders className="w-4 h-4" />
-            <span className="font-medium text-sm">Filtri</span>
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2 text-xs">
-                Attivo
-              </Badge>
-            )}
-          </div>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${
-              showFilters ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        {showFilters && (
-          <ExpenseFilterPanel
-            filters={filters}
-            categories={categories}
-            onFilterChange={updateFilter}
-            onReset={resetFilters}
-            hasActiveFilters={hasActiveFilters}
-            resultCount={filteredExpenses.length}
-            onSaveFilter={handleSaveFilter}
-          />
-        )}
-      </div>
 
       {/* Expenses List */}
       {loading ? (
@@ -218,12 +229,12 @@ export function ExpensesPage() {
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">
               {filters.searchQuery || hasActiveFilters
-                ? "Nessuna spesa trovata"
-                : "Nessuna spesa"}
+                ? t("expenses.noExpensesFiltered")
+                : t("expenses.noExpenses")}
             </p>
             {!filters.searchQuery && !hasActiveFilters && (
               <Button onClick={() => navigate("/expense/new")}>
-                Aggiungi la prima spesa
+                {t("expenses.addFirstExpense")}
               </Button>
             )}
           </CardContent>
@@ -257,7 +268,9 @@ export function ExpensesPage() {
 
                     {/* Description */}
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">{category?.icon || ""}</span>
+                      <div className="w-5 h-5">
+                        {category?.icon ? renderIcon(category.icon) : ""}
+                      </div>
                       <h3 className="font-medium truncate">
                         {expense.description}
                       </h3>

@@ -31,10 +31,10 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden px-4 pb-4 pointer-events-none animate-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-background/95 backdrop-blur-xl border border-border rounded-[24px] shadow-2xl shadow-black/20 dark:shadow-black/40 pointer-events-auto">
-        <div className="relative grid grid-cols-3 gap-1 px-3 py-2">
-          {navItems.map(({ path, icon: Icon, label }) => {
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 md:hidden pb-6 pointer-events-none animate-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-background/95 backdrop-blur-xl border border-border rounded-[20px] shadow-2xl shadow-black/20 dark:shadow-black/40 pointer-events-auto">
+        <div className="relative grid grid-cols-3 gap-5 px-4 py-2">
+          {navItems.map(({ path, icon: Icon }) => {
             const isActive = location.pathname.startsWith(path);
 
             return (
@@ -43,16 +43,15 @@ export function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={triggerHaptic}
-                  className={`w-full flex-col h-16 gap-1 transition-all duration-200 ${
+                  className={`w-10 h-10 p-0 flex items-center justify-center transition-all duration-200 ${
                     isActive
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 scale-105"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 scale-110"
                       : "hover:bg-accent hover:scale-105 active:scale-95"
                   }`}
                 >
                   <Icon
-                    className={`w-5 h-5 transition-transform ${isActive ? "scale-110" : ""}`}
+                    className={`w-6 h-6 transition-transform ${isActive ? "scale-110" : ""}`}
                   />
-                  <span className="text-xs">{label}</span>
                 </Button>
               </Link>
             );

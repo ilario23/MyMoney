@@ -313,4 +313,76 @@ export const en: Record<TranslationKey, string> = {
 
   // Common
   "common.dismiss": "Dismiss",
+
+  // Expenses Page
+  "expenses.title": "Expenses",
+  "expenses.expenseCount": "{count} expense",
+  "expenses.expenseCountPlural": "{count} expenses",
+  "expenses.filters": "Filters",
+  "expenses.activeFilter": "Active",
+  "expenses.noExpensesFiltered": "No expenses found",
+  "expenses.noExpenses": "No expenses",
+  "expenses.addFirstExpense": "Add your first expense",
+
+  // Categories Page (general)
+  "categories.archiveButton": "Archived",
+  "categories.type.expense": "Expense",
+  "categories.type.income": "Income",
+  "categories.type.investment": "Investment",
+  "categories.typeLabel": "Type",
+  "categories.newCategoryTitle": "New Category",
+  "categories.editCategoryTitle": "Edit Category",
+  "categories.nameLabel": "Name",
+  "categories.colorLabel": "Color",
+  "categories.active": "Active (show in form)",
+  "categories.updateButton": "Update Category",
+  "categories.createButton": "Create Category",
+  "categories.deleteConfirmMessage":
+    'Delete category "{name}"? This action cannot be undone.',
+  "categories.deleteConfirmButton": "Delete",
+
+  // Theme Selector
+  "theme.appearance": "Appearance",
+  "theme.customize": "Customize the look and feel of the app",
+  "theme.theme": "Theme",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
+  "theme.colorScheme": "Color Scheme",
+  "theme.neutral": "Neutral",
+  "theme.vivid": "Vivid",
+  "theme.current": "Current",
+  "theme.mode": "Mode",
+  "theme.show": "Show",
+  "theme.hide": "Hide",
+  "theme.palette": "Palette",
+
+  // Expense Filters
+  "expenses.filters.title": "Filters",
+  "expenses.filters.results": "result",
+  "expenses.filters.resultsPlural": "results",
+  "expenses.filters.search": "Search",
+  "expenses.filters.searchPlaceholder": "Description, category, amount...",
+  "expenses.filters.type": "Type",
+  "expenses.filters.categories": "Categories",
+  "expenses.filters.selectCategories": "Select categories...",
+  "expenses.filters.categoriesSelected": "{count} categor{singular}ies",
+  "expenses.filters.noCategoriesAvailable": "No categories available",
+  "expenses.filters.period": "Period",
+  "expenses.filters.from": "From",
+  "expenses.filters.to": "To",
+  "expenses.filters.amount": "Amount (€)",
+  "expenses.filters.min": "Min",
+  "expenses.filters.max": "Max",
+  "expenses.filters.sortBy": "Sort by",
+  "expenses.filters.sortDate": "Date",
+  "expenses.filters.sortAmount": "Amount",
+  "expenses.filters.sortCategory": "Category",
+  "expenses.filters.reset": "Reset filters",
+  "expenses.filters.saveFilter": "Save this filter",
+  "expenses.filters.filterName": "Filter name...",
+  "expenses.filters.save": "Save",
+
+  // Common - Drawer
+  "common.close": "Close",
 } as const;

@@ -215,7 +215,10 @@ export function ProfilePage() {
       </div>
 
       {error && (
-        <Alert variant="destructive" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+        <Alert
+          variant="destructive"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
+        >
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

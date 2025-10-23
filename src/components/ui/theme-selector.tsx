@@ -5,6 +5,7 @@ import {
   AVAILABLE_COLOR_SCHEMES,
   type Theme,
 } from "@/lib/theme.store";
+import { useLanguage } from "@/lib/language";
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ import { PalettePreview } from "./palette-preview";
  * Allows users to choose theme (light/dark/system) and color scheme
  */
 export function ThemeSelector() {
+  const { t } = useLanguage();
   const [config, setConfig] = useState(getThemeConfig());
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -53,16 +55,14 @@ export function ThemeSelector() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sun className="w-5 h-5" />
-          Appearance
+          {t("theme.appearance")}
         </CardTitle>
-        <CardDescription>
-          Customize the look and feel of the app
-        </CardDescription>
+        <CardDescription>{t("theme.customize")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Theme Selection */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">Theme</label>
+          <label className="text-sm font-medium">{t("theme.theme")}</label>
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant={config.theme === "light" ? "default" : "outline"}
@@ -71,7 +71,7 @@ export function ThemeSelector() {
               className="flex items-center gap-2"
             >
               <Sun className="w-4 h-4" />
-              Light
+              {t("theme.light")}
             </Button>
             <Button
               variant={config.theme === "dark" ? "default" : "outline"}
@@ -80,7 +80,7 @@ export function ThemeSelector() {
               className="flex items-center gap-2"
             >
               <Moon className="w-4 h-4" />
-              Dark
+              {t("theme.dark")}
             </Button>
             <Button
               variant={config.theme === "system" ? "default" : "outline"}
@@ -89,7 +89,7 @@ export function ThemeSelector() {
               className="flex items-center gap-2"
             >
               <Monitor className="w-4 h-4" />
-              System
+              {t("theme.system")}
             </Button>
           </div>
         </div>
@@ -99,16 +99,16 @@ export function ThemeSelector() {
           type="single"
           collapsible
           defaultValue="color-scheme"
-          className="border rounded-lg shadow-xs"
+          className="border border-input rounded-lg"
         >
           <AccordionItem value="color-scheme">
-            <AccordionTrigger>Color Scheme</AccordionTrigger>
+            <AccordionTrigger>{t("theme.colorScheme")}</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-4">
                 {/* Neutral Schemes */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Neutral
+                    {t("theme.neutral")}
                   </p>
                   <div className="grid grid-cols-4 gap-2">
                     {AVAILABLE_COLOR_SCHEMES.filter((s) =>
@@ -135,7 +135,7 @@ export function ThemeSelector() {
                 {/* Vivid Schemes */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Vivid
+                    {t("theme.vivid")}
                   </p>
                   <div className="grid grid-cols-4 gap-2">
                     {AVAILABLE_COLOR_SCHEMES.filter(
@@ -163,12 +163,12 @@ export function ThemeSelector() {
                 {/* Preview */}
                 <div className="pt-2 mt-4 border-t space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    Current:{" "}
+                    {t("theme.current")}:{" "}
                     {config.theme === "system"
-                      ? "System"
+                      ? t("theme.system")
                       : config.theme.charAt(0).toUpperCase() +
                         config.theme.slice(1)}{" "}
-                    Mode •{" "}
+                    {t("theme.mode")} •{" "}
                     {AVAILABLE_COLOR_SCHEMES.find(
                       (s) => s.value === config.colorScheme
                     )?.name || config.colorScheme}
@@ -185,7 +185,8 @@ export function ThemeSelector() {
                     ) : (
                       <ChevronUp className="w-4 h-4 rotate-180" />
                     )}
-                    {showPreview ? "Hide" : "Show"} Palette
+                    {showPreview ? t("theme.hide") : t("theme.show")}{" "}
+                    {t("theme.palette")}
                   </Button>
                   {showPreview && <PalettePreview />}
                 </div>
