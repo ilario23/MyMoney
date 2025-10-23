@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Zap, BarChart3, Users, Shield, Clock, Target } from "lucide-react";
 
 const features = [
@@ -11,7 +17,8 @@ const features = [
   {
     icon: BarChart3,
     title: "Advanced Analytics",
-    description: "Deep insights into your progress with beautiful charts and reports.",
+    description:
+      "Deep insights into your progress with beautiful charts and reports.",
   },
   {
     icon: Users,
@@ -37,14 +44,14 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="py-20 md:py-32 bg-white">
+    <section id="features" className="py-20 md:py-32 bg-background">
       <div className="container max-w-screen-2xl">
         <div className="text-center space-y-4 mb-16">
           <Badge className="mx-auto">Features</Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-neutral-950">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
             Everything you need
           </h2>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Powerful features designed to keep you motivated and on track.
           </p>
         </div>
@@ -53,15 +60,18 @@ export function Features() {
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <Card key={feature.title} className="border-neutral-200 hover:shadow-lg transition-shadow">
+              <Card
+                key={feature.title}
+                className="border-border hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-primary/15 rounded-lg flex items-center justify-center mb-4">
+                    <Icon className="w-6 h-6 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-neutral-600">
+                  <CardDescription className="text-muted-foreground">
                     {feature.description}
                   </CardDescription>
                 </CardContent>

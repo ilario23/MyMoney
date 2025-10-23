@@ -18,7 +18,6 @@ interface AuthStore {
   setLoading: (loading: boolean) => void;
   logout: () => void;
   startSync: () => Promise<void>;
-  stopSync: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -35,8 +34,6 @@ export const useAuthStore = create<AuthStore>()(
         }),
       setLoading: (loading) => set({ isLoading: loading }),
       logout: async () => {
-        // Stop sync before logout
-        await syncService.stopSync();
         set({
           user: null,
           isAuthenticated: false,
@@ -51,14 +48,6 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error) {
             syncLogger.error("Failed to start sync:", error);
           }
-        }
-      },
-      stopSync: async () => {
-        try {
-          await syncService.stopSync();
-          syncLogger.info("Sync stopped");
-        } catch (error) {
-          syncLogger.error("Failed to stop sync:", error);
         }
       },
     }),

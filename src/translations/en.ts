@@ -7,6 +7,7 @@ import { type TranslationKey } from "./it";
 export const en: Record<TranslationKey, string> = {
   // Profile Page
   "profile.title": "Profile",
+  "profile.settings": "Settings",
   "profile.editProfile": "Edit Profile",
   "profile.cancelEdit": "Cancel Edit",
   "profile.saveChanges": "Save Changes",
@@ -113,6 +114,7 @@ export const en: Record<TranslationKey, string> = {
   "dashboard.errorLoading": "Error loading",
   "dashboard.expensesThisMonth": "Expenses this month",
   "dashboard.incomeThisMonth": "Income this month",
+  "dashboard.investmentsThisMonth": "Investments this month",
   "dashboard.netBalance": "Net balance",
   "dashboard.transactions": "{count} transactions",
   "dashboard.totalTransactions": "{count} total transactions",
@@ -311,4 +313,108 @@ export const en: Record<TranslationKey, string> = {
 
   // Common
   "common.dismiss": "Dismiss",
+
+  // Expenses Page
+  "expenses.title": "Expenses",
+  "expenses.expenseCount": "{count} expense",
+  "expenses.expenseCountPlural": "{count} expenses",
+  "expenses.filters": "Filters",
+  "expenses.activeFilter": "Active",
+  "expenses.noExpensesFiltered": "No expenses found",
+  "expenses.noExpenses": "No expenses",
+  "expenses.addFirstExpense": "Add your first expense",
+
+  // Categories Page (general)
+  "categories.archiveButton": "Archived",
+  "categories.type.expense": "Expense",
+  "categories.type.income": "Income",
+  "categories.type.investment": "Investment",
+  "categories.typeLabel": "Type",
+  "categories.newCategoryTitle": "New Category",
+  "categories.editCategoryTitle": "Edit Category",
+  "categories.nameLabel": "Name",
+  "categories.colorLabel": "Color",
+  "categories.active": "Active (show in form)",
+  "categories.updateButton": "Update Category",
+  "categories.createButton": "Create Category",
+  "categories.deleteConfirmMessage":
+    'Delete category "{name}"? This action cannot be undone.',
+  "categories.deleteConfirmButton": "Delete",
+
+  // Theme Selector
+  "theme.appearance": "Appearance",
+  "theme.customize": "Customize the look and feel of the app",
+  "theme.theme": "Theme",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
+  "theme.colorScheme": "Color Scheme",
+  "theme.neutral": "Neutral",
+  "theme.vivid": "Vivid",
+  "theme.current": "Current",
+  "theme.mode": "Mode",
+  "theme.show": "Show",
+  "theme.hide": "Hide",
+  "theme.palette": "Palette",
+
+  // Expense Filters
+  "expenses.filters.title": "Filters",
+  "expenses.filters.results": "result",
+  "expenses.filters.resultsPlural": "results",
+  "expenses.filters.search": "Search",
+  "expenses.filters.searchPlaceholder": "Description, category, amount...",
+  "expenses.filters.type": "Type",
+  "expenses.filters.categories": "Categories",
+  "expenses.filters.selectCategories": "Select categories...",
+  "expenses.filters.categoriesSelected": "{count} categor{singular}ies",
+  "expenses.filters.noCategoriesAvailable": "No categories available",
+  "expenses.filters.period": "Period",
+  "expenses.filters.from": "From",
+  "expenses.filters.to": "To",
+  "expenses.filters.amount": "Amount (€)",
+  "expenses.filters.min": "Min",
+  "expenses.filters.max": "Max",
+  "expenses.filters.sortBy": "Sort by",
+  "expenses.filters.sortDate": "Date",
+  "expenses.filters.sortAmount": "Amount",
+  "expenses.filters.sortCategory": "Category",
+  "expenses.filters.reset": "Reset filters",
+  "expenses.filters.saveFilter": "Save this filter",
+  "expenses.filters.filterName": "Filter name...",
+  "expenses.filters.save": "Save",
+
+  // Common - Drawer
+  "common.close": "Close",
+
+  // Sync Indicator
+  "sync.offline": "Offline",
+  "sync.synced": "Synchronized",
+  "sync.pending": "{count} pending {singular}change{plural}s",
+  "sync.conflict": "Updates to download",
+  "sync.title.synced": "Synchronized",
+  "sync.title.pending": "Pending changes",
+  "sync.title.conflict": "Server data is more recent",
+  "sync.description.synced":
+    "Everything is synchronized between local and remote.",
+  "sync.description.pending": `You have {count} pending local {singular}change{plural}s.`,
+  "sync.description.conflict":
+    "The server has updates not present locally. Sync to download them.",
+  "sync.offline.message":
+    "You are offline. Changes will be synchronized when you are back online.",
+  "sync.icons.title": "Icon legend:",
+  "sync.icons.online": "You are online and connected",
+  "sync.icons.offline": "You are offline (no connection)",
+  "sync.colors.title": "Color legend:",
+  "sync.colors.synced": "Everything synchronized",
+  "sync.colors.pending": "Pending changes",
+  "sync.colors.conflict": "Server data is more recent",
+  "sync.colors.green": "Green",
+  "sync.colors.orange": "Orange",
+  "sync.colors.red": "Red",
+  "sync.pending.state.message":
+    "⏳ You have local changes not yet sent to the server.",
+  "sync.conflict.state.message": "🔄 The server has newer updates to download.",
+  "sync.close": "Close",
+  "sync.syncNow": "Sync now",
+  "sync.syncing": "Syncing...",
 } as const;

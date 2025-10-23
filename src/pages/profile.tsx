@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/auth.store";
-import { useLanguage, type Language } from "@/lib/language";
+import { useLanguage } from "@/lib/language";
 import { supabase } from "@/lib/supabase";
-import { getDatabase, closeDatabase } from "@/lib/rxdb";
-import { statsService } from "@/services/stats.service";
-import { authLogger, dbLogger, syncLogger } from "@/lib/logger";
+import { getDatabase } from "@/lib/db";
+import { authLogger, dbLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -22,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +23,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Edit2, Save, X } from "lucide-react";
-import packageJson from "../../package.json";
+import { LogOut, Edit2, Save, X, Settings } from "lucide-react";
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -59,23 +49,34 @@ export function ProfilePage() {
       try {
         const db = getDatabase();
 
-        // Calcola statistiche del mese corrente
-        const monthlyStats = await statsService.calculateMonthlyStats(
-          user.id,
-          new Date()
-        );
+        // Calcola statistiche di tutti i tempi (non solo questo mese)
+        const allExpenses = await db.expenses
+          .where("user_id")
+          .equals(user.id)
+          .filter((exp) => !exp.deleted_at)
+          .toArray();
 
         // Conta le categorie
         const categories = await db.categories
-          .find({ selector: { user_id: user.id, deleted_at: null } })
-          .exec();
+          .where("user_id")
+          .equals(user.id)
+          .toArray();
 
-        setStats({
-          totalExpenses: monthlyStats.expenseCount,
-          totalAmount: monthlyStats.totalExpenses,
+        // Calcola l'importo totale
+        const totalAmount = allExpenses.reduce(
+          (sum, exp) => sum + exp.amount,
+          0
+        );
+
+        const newStats = {
+          totalExpenses: allExpenses.length,
+          totalAmount: totalAmount,
           categories: categories.length,
           lastSyncDate: new Date(),
-        });
+        };
+
+        console.log("Profile Stats:", newStats);
+        setStats(newStats);
       } catch (error) {
         console.error("Error loading stats:", error);
       }
@@ -130,9 +131,8 @@ export function ProfilePage() {
 
       // 2. Pulisci completamente IndexedDB
       try {
-        // Chiudi il database RxDB
-        await closeDatabase();
-        dbLogger.success("RxDB database closed");
+        // Chiudi il database Dexie (non è necessario con Dexie)
+        dbLogger.success("Dexie database ready for cleanup");
 
         // Elimina tutti i database IndexedDB
         if (window.indexedDB) {
@@ -207,41 +207,54 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/settings")}
+          title={t("nav.settings")}
+          className="gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="hidden sm:inline">{t("nav.settings")}</span>
+        </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert
+          variant="destructive"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
+        >
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">
+        <Alert className="border border-primary/30 bg-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+          <AlertDescription className="text-primary font-medium">
             ✓ {success}
           </AlertDescription>
         </Alert>
       )}
 
       {/* User Info Card */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle>{t("profile.title")}</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               {!isEditing && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="gap-2"
+                  className="gap-2 flex-1 sm:flex-none"
                 >
                   <Edit2 className="w-4 h-4" />
-                  {t("profile.editProfile")}
+                  <span className="sm:inline">{t("profile.editProfile")}</span>
                 </Button>
               )}
               <Dialog
@@ -253,9 +266,12 @@ export function ProfilePage() {
                     variant="destructive"
                     size="sm"
                     title={t("profile.logout")}
-                    className="w-10 h-10 p-0"
+                    className="gap-2 flex-1 sm:flex-none"
                   >
                     <LogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {t("profile.logout")}
+                    </span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -289,7 +305,9 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("profile.name")}</label>
+            <label className="text-xs sm:text-sm font-medium block">
+              {t("profile.name")}
+            </label>
             {isEditing ? (
               <Input
                 value={displayName}
@@ -298,21 +316,23 @@ export function ProfilePage() {
                 disabled={isSaving}
               />
             ) : (
-              <p className="text-lg font-semibold">
+              <p className="text-base sm:text-lg font-semibold break-words">
                 {displayName || t("profile.notSet")}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("profile.email")}</label>
-            <p className="text-sm text-muted-foreground break-all">
+            <label className="text-xs sm:text-sm font-medium block">
+              {t("profile.email")}
+            </label>
+            <p className="text-xs sm:text-sm text-muted-foreground break-all">
               {user.email}
             </p>
           </div>
 
           {isEditing && (
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
               <Button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
@@ -328,10 +348,12 @@ export function ProfilePage() {
                   setDisplayName(user.displayName || "");
                 }}
                 disabled={isSaving}
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-none"
               >
                 <X className="w-4 h-4" />
-                {t("profile.cancelEdit")}
+                <span className="hidden sm:inline">
+                  {t("profile.cancelEdit")}
+                </span>
               </Button>
             </div>
           )}
@@ -339,40 +361,44 @@ export function ProfilePage() {
       </Card>
 
       {/* Statistics Card */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 hover:shadow-lg transition-all">
         <CardHeader>
           <CardTitle>{t("profile.statistics")}</CardTitle>
           <CardDescription>{t("profile.yourTrackingData")}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.expenses")}
               </p>
-              <p className="text-2xl font-bold">{stats.totalExpenses}</p>
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
+                {stats.totalExpenses}
+              </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.totalAmount")}
               </p>
-              <p className="text-2xl font-bold">
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
                 €{stats.totalAmount.toFixed(2)}
               </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.categories")}
               </p>
-              <p className="text-2xl font-bold">{stats.categories}</p>
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
+                {stats.categories}
+              </p>
             </div>
           </div>
 
           {stats.lastSyncDate && (
-            <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-sm">
-              <p className="text-muted-foreground">
+            <div className="mt-4 p-3 bg-secondary/50 rounded-lg text-sm border border-input shadow-xs text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {t("profile.lastSync")}:{" "}
                 <span className="font-medium">
                   {stats.lastSyncDate.toLocaleDateString(
@@ -393,7 +419,7 @@ export function ProfilePage() {
       </Card>
 
       {/* Categories Management */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 hover:shadow-lg transition-all">
         <CardHeader>
           <CardTitle>{t("profile.categoriesManagement")}</CardTitle>
           <CardDescription>
@@ -411,186 +437,6 @@ export function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-3">
             {t("profile.manageCategoriesDescription")}
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Language Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🌍 {t("profile.language")}</CardTitle>
-          <CardDescription>{t("profile.selectLanguage")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t("profile.language")}
-            </label>
-            <Select
-              value={language}
-              onValueChange={(value) => {
-                setLanguage(value as Language);
-                setSuccess(t("profile.languageUpdated"));
-                setTimeout(() => setSuccess(""), 3000);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="it">🇮🇹 Italiano</SelectItem>
-                <SelectItem value="en">🇬🇧 English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile.account")}</CardTitle>
-          <CardDescription>{t("profile.manageAccount")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div>
-              <h3 className="font-medium mb-2">{t("profile.appVersion")}</h3>
-              <Badge variant="outline">v{packageJson.version} - PWA</Badge>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">{t("profile.localDatabase")}</h3>
-              <Badge variant="outline">{t("profile.dexieIndexedDB")}</Badge>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">
-                {t("profile.synchronization")}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {t("profile.syncDescription")}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile.dataManagement")}</CardTitle>
-          <CardDescription>{t("profile.exportDeleteData")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
-                {t("profile.exportData")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t("profile.exportData")}</DialogTitle>
-                <DialogDescription>
-                  {t("profile.exportDescription")}
-                </DialogDescription>
-              </DialogHeader>
-              <Button
-                onClick={async () => {
-                  const db = getDatabase();
-                  const expenses = await db.expenses
-                    .find({ selector: { user_id: user.id } })
-                    .exec();
-                  const categories = await db.categories
-                    .find({ selector: { user_id: user.id } })
-                    .exec();
-                  const data = {
-                    user,
-                    expenses: expenses.map((e) => e.toJSON()),
-                    categories: categories.map((c) => c.toJSON()),
-                    exportDate: new Date(),
-                  };
-                  const blob = new Blob([JSON.stringify(data, null, 2)], {
-                    type: "application/json",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `mymoney-backup-${Date.now()}.json`;
-                  a.click();
-                  setSuccess(t("profile.dataExported"));
-                }}
-                className="w-full"
-              >
-                ✓ {t("common.save")}
-              </Button>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="destructive" className="w-full">
-                {t("profile.deleteAllData")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t("profile.deleteAllData")}</DialogTitle>
-                <DialogDescription className="text-destructive">
-                  ⚠️ {t("profile.confirmDeleteAllData")}
-                </DialogDescription>
-              </DialogHeader>
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  if (!user) return;
-                  try {
-                    const db = getDatabase();
-
-                    // Soft delete: imposta deleted_at invece di eliminare fisicamente
-                    const expenses = await db.expenses
-                      .find({ selector: { user_id: user.id } })
-                      .exec();
-
-                    for (const expense of expenses) {
-                      await expense.update({
-                        $set: {
-                          deleted_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                        },
-                      });
-                    }
-
-                    // Elimina categorie custom
-                    const categories = await db.categories
-                      .find({ selector: { user_id: user.id, is_custom: true } })
-                      .exec();
-
-                    for (const category of categories) {
-                      await category.update({
-                        $set: {
-                          deleted_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                        },
-                      });
-                    }
-
-                    // La sincronizzazione avverrà automaticamente
-                    syncLogger.success("Data deletion queued for sync");
-
-                    setSuccess(t("profile.dataDeleted"));
-                    setTimeout(() => navigate("/dashboard"), 1500);
-                  } catch (error) {
-                    dbLogger.error("Error deleting data:", error);
-                    setError(t("profile.anErrorOccurred"));
-                  }
-                }}
-                className="w-full"
-              >
-                {t("profile.deleteConfirmation")}
-              </Button>
-            </DialogContent>
-          </Dialog>
         </CardContent>
       </Card>
     </div>

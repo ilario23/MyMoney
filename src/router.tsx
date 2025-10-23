@@ -1,18 +1,23 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useAuthStore } from '@/lib/auth.store';
-import { supabase } from '@/lib/supabase';
-import { Layout } from '@/components/layout/layout';
-import { LoginPage } from '@/pages/login';
-import { SignupPage } from '@/pages/signup';
-import { DashboardPage } from '@/pages/dashboard';
-import { ProfilePage } from '@/pages/profile';
-import { CategoriesPage } from '@/pages/categories';
-import { GroupsPage } from '@/pages/groups';
-import { SharedExpensesPage } from '@/pages/shared-expenses';
-import { StatisticsPage } from '@/pages/statistics';
-import { ExpenseForm } from '@/components/expense/expense-form';
-import { ExpensesPage } from '@/pages/expenses';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthStore } from "@/lib/auth.store";
+import { supabase } from "@/lib/supabase";
+import { syncService } from "@/services/sync.service";
+import { Layout } from "@/components/layout/layout";
+import { LoginPage } from "@/pages/login";
+import { SignupPage } from "@/pages/signup";
+import { DashboardPage } from "@/pages/dashboard";
+import { ProfilePage } from "@/pages/profile";
+import { SettingsPage } from "@/pages/settings";
+import { CategoriesPage } from "@/pages/categories";
+import { StatisticsPage } from "@/pages/statistics";
+import { ExpenseForm } from "@/components/expense/expense-form";
+import { ExpensesPage } from "@/pages/expenses";
 
 function NotFound() {
   return <div className="text-center py-12">Pagina non trovata</div>;
@@ -36,9 +41,16 @@ export function AppRoutes() {
             displayName: session.user.user_metadata?.display_name,
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
+
+          // Initialize app: Load from Dexie first, then sync with Supabase in background
+          // This ensures data is available immediately while syncing remotely
+          await syncService.initializeAtStartup(session.user.id);
+
+          // Setup realtime monitoring to detect remote changes
+          syncService.setupRealtimeMonitoring(session.user.id);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error("Auth check error:", error);
       } finally {
         setLoading(false);
       }
@@ -59,10 +71,15 @@ export function AppRoutes() {
         });
       } else {
         setUser(null);
+        // Clean up realtime monitoring on logout
+        syncService.cleanupRealtimeMonitoring();
       }
     });
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+      syncService.cleanupRealtimeMonitoring();
+    };
   }, [setUser, setLoading]);
 
   if (isLoading) {
@@ -119,26 +136,18 @@ export function AppRoutes() {
               }
             />
             <Route
-              path="/groups"
-              element={
-                <Layout>
-                  <GroupsPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/shared-expenses"
-              element={
-                <Layout>
-                  <SharedExpensesPage />
-                </Layout>
-              }
-            />
-            <Route
               path="/profile"
               element={
                 <Layout>
                   <ProfilePage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Layout>
+                  <SettingsPage />
                 </Layout>
               }
             />

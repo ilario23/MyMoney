@@ -6,6 +6,7 @@
 export const it = {
   // Profile Page
   "profile.title": "Profilo",
+  "profile.settings": "Impostazioni",
   "profile.editProfile": "Modifica Profilo",
   "profile.cancelEdit": "Annulla Modifica",
   "profile.saveChanges": "Salva Cambiamenti",
@@ -114,6 +115,7 @@ export const it = {
   "dashboard.errorLoading": "Errore nel caricamento",
   "dashboard.expensesThisMonth": "Spese questo mese",
   "dashboard.incomeThisMonth": "Entrate questo mese",
+  "dashboard.investmentsThisMonth": "Investimenti questo mese",
   "dashboard.netBalance": "Saldo netto",
   "dashboard.transactions": "{count} transazioni",
   "dashboard.totalTransactions": "{count} transazioni totali",
@@ -313,6 +315,110 @@ export const it = {
 
   // Common
   "common.dismiss": "Chiudi",
+
+  // Expenses Page
+  "expenses.title": "Spese",
+  "expenses.expenseCount": "{count} spesa",
+  "expenses.expenseCountPlural": "{count} spese",
+  "expenses.filters": "Filtri",
+  "expenses.activeFilter": "Attivo",
+  "expenses.noExpensesFiltered": "Nessuna spesa trovata",
+  "expenses.noExpenses": "Nessuna spesa",
+  "expenses.addFirstExpense": "Aggiungi la prima spesa",
+
+  // Categories Page (general)
+  "categories.archiveButton": "Archiviato",
+  "categories.type.expense": "Spesa",
+  "categories.type.income": "Entrata",
+  "categories.type.investment": "Investimento",
+  "categories.typeLabel": "Tipo",
+  "categories.newCategoryTitle": "Nuova Categoria",
+  "categories.editCategoryTitle": "Modifica Categoria",
+  "categories.nameLabel": "Nome",
+  "categories.colorLabel": "Colore",
+  "categories.active": "Attivo (mostra nel modulo)",
+  "categories.updateButton": "Aggiorna Categoria",
+  "categories.createButton": "Crea Categoria",
+  "categories.deleteConfirmMessage":
+    'Elimina categoria "{name}"? Questa azione non può essere annullata.',
+  "categories.deleteConfirmButton": "Elimina",
+
+  // Theme Selector
+  "theme.appearance": "Aspetto",
+  "theme.customize": "Personalizza l'aspetto dell'app",
+  "theme.theme": "Tema",
+  "theme.light": "Chiaro",
+  "theme.dark": "Scuro",
+  "theme.system": "Sistema",
+  "theme.colorScheme": "Schema Colori",
+  "theme.neutral": "Neutro",
+  "theme.vivid": "Vivido",
+  "theme.current": "Attuale",
+  "theme.mode": "Modalità",
+  "theme.show": "Mostra",
+  "theme.hide": "Nascondi",
+  "theme.palette": "Tavolozza",
+
+  // Expense Filters
+  "expenses.filters.title": "Filtri",
+  "expenses.filters.results": "risultato",
+  "expenses.filters.resultsPlural": "risultati",
+  "expenses.filters.search": "Ricerca",
+  "expenses.filters.searchPlaceholder": "Descrizione, categoria, importo...",
+  "expenses.filters.type": "Tipo",
+  "expenses.filters.categories": "Categorie",
+  "expenses.filters.selectCategories": "Seleziona categorie...",
+  "expenses.filters.categoriesSelected": "{count} categor{singular}ia",
+  "expenses.filters.noCategoriesAvailable": "Nessuna categoria disponibile",
+  "expenses.filters.period": "Periodo",
+  "expenses.filters.from": "Da",
+  "expenses.filters.to": "A",
+  "expenses.filters.amount": "Importo (€)",
+  "expenses.filters.min": "Min",
+  "expenses.filters.max": "Max",
+  "expenses.filters.sortBy": "Ordina per",
+  "expenses.filters.sortDate": "Data",
+  "expenses.filters.sortAmount": "Importo",
+  "expenses.filters.sortCategory": "Categoria",
+  "expenses.filters.reset": "Ripristina filtri",
+  "expenses.filters.saveFilter": "Salva questo filtro",
+  "expenses.filters.filterName": "Nome filtro...",
+  "expenses.filters.save": "Salva",
+
+  // Common - Drawer
+  "common.close": "Chiudi",
+
+  // Sync Indicator
+  "sync.offline": "Offline",
+  "sync.synced": "Sincronizzato",
+  "sync.pending": "{count} {singular}cambiamento{plural}i in sospeso",
+  "sync.conflict": "Aggiornamenti da scaricare",
+  "sync.title.synced": "Sincronizzato",
+  "sync.title.pending": "Cambiamenti in sospeso",
+  "sync.title.conflict": "Dati remoti più recenti",
+  "sync.description.synced": "Tutto è sincronizzato tra locale e remoto.",
+  "sync.description.pending": `Hai {count} {singular}cambiamento{plural}i non sincronizzati localmente.`,
+  "sync.description.conflict":
+    "Il server ha aggiornamenti non presenti localmente. Sincronizza per scaricarli.",
+  "sync.offline.message":
+    "Sei offline. I cambiamenti verranno sincronizzati quando tornerai online.",
+  "sync.icons.title": "Legenda icone:",
+  "sync.icons.online": "Sei online e connesso",
+  "sync.icons.offline": "Sei offline (nessuna connessione)",
+  "sync.colors.title": "Legenda colori:",
+  "sync.colors.synced": "Tutto sincronizzato",
+  "sync.colors.pending": "Cambiamenti in sospeso",
+  "sync.colors.conflict": "Dati remoti più recenti",
+  "sync.colors.green": "Verde",
+  "sync.colors.orange": "Arancione",
+  "sync.colors.red": "Rosso",
+  "sync.pending.state.message":
+    "⏳ Hai cambiamenti locali non ancora inviati al server.",
+  "sync.conflict.state.message":
+    "🔄 Il server ha aggiornamenti più recenti da scaricare.",
+  "sync.close": "Chiudi",
+  "sync.syncNow": "Sincronizza ora",
+  "sync.syncing": "Sincronizzando...",
 } as const;
 
 export type TranslationKey = keyof typeof it;

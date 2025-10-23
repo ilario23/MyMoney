@@ -1,214 +1,650 @@
-# 💰 MyMoney v3.0# 💰 MyMoney v3.0# 💰 MyMoney - Personal & Shared Expense Tracker
+# 💰 MyMoney v3.0 - Local-First Expense Tracker# 💰 MyMoney v3.0 - Local-First Expense Tracker# 💰 MyMoney v3.0# 💰 MyMoney v3.0# 💰 MyMoney - Personal & Shared Expense Tracker
 
-**Local-first expense tracking with RxDB reactive database\*\***Local-first expense tracking app with reactive database and intelligent sync**A modern **Progressive Web App\*\* for tracking personal and shared expenses with intelligent offline-first sync, dark mode, and multi-language support (IT/EN).
+**Local-first progressive web app** for managing personal expenses with **Dexie** reactive database and optional **Supabase** sync.**Local-first progressive web app** for managing personal expenses with **Dexie** reactive database and optional **Supabase** sync.**Local-first expense tracking with RxDB reactive database\*\***Local-first expense tracking app with reactive database and intelligent sync**A modern **Progressive Web App\*\* for tracking personal and shared expenses with intelligent offline-first sync, dark mode, and multi-language support (IT/EN).
 
-Modern Progressive Web App for personal and shared expense tracking with full offline support, reactive UI updates, and intelligent client-side statistics.A modern Progressive Web App built with React 19, RxDB, and Supabase. Track personal and shared expenses with full offline support, real-time updates, and smart client-side statistics.**Version**: 1.7.0 | **Status**: ✅ Production Ready
-
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/ilario23/mymoney)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/yourusername/mymoney)---
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/ilario23/mymoney)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/ilario23/mymoney)Modern Progressive Web App for personal and shared expense tracking with full offline support, reactive UI updates, and intelligent client-side statistics.A modern Progressive Web App built with React 19, RxDB, and Supabase. Track personal and shared expenses with full offline support, real-time updates, and smart client-side statistics.**Version**: 1.7.0 | **Status**: ✅ Production Ready
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
----[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)## ✨ Key Features
+---[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/ilario23/mymoney)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/yourusername/mymoney)---
 
-## ✨ Key Features---### 💸 Expense Management
+## ✨ Key Features---[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-### 💸 Expense Management## ✨ Features- Quick add/edit/delete expenses
+### 💸 Expense Management## ✨ Features[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- Quick add/edit/delete expenses
+- ✅ Quick add/edit/delete personal expenses### 💸 Expense Management---[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)## ✨ Key Features
 
-- Hierarchical categories with icons & colors- Hierarchical categories (parent → child structure)
+- ✅ Hierarchical categories (parent → child) with icons & colors
 
-- Multi-currency support (EUR, USD, GBP)
+- ✅ Advanced search & filtering- ✅ Quick add/edit/delete expenses
 
-- Monthly dashboard with statistics### 💸 Expense Management- Multi-currency support (EUR, USD, GBP)
+- ✅ Monthly dashboard with statistics
 
-- Advanced search & filtering
+- ✅ Export/import data in JSON format- ✅ Hierarchical categories (parent → child) with icons & colors## ✨ Key Features---### 💸 Expense Management
 
-- **Quick CRUD**: Add, edit, delete expenses instantly- Monthly dashboard with smart summaries
+### 🔄 Local-First Architecture- ✅ Advanced search & filtering
 
-### 🔄 Reactive Architecture (NEW in v3.0)
+- ✅ **Dexie** (IndexedDB) - Reactive local database- ✅ Monthly dashboard with statistics### 💸 Expense Management## ✨ Features- Quick add/edit/delete expenses
 
-- **RxDB**: Observable database with live queries- **Smart Categories**: Hierarchical organization (parent → child)- Advanced search & filtering
+- ✅ **Dexie.Observable** - Real-time UI updates (no manual refetch)
 
-- **Automatic Updates**: UI re-renders on data changes
+- ✅ **Offline-first** - Full functionality without internet- ✅ Export/import data
 
-- **No Manual Fetching**: Components subscribe to data streams- **Intelligent Search**: Filter by date, category, amount
+- ✅ **Auto-sync** - Bidirectional sync with Supabase when online
 
-- **Multi-Tab Sync**: Leader election coordination
+- ✅ **Conflict resolution** - Last-write-wins strategy- Quick add/edit/delete expenses
 
-- **Better Performance**: Efficient reactive updates- **Statistics**: Local computation with automatic caching### 🔄 Intelligent Sync
+### 🌐 Optional Synchronization### 🔄 Local-First Architecture
 
-### 🌐 Intelligent Sync### 🔄 Local-First Architecture- **Offline-first** with Dexie (IndexedDB)
+- ✅ **Offline mode** - Complete local functionality- ✅ **Dexie** (IndexedDB) - Reactive local database- Hierarchical categories with icons & colors- Hierarchical categories (parent → child structure)
 
-- **Offline-first**: Full functionality without internet
+- ✅ **Auto-sync** - Pull changes from Supabase automatically
 
-- **Auto-sync**: Changes replicate when online- **Offline Mode**: Full functionality without internet- Auto-sync when online
+- ✅ **Manual sync** - Trigger sync on demand- ✅ **Dexie.Observable** - Real-time UI updates
 
-- **Conflict Resolution**: Timestamp-based strategy
+- ✅ **RLS-protected** - Row-level security on Supabase
 
-- **Bidirectional**: RxDB ↔️ Supabase replication- **RxDB**: Reactive, observable database with live queries- Bidirectional sync with Supabase
+- ✅ **Offline-first** - Full functionality without internet- Multi-currency support (EUR, USD, GBP)
 
-### 👥 Shared Expenses- **Auto-Sync**: Bidirectional replication with Supabase- Conflict resolution (local wins if newer)
+### 🎨 Modern UX
 
-- Create and manage groups
+- ✅ **Auto-sync** - Bidirectional sync with Supabase when online
 
-- Split costs (equal, percentage, custom)- **Conflict Resolution**: Last-write-wins with soft deletes- Manual sync control
+- ✅ **Dark mode** - System preference + manual toggle
 
-- Settlement tracking
+- ✅ **PWA** - Install on mobile and desktop- ✅ **Conflict resolution** - Last-write-wins strategy- Monthly dashboard with statistics### 💸 Expense Management- Multi-currency support (EUR, USD, GBP)
 
-- Real-time updates across devices### 👥 Shared Expenses### 👥 Shared Expenses (v2.0)
+- ✅ **Multi-language** - Italian & English (i18n)
 
-### 🎨 Modern UX- **Groups**: Create and manage expense groups
+- ✅ **Responsive** - Mobile-first design### 🌐 Optional Synchronization- Advanced search & filtering
 
-- Dark mode (system preference + manual toggle)
+- ✅ **Service Worker** - Full offline support
 
-- PWA installable on mobile/desktop- **Split Costs**: Equal, percentage, custom amounts- Create and manage groups
+- ✅ **Offline mode** - Complete local functionality
 
-- Multi-language (Italian & English)
+---
 
-- Responsive mobile-first design- **Settlement Tracking**: Mark expenses as paid- Split costs with friends/family
+- ✅ **Auto-sync** - Pull changes from Supabase automatically- **Quick CRUD**: Add, edit, delete expenses instantly- Monthly dashboard with smart summaries
 
----- **Real-time Updates**: See changes instantly across devices- Track who owes whom
+## 🚀 Quick Start
 
-## 🚀 Quick Start- Mark expenses as settled
+- ✅ **Manual sync** - Trigger sync on demand
 
-### Prerequisites### 🎨 Modern UX- Group statistics
+### Prerequisites
 
-- Node.js 18+
+- ✅ **RLS-protected** - Row-level security on Supabase### 🔄 Reactive Architecture (NEW in v3.0)
 
-- pnpm (or npm)- **Dark Mode**: System preference + manual toggle
+- **Node.js** 18+
 
-- Supabase account
+- **pnpm** 10+ (or npm)### 🎨 Modern UX- **RxDB**: Observable database with live queries- **Smart Categories**: Hierarchical organization (parent → child)- Advanced search & filtering
 
-- **PWA**: Install on mobile and desktop### 🎨 Modern UX
+- **Supabase** account (optional, free tier works)
 
-### Installation
-
-- **Multi-language**: Italian & English
-
-`````bash
-
-# Clone repository- **Responsive**: Mobile-first design- **Dark mode** (system preference + manual toggle)
-
-git clone https://github.com/ilario23/MyMoney.git
-
-cd MyMoney- **PWA** - Install on mobile/desktop
-
-
-
-# Install dependencies---- **Service Worker** - Full offline support
-
-pnpm install
-
-````- **Responsive** - Mobile-first design
-
-
-
-### Environment## 🚀 Quick Start- **Multi-language** - Italian & English
-
-
-
-```bash### Prerequisites---
-
-# Copy example environment file
-
-cp .env.example .env.local- Node.js 18+
-
-
-
-# Add your Supabase credentials- pnpm (or npm)## � Quick Start
-
-VITE_SUPABASE_URL=https://xxx.supabase.co
-
-VITE_SUPABASE_ANON_KEY=xxx- Supabase account
-
-`````
-
-### 1. Install
-
-### Database Setup
+- ✅ **Dark mode** (system preference + manual toggle)
 
 ### Installation
 
-1. Open your Supabase SQL Editor
-
-2. Copy SQL from `docs/SCHEMA_v3.0.sql`````bash
-
-3. Run the complete schema script
-
-`````bashgit clone https://github.com/ilario23/MyMoney.git
-
-This will create:
-
-- 6 tables (users, categories, expenses, groups, group_members, shared_expenses)# Clone repositorycd MyMoney
-
-- RLS policies for security
-
-- Triggers for automatic timestampsgit clone https://github.com/yourusername/mymoney.gitpnpm install
-
-- Indexes for performance
-
-cd mymoney```
-
-### Start Development
-
-
+- ✅ **PWA** - Install on mobile and desktop- **Automatic Updates**: UI re-renders on data changes
 
 ```bash
 
+# Clone repository- ✅ **Multi-language** - Italian & English (i18n)
+
+git clone https://github.com/ilario23/MyMoney.git
+
+cd MyMoney- ✅ **Responsive** - Mobile-first design- **No Manual Fetching**: Components subscribe to data streams- **Intelligent Search**: Filter by date, category, amount
+
+
+
+# Install dependencies- ✅ **Service Worker** - Full offline support
+
+pnpm install
+
+- **Multi-Tab Sync**: Leader election coordination
+
+# Create environment file
+
+cp .env.example .env.local---
+
+# Edit .env.local with your Supabase credentials (optional)
+
+- **Better Performance**: Efficient reactive updates- **Statistics**: Local computation with automatic caching### 🔄 Intelligent Sync
+
+# Start dev server
+
+pnpm dev## 🚀 Quick Start
+
+```
+
+### 🌐 Intelligent Sync### 🔄 Local-First Architecture- **Offline-first** with Dexie (IndexedDB)
+
+Open http://localhost:5173 in your browser.
+
+### Prerequisites
+
+### Build for Production
+
+- **Node.js** 18+- **Offline-first**: Full functionality without internet
+
+```````bash
+
+pnpm build- **pnpm** 10+ (or npm)
+
+pnpm preview
+
+```- **Supabase** account (optional, free tier works)- **Auto-sync**: Changes replicate when online- **Offline Mode**: Full functionality without internet- Auto-sync when online
+
+
+
+---### Installation- **Conflict Resolution**: Timestamp-based strategy
+
+
+
+## 📁 Project Structure``````bash- **Bidirectional**: RxDB ↔️ Supabase replication- **RxDB**: Reactive, observable database with live queries- Bidirectional sync with Supabase
+
+
+
+```# Clone repository
+
+src/
+
+├── components/              # React componentsgit clone https://github.com/ilario23/MyMoney.git### 👥 Shared Expenses- **Auto-Sync**: Bidirectional replication with Supabase- Conflict resolution (local wins if newer)
+
+│   ├── expense/            # Expense form & list
+
+│   ├── layout/             # Layout & navigationcd MyMoney
+
+│   └── ui/                 # ShadCN UI components
+
+├── pages/                  # Page components- Create and manage groups
+
+├── hooks/                  # Custom hooks (useQuery, useTheme)
+
+├── lib/                    # Core utilities# Install dependencies
+
+│   ├── db.ts               # Dexie database setup
+
+│   ├── db-schemas.ts       # TypeScript typespnpm install- Split costs (equal, percentage, custom)- **Conflict Resolution**: Last-write-wins with soft deletes- Manual sync control
+
+│   ├── supabase.ts         # Supabase client
+
+│   └── auth.store.ts       # Auth state (Zustand)
+
+├── services/               # Business logic
+
+│   ├── sync.service.ts     # Sync with Supabase# Start dev server- Settlement tracking
+
+│   └── stats.service.ts    # Statistics calculation
+
+└── translations/           # i18n (EN/IT)pnpm dev
+
+```````
+
+```````- Real-time updates across devices### 👥 Shared Expenses### 👥 Shared Expenses (v2.0)
+
+---
+
+
+
+## 🗄️ Database Schema
+
+Open **http://localhost:5173** in your browser.### 🎨 Modern UX- **Groups**: Create and manage expense groups
+
+### Local (Dexie - IndexedDB)
+
+
+
+**Always available, works offline:**
+
+### Full Setup Guide- Dark mode (system preference + manual toggle)
+
+- `users` - User profile
+
+- `categories` - Expense categories (hierarchical)👉 **[Read SETUP.md](docs/SETUP.md)** for complete installation and configuration instructions.
+
+- `expenses` - Personal expenses
+
+- `stats_cache` - Calculated statistics (30-min cache)- PWA installable on mobile/desktop- **Split Costs**: Equal, percentage, custom amounts- Create and manage groups
+
+
+
+### Remote (Supabase - PostgreSQL, Optional)---
+
+
+
+**Synced when online (RLS-protected):**- Multi-language (Italian & English)
+
+
+
+- `users` - User authentication## 📁 Architecture
+
+- `categories` - Synced categories
+
+- `expenses` - Synced expenses- Responsive mobile-first design- **Settlement Tracking**: Mark expenses as paid- Split costs with friends/family
+
+
+
+---### Database (Dexie - IndexedDB)
+
+
+
+## 🔄 Synchronization---- **Real-time Updates**: See changes instantly across devices- Track who owes whom
+
+
+
+**How it works:**```typescript
+
+
+
+1. **Offline**: App uses local Dexie database. All CRUD operations work normally.users          → Your account data## 🚀 Quick Start- Mark expenses as settled
+
+2. **Online**: App pulls changes from Supabase and pushes local changes.
+
+3. **Conflicts**: If both local and remote were edited, the newer one wins (based on `updated_at`).categories     → Expense categories (hierarchical)
+
+4. **Soft deletes**: Items marked as `deleted_at`, not hard-deleted.
+
+expenses       → Individual expenses### Prerequisites### 🎨 Modern UX- Group statistics
+
+**Automatic sync triggers:**
+
+stats_cache    → Cached monthly statistics
+
+- ✅ At login
+
+- ✅ Every 30 minutes (if online)```- Node.js 18+
+
+- ✅ When connection returns after offline
+
+
+
+---
+
+### Tech Stack- pnpm (or npm)- **Dark Mode**: System preference + manual toggle
+
+## 🔐 Authentication
+
+- **Frontend**: React 19 + TypeScript
+
+MyMoney uses **Supabase Auth**:
+
+- **Database**: Dexie 4.2.1 + dexie-observable- Supabase account
+
+- Email + Password signup/login
+
+- Secure password reset- **Backend**: Supabase (optional)
+
+- Social auth support (Google, GitHub, etc.) - optional
+
+- **Styling**: Tailwind CSS v4- **PWA**: Install on mobile and desktop### 🎨 Modern UX
+
+---
+
+- **UI Components**: Radix UI + ShadCN
+
+## 💱 Currency
+
+- **Build**: Vite 6### Installation
+
+All amounts are in **EUR (€)**. No multi-currency support.
+
+- **State**: Zustand
+
+---
+
+- **i18n**: i18next- **Multi-language**: Italian & English
+
+## 🌐 Translations
+
+
+
+Supported languages:
+
+---`````bash
+
+- 🇮🇹 **Italian** (it)
+
+- 🇬🇧 **English** (en)
+
+
+
+Switch languages in the profile page.## 🎯 How It Works# Clone repository- **Responsive**: Mobile-first design- **Dark mode** (system preference + manual toggle)
+
+
+
+**To add a language:**
+
+
+
+1. Create `src/translations/xx.ts`### 1. **Local-First**git clone https://github.com/ilario23/MyMoney.git
+
+2. Add to `src/translations/index.ts`
+
+3. Update `src/lib/language.tsx`All data is stored locally in IndexedDB. You can use MyMoney completely offline.
+
+
+
+---cd MyMoney- **PWA** - Install on mobile/desktop
+
+
+
+## 🚀 Tech Stack``````
+
+
+
+- **Frontend**: React 19 + Vite + TypeScript┌─────────────────┐
+
+- **UI**: Tailwind CSS v4 + ShadCN UI + Radix UI
+
+- **Database**: Dexie.js (IndexedDB) + dexie-observable│ Your Device │
+
+- **Backend**: Supabase (Auth, PostgreSQL)
+
+- **State**: Zustand│ ┌───────────┐ │# Install dependencies---- **Service Worker** - Full offline support
+
+- **Date**: date-fns
+
+- **PWA**: vite-plugin-pwa│ │ Dexie │ │ ← All data stored here
+
+- **i18n**: i18next
+
+│ │ IndexedDB │ │pnpm install
+
+---
+
+│ └───────────┘ │
+
+## 📱 Progressive Web App
+
+└─────────────────┘````- **Responsive** - Mobile-first design
+
+MyMoney is a full PWA:
+
+```````
+
+- **Install on home screen** (mobile & desktop)
+
+- **Works offline** with service worker
+
+- **App-like experience** with splash screens
+
+- **Auto-updates** when new version available### 2. **Sync When Online** (optional)
+
+**Installation:**When you configure Supabase, changes automatically sync when you're online.### Environment## 🚀 Quick Start- **Multi-language** - Italian & English
+
+- **Desktop (Chrome/Edge)**: Click install icon in address bar
+
+- **iOS (Safari)**: Share → Add to Home Screen
+
+- **Android (Chrome)**: Menu → Install app```
+
+---┌─────────────────┐ ┌──────────────┐
+
+## 🛠️ Development│ Your Device │◄───────►│ Supabase │```bash### Prerequisites---
+
+### Available Commands│ ┌───────────┐ │ │ (Cloud) │
+
+``````bash│ │ Dexie │ │ │ (Postgres) │# Copy example environment file
+
+# Development server
+
+pnpm dev│ └───────────┘ │ └──────────────┘
+
+
+
+# Build for production└─────────────────┘cp .env.example .env.local- Node.js 18+
+
+pnpm build
+
+     (auto-sync)
+
+# Preview production build locally
+
+pnpm preview```
+
+
+
+# Run linter
+
+pnpm lint
+
+```### 3. **Works Offline**# Add your Supabase credentials- pnpm (or npm)## � Quick Start
+
+
+
+### Environment VariablesDisconnected? No problem. All features work locally until you're back online.
+
+
+
+Create `.env.local`:VITE_SUPABASE_URL=https://xxx.supabase.co
+
+
+
+```env---
+
+# Optional: Supabase sync
+
+VITE_SUPABASE_URL=https://your-project.supabase.coVITE_SUPABASE_ANON_KEY=xxx- Supabase account
+
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+```## 🔧 Commands
+
+
+
+App works 100% locally even without these variables.```
+
+
+
+---```bash
+
+
+
+## 📖 Documentation# Development### 1. Install
+
+
+
+- **[Setup Guide](./docs/SETUP.md)** - Complete setup instructionspnpm dev              # Start dev server
+
+- **[Supabase Setup](./docs/SUPABASE_SETUP.md)** - Database & authentication setup
+
+- **[Changelog](./docs/CHANGELOG.md)** - Version historypnpm build            # Build for production### Database Setup
+
+
+
+---pnpm preview          # Preview production build
+
+
+
+## 🤝 Contributingpnpm lint             # Check code quality### Installation
+
+
+
+Contributions are welcome! Please:```
+
+
+
+1. Fork the repository1. Open your Supabase SQL Editor
+
+2. Create a feature branch
+
+3. Make your changes---
+
+4. Add tests
+
+5. Submit a pull request2. Copy SQL from `docs/SCHEMA_v3.0.sql`````bash
+
+
+
+---## 📱 Progressive Web App
+
+
+
+## 📄 License3. Run the complete schema script
+
+
+
+MIT License - see [LICENSE](LICENSE) file for detailsInstall MyMoney as an app:
+
+
+
+---`````bashgit clone https://github.com/ilario23/MyMoney.git
+
+
+
+## 📞 Support1. Open https://your-domain (or localhost:5173)
+
+
+
+- **Issues**: [GitHub Issues](https://github.com/ilario23/mymoney/issues)2. Click **Install** button in your browserThis will create:
+
+- **Discussions**: [GitHub Discussions](https://github.com/ilario23/mymoney/discussions)
+
+3. Access from your home screen like a native app
+
+---
+
+- 6 tables (users, categories, expenses, groups, group_members, shared_expenses)# Clone repositorycd MyMoney
+
+**Built with ❤️ for personal expense tracking - Simple, Fast, Private**
+
+**Features**:
+
+*v3.1.0 | Last updated: October 2025*
+
+- ✅ Works offline- RLS policies for security
+
+- ✅ Fast loading
+
+- ✅ Home screen icon- Triggers for automatic timestampsgit clone https://github.com/yourusername/mymoney.gitpnpm install
+
+- ✅ Splash screen
+
+- Indexes for performance
+
+---
+
+cd mymoney```
+
+## 🔐 Privacy & Security
+
+### Start Development
+
+- ✅ **All data stored locally** by default
+
+- ✅ **No mandatory cloud** - use entirely offline
+
+- ✅ **Optional Supabase** - you choose whether to sync
+
+- ✅ **Row-level security** - can only see your data```bash
+
+- ✅ **Open source** - audit the code
+
 pnpm dev# Install dependencies### 2. Environment
+
+---
 
 # Open http://localhost:5173
 
+## 📊 Changelog
+
 ```pnpm install
 
+### v3.0 (Current)
 
+- ✨ Dexie instead of RxDB
 
-**Full setup guide**: [📖 docs/SETUP_v3.0.md](./docs/SETUP_v3.0.md)```bash
+- ✨ 100% local-first architecture
 
+- ✨ Dexie.Observable for reactivity**Full setup guide**: [📖 docs/SETUP_v3.0.md](./docs/SETUP_v3.0.md)```bash
 
+- ❌ Removed groups and shared expenses
+
+- ✨ Simplified setup
+
+- ✨ Optional Supabase sync
 
 ---# Setup environmentcp .env.example .env.local
 
+### v2.x
 
+- RxDB with replication
+
+- Support for groups and shared expenses
 
 ## 🏗️ Architecturecp .env.example .env.local# Add Supabase credentials to .env.local
 
+### v1.x
+
+- Initial version
 
 
-```# Add your Supabase credentials to .env.local```
 
-┌─────────────────────────────────┐
+---```# Add your Supabase credentials to .env.local```
 
-│     React 19 + TypeScript       │
 
-│    (UI with RxJS Observables)   │
+
+## 📖 Documentation┌─────────────────────────────────┐
+
+
+
+- **[SETUP.md](docs/SETUP.md)** - Complete setup and configuration guide│     React 19 + TypeScript       │
+
+- **[SUPABASE_MIGRATION_INSTRUCTIONS.md](docs/SUPABASE_MIGRATION_INSTRUCTIONS.md)** - Database migration guide (if upgrading from v2)
+
+- **[Dexie Docs](https://dexie.org/docs)** - Dexie documentation│    (UI with RxJS Observables)   │
+
+- **[Supabase Docs](https://supabase.com/docs)** - Supabase documentation
 
 └────────────┬────────────────────┘# Run database setup### 3. Database Setup
 
+---
+
              │
+
+## 🤝 Contributing
 
 ┌────────────▼────────────────────┐# Copy SQL from docs/SETUP_v3.0.sql and run in Supabase SQL Editor
 
+Contributions are welcome! Please feel free to submit a Pull Request.
+
 │         RxDB Collections        │
+
+---
 
 │    (Local IndexedDB Database)   │Run SQL from **[docs/SETUP.md](./docs/SETUP.md)** in Supabase SQL Editor
 
+## 📄 License
+
 │  - Reactive queries             │
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 │  - Observable streams           │# Start development server
 
+---
+
 │  - Leader election              │
+
+## 💡 Questions?
 
 └────────────┬────────────────────┘pnpm dev### 4. Start
 
-             │
+- Open an issue on [GitHub](https://github.com/ilario23/MyMoney/issues)
+
+- Check the [documentation](docs/SETUP.md)             │
+
+- Read [Troubleshooting section](docs/SETUP.md#-troubleshooting)
 
 ┌────────────▼────────────────────┐````
 
+---
+
 │   Bidirectional Sync Service    │
+
+**Happy budgeting! 💰**
 
 │  - Pull: Supabase → RxDB        │````bash
 
@@ -232,7 +668,7 @@ pnpm dev# Install dependencies### 2. Environment
 
 └─────────────────────────────────┘---**Full setup guide**: [📖 docs/SETUP.md](./docs/SETUP.md)
 
-`````
+``````
 
 **Key Concepts:**
 

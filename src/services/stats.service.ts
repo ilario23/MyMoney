@@ -1,12 +1,11 @@
 // Stats Service v3.0 - Local statistics calculation
-import { getDatabase } from "@/lib/rxdb";
-import type { ExpenseDocType } from "@/lib/rxdb-schemas";
+import { getDatabase } from "@/lib/db";
+import type { ExpenseDocType, StatsCacheDocType } from "@/lib/db-schemas";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export interface StatsData {
   period: string;
   totalExpenses: number;
-  totalIncome: number;
   expenseCount: number;
   topCategories: Array<{
     categoryId: string;
@@ -25,15 +24,11 @@ class StatsService {
 
     // Check cache first
     const cached = await db.stats_cache
-      .findOne({
-        selector: {
-          user_id: userId,
-          period: periodKey,
-        },
-      })
-      .exec();
+      .where("id")
+      .equals(`${userId}-${periodKey}`)
+      .first();
 
-    if (cached && this.isCacheValid(cached.calculated_at)) {
+    if (cached && this.isCacheValid(cached.updated_at)) {
       return this.mapCacheToStats(cached);
     }
 
@@ -42,17 +37,13 @@ class StatsService {
     const end = endOfMonth(date);
 
     const expenses = await db.expenses
-      .find({
-        selector: {
-          user_id: userId,
-          date: {
-            $gte: start.toISOString(),
-            $lte: end.toISOString(),
-          },
-          deleted_at: null,
-        },
+      .where("user_id")
+      .equals(userId)
+      .filter((exp) => {
+        const expDate = new Date(exp.date);
+        return expDate >= start && expDate <= end && !exp.deleted_at;
       })
-      .exec();
+      .toArray();
 
     const stats = this.processExpenses(expenses, periodKey);
 
@@ -63,25 +54,20 @@ class StatsService {
   }
 
   private processExpenses(
-    expenses: Array<ExpenseDocType & { category_name?: string }>,
+    expenses: ExpenseDocType[],
     period: string
   ): StatsData {
     let totalExpenses = 0;
-    let totalIncome = 0;
     const categoryMap = new Map();
 
     for (const expense of expenses) {
-      if (expense.amount > 0) {
-        totalExpenses += expense.amount;
-      } else {
-        totalIncome += Math.abs(expense.amount);
-      }
+      totalExpenses += expense.amount;
 
       const catId = expense.category_id || "uncategorized";
       const existing = categoryMap.get(catId) || {
         count: 0,
         amount: 0,
-        name: expense.category_name || "Uncategorized",
+        name: "Uncategorized",
       };
       existing.count++;
       existing.amount += expense.amount;
@@ -104,7 +90,6 @@ class StatsService {
     return {
       period,
       totalExpenses,
-      totalIncome,
       expenseCount: expenses.length,
       topCategories,
       dailyAverage,
@@ -112,32 +97,25 @@ class StatsService {
     };
   }
 
-  private isCacheValid(calculatedAt: string): boolean {
-    const cacheAge = Date.now() - new Date(calculatedAt).getTime();
+  private isCacheValid(updatedAt: string): boolean {
+    const cacheAge = Date.now() - new Date(updatedAt).getTime();
     const maxAge = 1000 * 60 * 30; // 30 minutes
     return cacheAge < maxAge;
   }
 
-  private mapCacheToStats(cached: {
-    period: string;
-    total_expenses: number;
-    total_income: number;
-    expense_count: number;
-    top_categories: Array<{
-      categoryId: string;
-      categoryName: string;
-      amount: number;
-      count: number;
-    }>;
-    daily_average: number;
-    monthly_average: number;
-  }): StatsData {
+  private mapCacheToStats(cached: StatsCacheDocType): StatsData {
+    const topCategories = (cached.top_categories || []).map((cat: any) => ({
+      categoryId: cat.category_id,
+      categoryName: cat.category_name,
+      amount: cat.amount,
+      count: cat.count,
+    }));
+
     return {
       period: cached.period,
       totalExpenses: cached.total_expenses,
-      totalIncome: cached.total_income,
       expenseCount: cached.expense_count,
-      topCategories: cached.top_categories,
+      topCategories,
       dailyAverage: cached.daily_average,
       monthlyAverage: cached.monthly_average,
     };
@@ -147,17 +125,20 @@ class StatsService {
     const db = getDatabase();
     const now = new Date().toISOString();
 
-    await db.stats_cache.upsert({
+    await db.stats_cache.put({
       id: `${userId}-${stats.period}`,
       user_id: userId,
       period: stats.period,
       total_expenses: stats.totalExpenses,
-      total_income: stats.totalIncome,
       expense_count: stats.expenseCount,
-      top_categories: stats.topCategories,
+      top_categories: stats.topCategories.map((cat) => ({
+        category_id: cat.categoryId,
+        category_name: cat.categoryName,
+        amount: cat.amount,
+        count: cat.count,
+      })),
       daily_average: stats.dailyAverage,
       monthly_average: stats.monthlyAverage,
-      calculated_at: now,
       updated_at: now,
     });
   }
@@ -166,22 +147,15 @@ class StatsService {
     const db = getDatabase();
 
     if (period) {
-      await db.stats_cache
-        .find({
-          selector: {
-            user_id: userId,
-            period,
-          },
-        })
-        .remove();
+      const cached = await db.stats_cache
+        .where("id")
+        .equals(`${userId}-${period}`)
+        .first();
+      if (cached) {
+        await db.stats_cache.delete(cached.id);
+      }
     } else {
-      await db.stats_cache
-        .find({
-          selector: {
-            user_id: userId,
-          },
-        })
-        .remove();
+      await db.stats_cache.where("user_id").equals(userId).delete();
     }
   }
 }

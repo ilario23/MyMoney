@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Wallet, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/auth.store";
-import { getDatabase } from "@/lib/rxdb";
+import { getDatabase } from "@/lib/db";
 import { authLogger } from "@/lib/logger";
 
 export function SignupPage() {
@@ -89,42 +89,20 @@ export function SignupPage() {
       const userId = data.user.id;
       const userEmail = data.user.email!;
 
-      // 2. Crea l'utente nel database locale RxDB
+      // 2. Crea l'utente nel database locale Dexie
       const db = getDatabase();
-      await db.users.insert({
+      await db.users.put({
         id: userId,
         email: userEmail,
-        full_name: displayName,
-        preferred_language: "it",
+        display_name: displayName,
+        avatar_url: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         deleted_at: null,
       });
 
-      // 2b. Crea l'utente anche in Supabase
-      authLogger.info("Attempting to create user in Supabase...");
-      const { error: userError, data: userData } = await supabase
-        .from("users")
-        .insert({
-          id: userId,
-          email: userEmail,
-          full_name: displayName,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-      if (userError) {
-        authLogger.error("Error creating user in Supabase:", userError);
-        authLogger.error("Error code:", userError.code);
-        authLogger.error("Error details:", userError.details);
-        authLogger.error("Error message:", userError.message);
-        setError(
-          `Failed to create user in database: ${userError.message}. Code: ${userError.code}`
-        );
-        return;
-      }
-
-      authLogger.success("User created successfully in Supabase", userData);
+      // Note: User in Supabase is auto-created by trigger on auth signup
+      authLogger.success("User registered successfully");
 
       setSuccess(true);
 
@@ -177,9 +155,9 @@ export function SignupPage() {
               )}
 
               {success && (
-                <Alert className="border-green-200 bg-green-50">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
+                <Alert className="border border-primary/30 bg-primary/10">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <AlertDescription className="text-primary font-medium">
                     {t("auth.signupSuccess")}
                   </AlertDescription>
                 </Alert>
