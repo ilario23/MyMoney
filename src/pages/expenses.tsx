@@ -238,7 +238,9 @@ export function ExpensesPage() {
                   <div className="flex-1 min-w-0">
                     {/* Badge with type */}
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`${typeStyle.badgeColor} ${typeStyle.textColor} text-xs font-semibold px-2 py-1 rounded`}>
+                      <span
+                        className={`${typeStyle.badgeColor} ${typeStyle.textColor} text-xs font-semibold px-2 py-1 rounded`}
+                      >
                         {expense.type.charAt(0).toUpperCase() +
                           expense.type.slice(1)}
                       </span>

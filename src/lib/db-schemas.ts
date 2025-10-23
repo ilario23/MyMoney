@@ -23,12 +23,11 @@ export interface CategoryDocType {
   id: string;
   user_id: string;
   name: string;
-  icon: string;
+  icon: string; // Lucide icon name (e.g., "ShoppingCart", "TrendingUp")
   color?: string | null;
   type: "expense" | "income" | "investment"; // Category type
   parent_id?: string | null;
-  is_custom: boolean; // true = created by user, false = default
-  is_active: boolean; // true = shown in transaction form
+  is_active: boolean; // true = shown in transaction form, false = archived
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;

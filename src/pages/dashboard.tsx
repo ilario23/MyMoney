@@ -245,8 +245,9 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter((e: ExpenseDocType) => e.type === "expense")
-                      .length
+                    expenseDocs.filter(
+                      (e: ExpenseDocType) => e.type === "expense"
+                    ).length
                   )
                 )}
               </p>
@@ -264,8 +265,9 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter((e: ExpenseDocType) => e.type === "income")
-                      .length
+                    expenseDocs.filter(
+                      (e: ExpenseDocType) => e.type === "income"
+                    ).length
                   )
                 )}
               </p>
@@ -274,7 +276,9 @@ export function DashboardPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Zap className="h-4 w-4 text-blue-500" />
-                <span>{t("dashboard.investmentsThisMonth") || "Investimenti"}</span>
+                <span>
+                  {t("dashboard.investmentsThisMonth") || "Investimenti"}
+                </span>
               </div>
               <div className="text-3xl font-bold text-blue-500">
                 {monthlyInvestment.toFixed(2)}
@@ -283,8 +287,9 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter((e: ExpenseDocType) => e.type === "investment")
-                      .length
+                    expenseDocs.filter(
+                      (e: ExpenseDocType) => e.type === "investment"
+                    ).length
                   )
                 )}
               </p>

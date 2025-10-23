@@ -71,7 +71,6 @@ CREATE TABLE public.categories (
   color TEXT,
   type TEXT NOT NULL DEFAULT 'expense' CHECK (type IN ('expense', 'income', 'investment')),
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
-  is_custom BOOLEAN DEFAULT true,
   is_active BOOLEAN DEFAULT TRUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
