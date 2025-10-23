@@ -166,30 +166,34 @@ ALTER TABLE public.stats_cache ENABLE ROW LEVEL SECURITY;
 -- whenever someone signs up via Supabase Auth
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
 BEGIN
-  -- Insert new user into public.users table
-  -- Only copy id and email from auth.users
-  -- The app will set display_name on first login
-  INSERT INTO public.users (id, email, display_name, created_at, updated_at)
+  -- Insert new user into public.users table copying id and email
+  -- Use COALESCE to avoid duplicate key errors if profile already exists
+  INSERT INTO public.users (id, email, display_name, avatar_url, created_at, updated_at)
   VALUES (
     NEW.id,
     NEW.email,
-    '',
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
     NOW(),
     NOW()
-  );
-  
+  )
+  ON CONFLICT (id) DO NOTHING;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$function$;
 
--- Create trigger that fires when new user signs up
+-- Drop existing trigger if exists then create
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================================
 -- Trigger to enforce immutable fields on user profile updates
