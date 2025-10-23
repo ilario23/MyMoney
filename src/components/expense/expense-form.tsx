@@ -23,12 +23,15 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { v4 as uuidv4 } from "uuid";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, TrendingDown, TrendingUp, Zap } from "lucide-react";
 
 export function ExpenseForm() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [type, setType] = useState<"expense" | "income" | "investment">(
+    "expense"
+  );
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -58,9 +61,11 @@ export function ExpenseForm() {
     loadData();
   }, [user]);
 
-  // Helper: Build grouped category structure (only active categories)
+  // Helper: Build grouped category structure (only active categories of selected type)
   const getGroupedCategories = () => {
-    const activeCategories = categories.filter((c) => !c.deleted_at);
+    const activeCategories = categories.filter(
+      (c) => !c.deleted_at && c.type === type
+    );
     const topLevel = activeCategories.filter((c) => !c.parent_id);
     const childrenMap = new Map<string, CategoryDocType[]>();
 
@@ -90,6 +95,7 @@ export function ExpenseForm() {
       const expense = {
         id: uuidv4(),
         user_id: user.id,
+        type,
         amount: parseFloat(amount),
         category_id: categoryId,
         description,
@@ -163,6 +169,61 @@ export function ExpenseForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Transaction Type Toggle */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Transaction Type</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setType("expense");
+                    setCategoryId("");
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                    type === "expense"
+                      ? "bg-red-500 text-white shadow-lg"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  disabled={isLoading || success}
+                >
+                  <TrendingDown className="w-4 h-4" />
+                  Expense
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setType("income");
+                    setCategoryId("");
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                    type === "income"
+                      ? "bg-green-500 text-white shadow-lg"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  disabled={isLoading || success}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Income
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setType("investment");
+                    setCategoryId("");
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
+                    type === "investment"
+                      ? "bg-blue-500 text-white shadow-lg"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  disabled={isLoading || success}
+                >
+                  <Zap className="w-4 h-4" />
+                  Investment
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {t("expense.description")}

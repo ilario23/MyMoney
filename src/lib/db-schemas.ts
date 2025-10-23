@@ -25,9 +25,10 @@ export interface CategoryDocType {
   name: string;
   icon: string;
   color?: string | null;
+  type: "expense" | "income" | "investment"; // Category type
   parent_id?: string | null;
   is_custom: boolean; // true = created by user, false = default
-  is_active: boolean; // true = shown in expense form
+  is_active: boolean; // true = shown in transaction form
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -40,6 +41,7 @@ export interface ExpenseDocType {
   id: string;
   user_id: string;
   category_id: string;
+  type: "expense" | "income" | "investment"; // Transaction type
   amount: number;
   description?: string | null;
   date: string;

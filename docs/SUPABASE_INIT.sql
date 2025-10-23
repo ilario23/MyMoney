@@ -69,25 +69,28 @@ CREATE TABLE public.categories (
   name TEXT NOT NULL,
   icon TEXT NOT NULL,
   color TEXT,
+  type TEXT NOT NULL DEFAULT 'expense' CHECK (type IN ('expense', 'income', 'investment')),
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
   is_custom BOOLEAN DEFAULT true,
   is_active BOOLEAN DEFAULT TRUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP WITH TIME ZONE,
-  UNIQUE(user_id, name)
+  UNIQUE(user_id, name, type)
 );
 
-COMMENT ON TABLE public.categories IS 'Expense categories per user - supports soft-delete via deleted_at';
+COMMENT ON TABLE public.categories IS 'Transaction categories per user - supports soft-delete via deleted_at';
+COMMENT ON COLUMN public.categories.type IS 'Category type: expense, income, or investment';
 COMMENT ON COLUMN public.categories.is_custom IS 'true = user-created, false = default category';
-COMMENT ON COLUMN public.categories.is_active IS 'Controls visibility in expense form';
+COMMENT ON COLUMN public.categories.is_active IS 'Controls visibility in transaction form';
 COMMENT ON COLUMN public.categories.deleted_at IS 'Soft-delete timestamp (NULL = active)';
 
--- Table 3: expenses (user expenses)
+-- Table 3: transactions (user transactions - expenses, income, investments)
 CREATE TABLE public.expenses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   category_id UUID NOT NULL REFERENCES public.categories(id) ON DELETE SET NULL,
+  type TEXT NOT NULL DEFAULT 'expense' CHECK (type IN ('expense', 'income', 'investment')),
   amount DECIMAL(10, 2) NOT NULL,
   description TEXT,
   date DATE NOT NULL,
@@ -96,9 +99,10 @@ CREATE TABLE public.expenses (
   deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-COMMENT ON TABLE public.expenses IS 'Individual expenses in EUR - supports soft-delete via deleted_at';
+COMMENT ON TABLE public.expenses IS 'Transactions (expenses, income, investments) - supports soft-delete via deleted_at';
+COMMENT ON COLUMN public.expenses.type IS 'Transaction type: expense, income, or investment';
 COMMENT ON COLUMN public.expenses.amount IS 'Amount in EUR (€), 2 decimal places';
-COMMENT ON COLUMN public.expenses.date IS 'Expense date (YYYY-MM-DD format)';
+COMMENT ON COLUMN public.expenses.date IS 'Transaction date (YYYY-MM-DD format)';
 COMMENT ON COLUMN public.expenses.deleted_at IS 'Soft-delete timestamp (NULL = active)';
 
 -- Table 4: stats_cache (monthly statistics cache)
@@ -124,18 +128,26 @@ COMMENT ON COLUMN public.stats_cache.top_categories IS 'JSON array of top catego
 CREATE INDEX idx_categories_user_id ON public.categories(user_id);
 COMMENT ON INDEX idx_categories_user_id IS 'Fast lookup of categories by user';
 
+CREATE INDEX idx_categories_type ON public.categories(user_id, type) 
+WHERE deleted_at IS NULL;
+COMMENT ON INDEX idx_categories_type IS 'Fast lookup of categories by type';
+
 CREATE INDEX idx_categories_parent_id ON public.categories(parent_id);
 COMMENT ON INDEX idx_categories_parent_id IS 'Fast lookup of subcategories';
 
 CREATE INDEX idx_categories_active ON public.categories(user_id, is_active) 
 WHERE deleted_at IS NULL;
-COMMENT ON INDEX idx_categories_active IS 'Fast lookup of active categories for expense form';
+COMMENT ON INDEX idx_categories_active IS 'Fast lookup of active categories for transaction form';
 
 CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
-COMMENT ON INDEX idx_expenses_user_id IS 'Fast lookup of expenses by user';
+COMMENT ON INDEX idx_expenses_user_id IS 'Fast lookup of transactions by user';
+
+CREATE INDEX idx_expenses_type ON public.expenses(user_id, type) 
+WHERE deleted_at IS NULL;
+COMMENT ON INDEX idx_expenses_type IS 'Fast lookup of transactions by type';
 
 CREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
-COMMENT ON INDEX idx_expenses_user_date IS 'Fast lookup of expenses for date range queries';
+COMMENT ON INDEX idx_expenses_user_date IS 'Fast lookup of transactions for date range queries';
 
 CREATE INDEX idx_stats_cache_user_id ON public.stats_cache(user_id);
 COMMENT ON INDEX idx_stats_cache_user_id IS 'Fast lookup of cached stats by user';

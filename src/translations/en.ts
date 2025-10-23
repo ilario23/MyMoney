@@ -113,6 +113,7 @@ export const en: Record<TranslationKey, string> = {
   "dashboard.errorLoading": "Error loading",
   "dashboard.expensesThisMonth": "Expenses this month",
   "dashboard.incomeThisMonth": "Income this month",
+  "dashboard.investmentsThisMonth": "Investments this month",
   "dashboard.netBalance": "Net balance",
   "dashboard.transactions": "{count} transactions",
   "dashboard.totalTransactions": "{count} total transactions",

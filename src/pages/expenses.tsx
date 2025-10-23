@@ -101,6 +101,39 @@ export function ExpensesPage() {
     return null;
   }
 
+  // Helper: Get color and style for transaction type
+  const getTypeStyle = (type: "expense" | "income" | "investment") => {
+    switch (type) {
+      case "expense":
+        return {
+          bgColor: "bg-red-50",
+          borderColor: "border-red-200",
+          textColor: "text-red-700",
+          badgeColor: "bg-red-100",
+          amountColor: "text-red-600",
+          icon: "📤",
+        };
+      case "income":
+        return {
+          bgColor: "bg-green-50",
+          borderColor: "border-green-200",
+          textColor: "text-green-700",
+          badgeColor: "bg-green-100",
+          amountColor: "text-green-600",
+          icon: "📥",
+        };
+      case "investment":
+        return {
+          bgColor: "bg-blue-50",
+          borderColor: "border-blue-200",
+          textColor: "text-blue-700",
+          badgeColor: "bg-blue-100",
+          amountColor: "text-blue-600",
+          icon: "💰",
+        };
+    }
+  };
+
   const dateLocale = language === "it" ? it : enUS;
 
   return (
@@ -193,43 +226,53 @@ export function ExpensesPage() {
         <div className="space-y-3">
           {filteredExpenses.map((expense) => {
             const category = categories.get(expense.category_id);
+            const typeStyle = getTypeStyle(expense.type);
 
             return (
-              <Card
+              <div
                 key={expense.id}
-                className="cursor-pointer hover:shadow-md transition-all"
+                className={`${typeStyle.bgColor} ${typeStyle.borderColor} border rounded-lg cursor-pointer hover:shadow-md transition-all p-4`}
                 onClick={() => navigate(`/expense/${expense.id}`)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{category?.icon || ""}</span>
-                        <h3 className="font-medium truncate">
-                          {expense.description}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{category?.name || "Senza categoria"}</span>
-                        <span>•</span>
-                        <span>
-                          {format(new Date(expense.date), "d MMM yyyy", {
-                            locale: dateLocale,
-                          })}
-                        </span>
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    {/* Badge with type */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`${typeStyle.badgeColor} ${typeStyle.textColor} text-xs font-semibold px-2 py-1 rounded`}>
+                        {expense.type.charAt(0).toUpperCase() +
+                          expense.type.slice(1)}
+                      </span>
                     </div>
-                    <div className="text-right ml-4">
-                      <p
-                        className={`text-xl font-bold ${expense.amount > 0 ? "text-destructive" : "text-green-600"}`}
-                      >
-                        {expense.amount > 0 ? "-" : "+"}
-                        {Math.abs(expense.amount).toFixed(2)}
-                      </p>
+
+                    {/* Description */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">{category?.icon || ""}</span>
+                      <h3 className="font-medium truncate">
+                        {expense.description}
+                      </h3>
+                    </div>
+
+                    {/* Category and date */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{category?.name || "Senza categoria"}</span>
+                      <span>•</span>
+                      <span>
+                        {format(new Date(expense.date), "d MMM yyyy", {
+                          locale: dateLocale,
+                        })}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Amount with dynamic color */}
+                  <div className="text-right ml-4">
+                    <p className={`text-xl font-bold ${typeStyle.amountColor}`}>
+                      {expense.type === "income" ? "+" : "-"}
+                      {Math.abs(expense.amount).toFixed(2)}€
+                    </p>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

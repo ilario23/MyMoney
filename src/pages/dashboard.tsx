@@ -21,6 +21,7 @@ import {
   PieChart,
   Target,
   BarChart3,
+  Zap,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { it, enUS } from "date-fns/locale";
@@ -86,11 +87,11 @@ export function DashboardPage() {
     return map;
   }, [categoryDocs]);
 
-  // Calculate monthly totals
+  // Calculate monthly totals by type
   const monthlyTotal = useMemo(
     () =>
       expenseDocs
-        .filter((e) => e.amount > 0)
+        .filter((e) => e.amount > 0 && e.type === "expense")
         .reduce((sum, e) => sum + e.amount, 0),
     [expenseDocs]
   );
@@ -98,8 +99,16 @@ export function DashboardPage() {
   const monthlyIncome = useMemo(
     () =>
       expenseDocs
-        .filter((e) => e.amount < 0)
+        .filter((e) => e.amount < 0 && e.type === "income")
         .reduce((sum, e) => sum + Math.abs(e.amount), 0),
+    [expenseDocs]
+  );
+
+  const monthlyInvestment = useMemo(
+    () =>
+      expenseDocs
+        .filter((e) => e.amount > 0 && e.type === "investment")
+        .reduce((sum, e) => sum + e.amount, 0),
     [expenseDocs]
   );
 
@@ -226,17 +235,17 @@ export function DashboardPage() {
           <div className="hidden md:grid md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingDown className="h-4 w-4 text-destructive" />
-                <span>{t("dashboard.expensesThisMonth")}</span>
+                <TrendingDown className="h-4 w-4 text-red-500" />
+                <span>{t("dashboard.expensesThisMonth") || "Spese"}</span>
               </div>
-              <div className="text-3xl font-bold text-destructive">
+              <div className="text-3xl font-bold text-red-500">
                 {monthlyTotal.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter((e: ExpenseDocType) => e.amount > 0)
+                    expenseDocs.filter((e: ExpenseDocType) => e.type === "expense")
                       .length
                   )
                 )}
@@ -245,17 +254,17 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span>{t("dashboard.incomeThisMonth")}</span>
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span>{t("dashboard.incomeThisMonth") || "Entrate"}</span>
               </div>
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-green-500">
                 {monthlyIncome.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter((e: ExpenseDocType) => e.amount < 0)
+                    expenseDocs.filter((e: ExpenseDocType) => e.type === "income")
                       .length
                   )
                 )}
@@ -264,18 +273,19 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <span>{t("dashboard.netBalance")}</span>
+                <Zap className="h-4 w-4 text-blue-500" />
+                <span>{t("dashboard.investmentsThisMonth") || "Investimenti"}</span>
               </div>
-              <div
-                className={`text-3xl font-bold ${monthlyIncome - monthlyTotal >= 0 ? "text-green-600" : "text-destructive"}`}
-              >
-                {(monthlyIncome - monthlyTotal).toFixed(2)}
+              <div className="text-3xl font-bold text-blue-500">
+                {monthlyInvestment.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {t("dashboard.totalTransactions").replace(
+                {t("dashboard.transactions").replace(
                   "{count}",
-                  String(expenseDocs.length)
+                  String(
+                    expenseDocs.filter((e: ExpenseDocType) => e.type === "investment")
+                      .length
+                  )
                 )}
               </p>
             </div>

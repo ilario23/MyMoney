@@ -16,6 +16,7 @@ export function CategoriesPage() {
     name: "",
     icon: "📂",
     color: "#3B82F6",
+    type: "expense" as "expense" | "income" | "investment",
   });
 
   const { data: categoryDocs } = useQuery(
@@ -43,6 +44,7 @@ export function CategoriesPage() {
         name: formData.name,
         icon: formData.icon,
         color: formData.color,
+        type: formData.type,
         is_custom: true,
         is_active: true,
         created_at: new Date().toISOString(),
@@ -50,7 +52,12 @@ export function CategoriesPage() {
         deleted_at: null,
       });
 
-      setFormData({ name: "", icon: "📂", color: "#3B82F6" });
+      setFormData({
+        name: "",
+        icon: "📂",
+        color: "#3B82F6",
+        type: "expense",
+      });
       setShowForm(false);
     } catch (error) {
       console.error("Error adding category:", error);
@@ -125,6 +132,27 @@ export function CategoriesPage() {
                     {formData.color}
                   </span>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Type</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      type: e.target.value as
+                        | "expense"
+                        | "income"
+                        | "investment",
+                    })
+                  }
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                >
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                  <option value="investment">Investment</option>
+                </select>
               </div>
 
               <div className="flex gap-2 pt-2">

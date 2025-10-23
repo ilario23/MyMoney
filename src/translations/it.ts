@@ -114,6 +114,7 @@ export const it = {
   "dashboard.errorLoading": "Errore nel caricamento",
   "dashboard.expensesThisMonth": "Spese questo mese",
   "dashboard.incomeThisMonth": "Entrate questo mese",
+  "dashboard.investmentsThisMonth": "Investimenti questo mese",
   "dashboard.netBalance": "Saldo netto",
   "dashboard.transactions": "{count} transazioni",
   "dashboard.totalTransactions": "{count} transazioni totali",
