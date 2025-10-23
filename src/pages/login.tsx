@@ -47,43 +47,15 @@ export function LoginPage() {
         const displayName = data.user.user_metadata?.display_name;
         const avatarUrl = data.user.user_metadata?.avatar_url;
 
-        // Assicura che il record user esista in Supabase
-        const { data: existingUser, error: checkError } = await supabase
-          .from("users")
-          .select("id")
-          .eq("id", data.user.id)
-          .single();
-
-        if (checkError && checkError.code !== "PGRST116") {
-          authLogger.error("Error checking user:", checkError);
-        }
-
-        if (!existingUser) {
-          authLogger.info("Creating user in database...");
-          const { error: createError } = await supabase.from("users").insert({
-            id: data.user.id,
-            email: data.user.email,
-            display_name: displayName,
-            avatar_url: avatarUrl,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-
-          if (createError) {
-            authLogger.error("Error creating user:", createError);
-          } else {
-            authLogger.success("User created successfully");
-          }
-        }
+        // Note: User in Supabase is auto-created by trigger on auth signup
 
         // Salva nel database locale Dexie
         const db = getDatabase();
         await db.users.put({
           id: data.user.id,
           email: data.user.email!,
-          full_name: displayName,
+          display_name: displayName,
           avatar_url: avatarUrl,
-          preferred_language: "it",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           deleted_at: null,

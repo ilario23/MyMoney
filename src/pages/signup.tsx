@@ -94,38 +94,15 @@ export function SignupPage() {
       await db.users.put({
         id: userId,
         email: userEmail,
-        full_name: displayName,
+        display_name: displayName,
         avatar_url: null,
-        preferred_language: "it",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         deleted_at: null,
       });
 
-      // 2b. Crea l'utente anche in Supabase
-      authLogger.info("Attempting to create user in Supabase...");
-      const { error: userError, data: userData } = await supabase
-        .from("users")
-        .insert({
-          id: userId,
-          email: userEmail,
-          display_name: displayName,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-      if (userError) {
-        authLogger.error("Error creating user in Supabase:", userError);
-        authLogger.error("Error code:", userError.code);
-        authLogger.error("Error details:", userError.details);
-        authLogger.error("Error message:", userError.message);
-        setError(
-          `Failed to create user in database: ${userError.message}. Code: ${userError.code}`
-        );
-        return;
-      }
-
-      authLogger.success("User created successfully in Supabase", userData);
+      // Note: User in Supabase is auto-created by trigger on auth signup
+      authLogger.success("User registered successfully");
 
       setSuccess(true);
 

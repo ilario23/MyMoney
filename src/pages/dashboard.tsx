@@ -1,7 +1,7 @@
-﻿import { useMemo, useState, useEffect } from "react";
+﻿import { useMemo, useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
-import { useRxQuery } from "@/hooks/useRxDB";
+import { useQuery } from "@/hooks/useQuery";
 import { statsService } from "@/services/stats.service";
 import {
   Card,
@@ -36,9 +36,9 @@ export function DashboardPage() {
   const monthStart = startOfMonth(now).toISOString().split("T")[0];
   const monthEnd = endOfMonth(now).toISOString().split("T")[0];
 
-  // Reactive queries using Dexie
-  const { data: expenseDocs } = useRxQuery(
-    (table) =>
+  // Memoize query functions
+  const expenseQueryFn = useCallback(
+    (table: any) =>
       user
         ? table
             .where("user_id")
@@ -50,19 +50,24 @@ export function DashboardPage() {
                 exp.date <= monthEnd
             )
         : Promise.resolve([]),
-    "expenses"
+    [user?.id, monthStart, monthEnd]
   );
 
-  const { data: categoryDocs } = useRxQuery(
-    (table) =>
+  const categoryQueryFn = useCallback(
+    (table: any) =>
       user
         ? table
             .where("user_id")
             .equals(user.id)
             .filter((cat: CategoryDocType) => !cat.deleted_at)
         : Promise.resolve([]),
-    "categories"
+    [user?.id]
   );
+
+  // Reactive queries using Dexie
+  const { data: expenseDocs } = useQuery(expenseQueryFn, "expenses");
+
+  const { data: categoryDocs } = useQuery(categoryQueryFn, "categories");
 
   // Stats state
   const [totalExpenses, setTotalExpenses] = useState(0);

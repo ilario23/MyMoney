@@ -9,9 +9,8 @@
 export interface UserDocType {
   id: string;
   email: string;
-  full_name?: string | null; // Local field name (mapped from display_name in Supabase)
+  display_name?: string | null;
   avatar_url?: string | null;
-  preferred_language: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;

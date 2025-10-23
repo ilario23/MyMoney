@@ -40,9 +40,24 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 
 ---
 
-## 📊 Step 3: Crea le Tabelle
+## 📊 Step 3: Crea le Tabelle e Abilita RLS
 
-Vai a **SQL Editor** in Supabase e copia/incolla questo SQL:
+⚠️ **Usa il file master per la source of truth**: `docs/SUPABASE_INIT.sql`
+
+Vai a **SQL Editor** in Supabase e:
+
+1. **Opzione A (Consigliato)**: Copia l'intero file `docs/SUPABASE_INIT.sql`
+   - Contiene tabelle + indici + RLS completo
+   - Singola sorgente di verità
+   - Facile da mantenere
+
+2. **Opzione B (Manuale)**: Copia/incolla il codice SQL qui sotto
+
+Clicca **"Run"** e aspetta che finisca (2-3 secondi).
+
+✅ Se vedi "Success" → Perfetto!
+
+### SQL Completo (alternativa a SUPABASE_INIT.sql)
 
 ```sql
 -- 1. Create users table
@@ -51,7 +66,6 @@ CREATE TABLE public.users (
   email TEXT UNIQUE NOT NULL,
   display_name TEXT,
   avatar_url TEXT,
-  preferred_language TEXT DEFAULT 'it',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -115,13 +129,13 @@ ALTER TABLE public.stats_cache ENABLE ROW LEVEL SECURITY;
 -- ====== RLS POLICIES FOR USERS TABLE ======
 -- Only authenticated user can read their own profile
 CREATE POLICY "Users can read own profile"
-ON public.users FOR SELECT 
+ON public.users FOR SELECT
 USING (auth.uid() = id);
 
 -- Only authenticated user can update their own profile
 CREATE POLICY "Users can update own profile"
-ON public.users FOR UPDATE 
-USING (auth.uid() = id) 
+ON public.users FOR UPDATE
+USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
 -- ⚠️ DELETE DISABLED - User profiles cannot be deleted (soft-delete only)
@@ -130,18 +144,18 @@ WITH CHECK (auth.uid() = id);
 -- ====== RLS POLICIES FOR CATEGORIES TABLE ======
 -- Only authenticated user can read their own categories
 CREATE POLICY "Users can read own categories"
-ON public.categories FOR SELECT 
+ON public.categories FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Only authenticated user can create categories (for themselves only)
 CREATE POLICY "Users can create own categories"
-ON public.categories FOR INSERT 
+ON public.categories FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Only authenticated user can update their own categories
 CREATE POLICY "Users can update own categories"
-ON public.categories FOR UPDATE 
-USING (auth.uid() = user_id) 
+ON public.categories FOR UPDATE
+USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
@@ -149,18 +163,18 @@ WITH CHECK (auth.uid() = user_id);
 -- ====== RLS POLICIES FOR EXPENSES TABLE ======
 -- Only authenticated user can read their own expenses
 CREATE POLICY "Users can read own expenses"
-ON public.expenses FOR SELECT 
+ON public.expenses FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Only authenticated user can create expenses (for themselves only)
 CREATE POLICY "Users can create own expenses"
-ON public.expenses FOR INSERT 
+ON public.expenses FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Only authenticated user can update their own expenses
 CREATE POLICY "Users can update own expenses"
-ON public.expenses FOR UPDATE 
-USING (auth.uid() = user_id) 
+ON public.expenses FOR UPDATE
+USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
@@ -168,18 +182,18 @@ WITH CHECK (auth.uid() = user_id);
 -- ====== RLS POLICIES FOR STATS_CACHE TABLE ======
 -- Only authenticated user can read their own stats
 CREATE POLICY "Users can read own stats"
-ON public.stats_cache FOR SELECT 
+ON public.stats_cache FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Only authenticated user can insert their own stats
 CREATE POLICY "Users can insert own stats"
-ON public.stats_cache FOR INSERT 
+ON public.stats_cache FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Only authenticated user can update their own stats
 CREATE POLICY "Users can update own stats"
-ON public.stats_cache FOR UPDATE 
-USING (auth.uid() = user_id) 
+ON public.stats_cache FOR UPDATE
+USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
@@ -211,12 +225,12 @@ Clicca **"Run"** e aspetta che finisca (2-3 secondi).
 
    ```sql
    -- Soft-delete a category
-   UPDATE public.categories 
+   UPDATE public.categories
    SET deleted_at = NOW(), updated_at = NOW()
    WHERE id = 'category-id' AND user_id = auth.uid();
 
    -- Query active records only
-   SELECT * FROM public.categories 
+   SELECT * FROM public.categories
    WHERE user_id = auth.uid() AND deleted_at IS NULL;
    ```
 

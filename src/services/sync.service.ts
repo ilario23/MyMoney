@@ -89,17 +89,21 @@ class SyncService {
 
   /**
    * Sync a single collection
+   * Note: Users are PULL-ONLY (read from Supabase)
+   *       Categories and Expenses are PULL + PUSH (bidirectional sync)
    */
   private async syncCollection(
     collectionName: "users" | "categories" | "expenses",
     userId: string
   ): Promise<void> {
     try {
-      // Pull from Supabase
+      // Always pull from Supabase
       await this.pullFromSupabase(collectionName, userId);
 
-      // Push local changes to Supabase
-      await this.pushToSupabase(collectionName, userId);
+      // Only push changes for categories and expenses
+      if (collectionName !== "users") {
+        await this.pushToSupabase(collectionName, userId);
+      }
     } catch (error) {
       syncLogger.error(`Failed to sync ${collectionName}:`, error);
       throw error;
@@ -155,36 +159,73 @@ class SyncService {
 
   /**
    * Push local changes to Supabase
+   * Called only for categories and expenses, never for users
+   * Uses INSERT or UPDATE separately to respect RLS policies
    */
   private async pushToSupabase(
-    collectionName: "users" | "categories" | "expenses",
+    collectionName: "categories" | "expenses",
     userId: string
   ): Promise<void> {
     const db = getDatabase();
     const table = db[collectionName as keyof typeof db] as any;
 
-    // Get all local documents
+    // Get all local documents filtered by user_id
     let localDocs = await table.toArray();
-
-    // Filter by user_id if needed (except for users collection)
-    if (collectionName !== "users") {
-      localDocs = localDocs.filter((doc: any) => doc.user_id === userId);
-    }
+    localDocs = localDocs.filter((doc: any) => doc.user_id === userId);
 
     if (localDocs.length === 0) {
       return;
     }
 
-    // Upsert to Supabase
-    const { error } = await supabase
-      .from(collectionName)
-      .upsert(localDocs, { onConflict: "id" });
+    // Separate into new (INSERT) and existing (UPDATE) docs
+    const newDocs: any[] = [];
+    const updateDocs: any[] = [];
 
-    if (error) {
-      throw error;
+    // First, fetch existing IDs from Supabase
+    const { data: existing } = await supabase
+      .from(collectionName)
+      .select("id")
+      .eq("user_id", userId);
+
+    const existingIds = new Set(existing?.map((doc: any) => doc.id) || []);
+
+    // Separate docs
+    localDocs.forEach((doc: any) => {
+      if (existingIds.has(doc.id)) {
+        updateDocs.push(doc);
+      } else {
+        newDocs.push(doc);
+      }
+    });
+
+    // INSERT new docs
+    if (newDocs.length > 0) {
+      const { error: insertError } = await supabase
+        .from(collectionName)
+        .insert(newDocs);
+
+      if (insertError) {
+        throw insertError;
+      }
     }
 
-    syncLogger.info(`Pushed ${localDocs.length} items to ${collectionName}`);
+    // UPDATE existing docs
+    if (updateDocs.length > 0) {
+      for (const doc of updateDocs) {
+        const { error: updateError } = await supabase
+          .from(collectionName)
+          .update(doc)
+          .eq("id", doc.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+    }
+
+    syncLogger.info(
+      `Pushed ${newDocs.length} new and ${updateDocs.length} updated items to ${collectionName}`
+    );
   }
 
   /**

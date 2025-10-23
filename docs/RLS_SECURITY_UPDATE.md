@@ -9,6 +9,7 @@ Le RLS policies di Supabase sono state aggiornate per **massima sicurezza**:
 ### Prima (v3.0 - v3.1)
 
 ❌ **Troppo Permissive:**
+
 - INSERT con `WITH CHECK (true)` → chiunque poteva creare record per altri
 - DELETE policies esistenti → rischio cancellazione accidentale
 - No protezione su user profiles
@@ -16,6 +17,7 @@ Le RLS policies di Supabase sono state aggiornate per **massima sicurezza**:
 ### Dopo (v3.2+)
 
 ✅ **Strict Security:**
+
 - INSERT limitato a `auth.uid() = user_id` → solo propri record
 - DELETE completamente disabilitato → soft-delete only
 - User profiles: no INSERT, no DELETE
@@ -31,8 +33,8 @@ In Supabase SQL Editor:
 
 ```sql
 -- Esporta tutte le policies attuali
-SELECT policyname, cmd, using_expression, with_check_expression 
-FROM pg_policies 
+SELECT policyname, cmd, using_expression, with_check_expression
+FROM pg_policies
 WHERE schemaname = 'public';
 ```
 
@@ -58,20 +60,24 @@ SELECT policyname, cmd FROM pg_policies WHERE schemaname = 'public' ORDER BY cmd
 Dovresti vedere:
 
 **Users (2 policies)**:
+
 - Users can read own profile (SELECT)
 - Users can update own profile (UPDATE)
 
 **Categories (3 policies)**:
+
 - Users can read own categories (SELECT)
 - Users can create own categories (INSERT)
 - Users can update own categories (UPDATE)
 
 **Expenses (3 policies)**:
+
 - Users can read own expenses (SELECT)
 - Users can create own expenses (INSERT)
 - Users can update own expenses (UPDATE)
 
 **Stats_cache (3 policies)**:
+
 - Users can read own stats (SELECT)
 - Users can insert own stats (INSERT)
 - Users can update own stats (UPDATE)
@@ -88,10 +94,7 @@ Dovresti vedere:
 
 ```javascript
 // FALLIRÀ dopo l'update
-await supabase
-  .from('categories')
-  .delete()
-  .eq('id', 'category-id');
+await supabase.from("categories").delete().eq("id", "category-id");
 // Error: DELETE policy not found
 ```
 
@@ -100,13 +103,13 @@ await supabase
 ```javascript
 // FUNZIONA - usato dall'app
 await supabase
-  .from('categories')
-  .update({ 
+  .from("categories")
+  .update({
     deleted_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   })
-  .eq('id', 'category-id')
-  .eq('user_id', userId);
+  .eq("id", "category-id")
+  .eq("user_id", userId);
 ```
 
 ### Codice App Deve Filtrare Soft-Deleted
@@ -141,18 +144,18 @@ WHERE deleted_at IS NULL
 
 ```javascript
 // ✅ CORRETTO
-await supabase.from('categories').insert({
-  user_id: userId,  // deve uguagliare auth.uid()
-  name: 'Food',
-  icon: '🍕',
-  is_custom: true
+await supabase.from("categories").insert({
+  user_id: userId, // deve uguagliare auth.uid()
+  name: "Food",
+  icon: "🍕",
+  is_custom: true,
 });
 
 // ❌ SBAGLIATO
-await supabase.from('categories').insert({
-  user_id: 'other-user-id',  // non uguaglia auth.uid()
-  name: 'Food',
-  icon: '🍕'
+await supabase.from("categories").insert({
+  user_id: "other-user-id", // non uguaglia auth.uid()
+  name: "Food",
+  icon: "🍕",
 });
 // ERROR: WITH CHECK policy violation
 ```
@@ -173,7 +176,7 @@ await supabase.from('categories').insert({
 **Eliminare** categoria logicamente (soft-delete):
 
 ```sql
-UPDATE public.categories 
+UPDATE public.categories
 SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = 'cat-123' AND user_id = auth.uid();
 ```
@@ -181,14 +184,14 @@ WHERE id = 'cat-123' AND user_id = auth.uid();
 **Leggere** solo categorie attive:
 
 ```sql
-SELECT * FROM public.categories 
+SELECT * FROM public.categories
 WHERE user_id = auth.uid() AND deleted_at IS NULL;
 ```
 
 **Recuperare** una categoria cancellata:
 
 ```sql
-UPDATE public.categories 
+UPDATE public.categories
 SET deleted_at = NULL, updated_at = NOW()
 WHERE id = 'cat-123' AND user_id = auth.uid();
 ```
@@ -199,7 +202,7 @@ WHERE id = 'cat-123' AND user_id = auth.uid();
 ✅ **Analytics**: Puoi ancora fare report su dati cancellati  
 ✅ **Recovery**: Undo feature possibile  
 ✅ **Audit**: Track quando/cosa è stato cancellato  
-✅ **Safety**: Nessuna cancellazione accidentale permanente  
+✅ **Safety**: Nessuna cancellazione accidentale permanente
 
 ---
 

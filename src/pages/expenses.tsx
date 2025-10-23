@@ -1,7 +1,7 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useMemo, useState, useCallback } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
-import { useRxQuery } from "@/hooks/useRxDB";
+import { useQuery } from "@/hooks/useQuery";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,28 +21,33 @@ export function ExpensesPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // Reactive queries using Dexie with Observable
-  const { data: expenseDocs, loading } = useRxQuery(
-    (table) =>
+  // Memoize query function to avoid re-runs
+  const expenseQueryFn = useCallback(
+    (table: any) =>
       user
         ? table
             .where("user_id")
             .equals(user.id)
             .filter((exp: ExpenseDocType) => !exp.deleted_at)
         : Promise.resolve([]),
-    "expenses"
+    [user?.id]
   );
 
-  const { data: categoryDocs } = useRxQuery(
-    (table) =>
+  const categoryQueryFn = useCallback(
+    (table: any) =>
       user
         ? table
             .where("user_id")
             .equals(user.id)
             .filter((cat: CategoryDocType) => !cat.deleted_at)
         : Promise.resolve([]),
-    "categories"
+    [user?.id]
   );
+
+  // Reactive queries using Dexie with Observable
+  const { data: expenseDocs, loading } = useQuery(expenseQueryFn, "expenses");
+
+  const { data: categoryDocs } = useQuery(categoryQueryFn, "categories");
 
   // Convert to map
   const categories = useMemo(() => {
