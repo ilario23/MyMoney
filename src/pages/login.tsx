@@ -63,7 +63,7 @@ export function LoginPage() {
           const { error: createError } = await supabase.from("users").insert({
             id: data.user.id,
             email: data.user.email,
-            full_name: displayName,
+            display_name: displayName,
             avatar_url: avatarUrl,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

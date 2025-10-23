@@ -1,10 +1,6 @@
 # 💰 MyMoney v3.0 - Local-First Expense Tracker# 💰 MyMoney v3.0 - Local-First Expense Tracker# 💰 MyMoney v3.0# 💰 MyMoney v3.0# 💰 MyMoney - Personal & Shared Expense Tracker
 
-
-
 **Local-first progressive web app** for managing personal expenses with **Dexie** reactive database and optional **Supabase** sync.**Local-first progressive web app** for managing personal expenses with **Dexie** reactive database and optional **Supabase** sync.**Local-first expense tracking with RxDB reactive database\*\***Local-first expense tracking app with reactive database and intelligent sync**A modern **Progressive Web App\*\* for tracking personal and shared expenses with intelligent offline-first sync, dark mode, and multi-language support (IT/EN).
-
-
 
 [![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/ilario23/mymoney)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/ilario23/mymoney)Modern Progressive Web App for personal and shared expense tracking with full offline support, reactive UI updates, and intelligent client-side statistics.A modern Progressive Web App built with React 19, RxDB, and Supabase. Track personal and shared expenses with full offline support, real-time updates, and smart client-side statistics.**Version**: 1.7.0 | **Status**: ✅ Production Ready
 
@@ -12,19 +8,11 @@
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-
-
 ---[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/ilario23/mymoney)[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/yourusername/mymoney)---
-
-
 
 ## ✨ Key Features---[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-
-
 ### 💸 Expense Management## ✨ Features[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
-
 
 - ✅ Quick add/edit/delete personal expenses### 💸 Expense Management---[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)## ✨ Key Features
 
@@ -36,11 +24,7 @@
 
 - ✅ Export/import data in JSON format- ✅ Hierarchical categories (parent → child) with icons & colors## ✨ Key Features---### 💸 Expense Management
 
-
-
 ### 🔄 Local-First Architecture- ✅ Advanced search & filtering
-
-
 
 - ✅ **Dexie** (IndexedDB) - Reactive local database- ✅ Monthly dashboard with statistics### 💸 Expense Management## ✨ Features- Quick add/edit/delete expenses
 
@@ -52,11 +36,7 @@
 
 - ✅ **Conflict resolution** - Last-write-wins strategy- Quick add/edit/delete expenses
 
-
-
 ### 🌐 Optional Synchronization### 🔄 Local-First Architecture
-
-
 
 - ✅ **Offline mode** - Complete local functionality- ✅ **Dexie** (IndexedDB) - Reactive local database- Hierarchical categories with icons & colors- Hierarchical categories (parent → child structure)
 
@@ -148,7 +128,7 @@ Open http://localhost:5173 in your browser.
 
 - **Node.js** 18+- **Offline-first**: Full functionality without internet
 
-```bash
+```````bash
 
 pnpm build- **pnpm** 10+ (or npm)
 
@@ -200,9 +180,9 @@ src/
 
 └── translations/           # i18n (EN/IT)pnpm dev
 
-```
+```````
 
-```- Real-time updates across devices### 👥 Shared Expenses### 👥 Shared Expenses (v2.0)
+```````- Real-time updates across devices### 👥 Shared Expenses### 👥 Shared Expenses (v2.0)
 
 ---
 
@@ -382,7 +362,7 @@ Switch languages in the profile page.## 🎯 How It Works# Clone repository- **R
 
 MyMoney is a full PWA:
 
-```
+```````
 
 - **Install on home screen** (mobile & desktop)
 
@@ -392,11 +372,7 @@ MyMoney is a full PWA:
 
 - **Auto-updates** when new version available### 2. **Sync When Online** (optional)
 
-
-
 **Installation:**When you configure Supabase, changes automatically sync when you're online.### Environment## 🚀 Quick Start- **Multi-language** - Italian & English
-
-
 
 - **Desktop (Chrome/Edge)**: Click install icon in address bar
 
@@ -404,21 +380,13 @@ MyMoney is a full PWA:
 
 - **Android (Chrome)**: Menu → Install app```
 
-
-
 ---┌─────────────────┐ ┌──────────────┐
-
-
 
 ## 🛠️ Development│ Your Device │◄───────►│ Supabase │```bash### Prerequisites---
 
-
-
 ### Available Commands│ ┌───────────┐ │ │ (Cloud) │
 
-
-
-```bash│ │ Dexie │ │ │ (Postgres) │# Copy example environment file
+``````bash│ │ Dexie │ │ │ (Postgres) │# Copy example environment file
 
 # Development server
 
@@ -700,7 +668,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 └─────────────────────────────────┘---**Full setup guide**: [📖 docs/SETUP.md](./docs/SETUP.md)
 
-`````
+``````
 
 **Key Concepts:**
 

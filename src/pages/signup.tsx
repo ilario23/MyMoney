@@ -95,6 +95,7 @@ export function SignupPage() {
         id: userId,
         email: userEmail,
         full_name: displayName,
+        avatar_url: null,
         preferred_language: "it",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -108,7 +109,7 @@ export function SignupPage() {
         .insert({
           id: userId,
           email: userEmail,
-          full_name: displayName,
+          display_name: displayName,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
