@@ -18,7 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
-import { Sliders } from "lucide-react";
+import { Sliders, Edit2 } from "lucide-react";
 import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
 
 export function ExpensesPage() {
@@ -248,14 +248,16 @@ export function ExpensesPage() {
             return (
               <div
                 key={expense.id}
-                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg cursor-pointer hover:shadow-lg transition-all p-4 border border-input shadow-xs`}
+                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs`}
                 style={{
                   animationDelay: `${index * 50}ms`,
                 }}
-                onClick={() => navigate(`/expense/${expense.id}`)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => navigate(`/expense/${expense.id}`)}
+                  >
                     {/* Badge with type */}
                     <div className="flex items-center gap-2 mb-2">
                       <span
@@ -288,12 +290,27 @@ export function ExpensesPage() {
                     </div>
                   </div>
 
-                  {/* Amount with dynamic color */}
-                  <div className="text-right ml-4">
-                    <p className={`text-xl font-bold ${typeStyle.amountColor}`}>
-                      {expense.type === "income" ? "+" : "-"}
-                      {Math.abs(expense.amount).toFixed(2)}€
-                    </p>
+                  {/* Amount and Actions */}
+                  <div className="text-right ml-4 flex items-center gap-2">
+                    <div>
+                      <p
+                        className={`text-xl font-bold ${typeStyle.amountColor}`}
+                      >
+                        {expense.type === "income" ? "+" : "-"}
+                        {Math.abs(expense.amount).toFixed(2)}€
+                      </p>
+                    </div>
+
+                    {/* Edit button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => navigate(`/expense/${expense.id}`)}
+                      title="Edit expense"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -2,9 +2,7 @@ import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Navigation } from "./navigation";
 import { SyncIndicator } from "./sync-indicator";
-import { ThemeToggle } from "./theme-toggle";
 import { OfflineIndicator } from "./offline-indicator";
-import { useSync } from "@/hooks/useSync";
 import { Sidebar } from "./sidebar";
 
 interface LayoutProps {
@@ -16,7 +14,6 @@ const noLayoutRoutes = ["/login", "/signup", "/"];
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const showLayout = !noLayoutRoutes.includes(location.pathname);
-  const { isSyncing, lastSync, sync } = useSync();
 
   if (!showLayout) {
     return <>{children}</>;
@@ -27,20 +24,18 @@ export function Layout({ children }: LayoutProps) {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-input bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-lg">
+          <div className="flex items-center gap-0">
+            <div className="flex h-8 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-3xl leading-none">
               S
             </div>
-            <h1 className="text-xl font-semibold tracking-tight">Spendix</h1>
+            <h1 className="text-lg sm:text-xl font-semibold tracking-tight">
+              <span className="hidden sm:inline">pendix App</span>
+              <span className="sm:hidden">pendix</span>
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
-            <SyncIndicator
-              isSyncing={isSyncing}
-              lastSync={lastSync}
-              onSync={sync}
-            />
-            <ThemeToggle />
+            <SyncIndicator />
           </div>
         </div>
       </header>

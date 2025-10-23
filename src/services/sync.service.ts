@@ -9,10 +9,13 @@ import { syncLogger } from "@/lib/logger";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "completed";
 
+export type SyncHealthStatus = "synced" | "pending" | "conflict";
+
 export interface SyncState {
   status: SyncStatus;
   lastSync: Date | null;
   error: string | null;
+  healthStatus: SyncHealthStatus;
 }
 
 class SyncService {
@@ -21,8 +24,11 @@ class SyncService {
     status: "idle",
     lastSync: null,
     error: null,
+    healthStatus: "synced",
   };
   private isOnline = navigator.onLine;
+  private hasRemoteChanges = false;
+  private realtimeSubscription: any = null;
 
   subscribe(listener: (state: SyncState) => void): () => void {
     this.listeners.add(listener);
@@ -95,6 +101,10 @@ class SyncService {
       this.currentState.status = "completed";
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
+
+      // Update health status after sync
+      this.currentState.healthStatus = await this.calculateHealthStatus(userId);
+
       this.notifyListeners();
 
       syncLogger.success("Background sync completed");
@@ -102,6 +112,10 @@ class SyncService {
       this.currentState.status = "error";
       this.currentState.error =
         error instanceof Error ? error.message : "Unknown error";
+
+      // Still update health status even on error
+      this.currentState.healthStatus = await this.calculateHealthStatus(userId);
+
       this.notifyListeners();
       syncLogger.error("Background sync error:", error);
       // Don't rethrow - background sync should fail gracefully
@@ -189,6 +203,12 @@ class SyncService {
 
     // Update last sync time
     localStorage.setItem(lastSyncKey, new Date().toISOString());
+
+    // Mark remote changes as processed (we've pulled them)
+    if (collectionName !== "users") {
+      this.markRemoteChangesAsProcessed();
+    }
+
     syncLogger.info(`Pulled ${data.length} items from ${collectionName}`);
   }
 
@@ -236,29 +256,38 @@ class SyncService {
 
     // INSERT new docs
     if (newDocs.length > 0) {
+      // Remove synced_at before sending to Supabase (local-only field)
+      const docsToInsert = newDocs.map((doc) => {
+        const { synced_at, ...rest } = doc;
+        return rest;
+      });
+
       const { error: insertError } = await supabase
         .from(collectionName)
-        .insert(newDocs);
+        .insert(docsToInsert);
 
       if (insertError) {
         throw insertError;
       }
-      
+
       newDocs.forEach((doc) => syncedIds.push(doc.id));
     }
 
     // UPDATE existing docs
     if (updateDocs.length > 0) {
       for (const doc of updateDocs) {
+        // Remove synced_at before sending to Supabase (local-only field)
+        const { synced_at, ...dataToUpdate } = doc;
+
         const { error: updateError } = await supabase
           .from(collectionName)
-          .update(doc)
+          .update(dataToUpdate)
           .eq("id", doc.id);
 
         if (updateError) {
           throw updateError;
         }
-        
+
         syncedIds.push(doc.id);
       }
     }
@@ -305,8 +334,13 @@ class SyncService {
         await this.pushToSupabase(collectionName, userId);
       }
 
+      // Only update lastSync and error if push succeeds
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
+
+      // Update health status after successful sync
+      this.currentState.healthStatus = await this.calculateHealthStatus(userId);
+
       this.notifyListeners();
 
       syncLogger.success("Changes synced successfully");
@@ -314,6 +348,11 @@ class SyncService {
       syncLogger.error("Failed to sync changes:", error);
       this.currentState.error =
         error instanceof Error ? error.message : "Unknown error";
+
+      // Update health status even on error - should show pending/conflict
+      // but NOT update lastSync (so user retries the sync)
+      this.currentState.healthStatus = await this.calculateHealthStatus(userId);
+
       this.notifyListeners();
       // Don't rethrow - app continues to work with local data
     }
@@ -339,10 +378,10 @@ class SyncService {
    */
   async getUnsyncedCount(userId: string): Promise<number> {
     const db = getDatabase();
-    
+
     try {
       const unsyncedCategories = await db.categories
-        .where('user_id')
+        .where("user_id")
         .equals(userId)
         .filter((cat: any) => {
           // Item is unsynced if:
@@ -354,7 +393,7 @@ class SyncService {
         .toArray();
 
       const unsyncedExpenses = await db.expenses
-        .where('user_id')
+        .where("user_id")
         .equals(userId)
         .filter((exp: any) => {
           if (!exp.synced_at) return true;
@@ -363,9 +402,11 @@ class SyncService {
         .toArray();
 
       const total = unsyncedCategories.length + unsyncedExpenses.length;
-      
+
       if (total > 0) {
-        syncLogger.info(`Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedExpenses.length} expenses)`);
+        syncLogger.info(
+          `Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedExpenses.length} expenses)`
+        );
       }
 
       return total;
@@ -380,13 +421,13 @@ class SyncService {
    * Used for efficient delta queries to Supabase
    */
   async getLastSuccessfulSyncTime(): Promise<string> {
-    const lastSyncKey = 'last_sync_expenses';
+    const lastSyncKey = "last_sync_expenses";
     const lastSync = localStorage.getItem(lastSyncKey);
-    
+
     if (lastSync) {
       return lastSync;
     }
-    
+
     // If no sync has happened yet, return epoch
     return new Date(0).toISOString();
   }
@@ -396,7 +437,7 @@ class SyncService {
    * Updates synced_at timestamp for all given items
    */
   private async markAsSynced(
-    collectionName: 'categories' | 'expenses',
+    collectionName: "categories" | "expenses",
     itemIds: string[]
   ): Promise<void> {
     if (itemIds.length === 0) return;
@@ -415,7 +456,110 @@ class SyncService {
       }
     }
 
-    syncLogger.info(`Marked ${itemIds.length} items as synced in ${collectionName}`);
+    syncLogger.info(
+      `Marked ${itemIds.length} items as synced in ${collectionName}`
+    );
+  }
+
+  /**
+   * Calculate sync health status
+   * synced: Verde - tutto ok, remoto = locale
+   * pending: Arancione - hai dati non pushati localmente
+   * conflict: Rosso - remoto ha dati che non hai in locale
+   */
+  async calculateHealthStatus(userId: string): Promise<SyncHealthStatus> {
+    try {
+      const unsyncedCount = await this.getUnsyncedCount(userId);
+
+      // Se hai dati non sincati: pending
+      if (unsyncedCount > 0) {
+        return "pending";
+      }
+
+      // Se remoto ha dati nuovi: conflict
+      if (this.hasRemoteChanges) {
+        return "conflict";
+      }
+
+      // Altrimenti: tutto sincato
+      return "synced";
+    } catch (error) {
+      syncLogger.error("Error calculating health status:", error);
+      return "synced"; // Default to synced on error
+    }
+  }
+
+  /**
+   * Setup realtime subscription to detect remote changes
+   * Only subscribes when user logs in, runs in background
+   */
+  setupRealtimeMonitoring(userId: string): void {
+    if (!this.isOnline) {
+      syncLogger.info("Offline - skipping realtime monitoring setup");
+      return;
+    }
+
+    // Subscribe to changes in categories and expenses tables
+    const subscription = supabase
+      .channel(`sync-monitoring:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "categories",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          this.hasRemoteChanges = true;
+          syncLogger.info("Remote changes detected in categories");
+          this.notifyListeners();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "expenses",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          this.hasRemoteChanges = true;
+          syncLogger.info("Remote changes detected in expenses");
+          this.notifyListeners();
+        }
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          syncLogger.success("Realtime monitoring setup completed");
+        } else if (status === "CHANNEL_ERROR") {
+          syncLogger.warn(
+            "Realtime monitoring error - will retry on next sync"
+          );
+        }
+      });
+
+    this.realtimeSubscription = subscription;
+  }
+
+  /**
+   * Clean up realtime monitoring when user logs out
+   */
+  cleanupRealtimeMonitoring(): void {
+    if (this.realtimeSubscription) {
+      supabase.removeChannel(this.realtimeSubscription);
+      this.realtimeSubscription = null;
+      syncLogger.info("Realtime monitoring cleaned up");
+    }
+    this.hasRemoteChanges = false;
+  }
+
+  /**
+   * Mark remote changes as processed (after pull)
+   */
+  markRemoteChangesAsProcessed(): void {
+    this.hasRemoteChanges = false;
   }
 }
 

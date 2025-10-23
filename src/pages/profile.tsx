@@ -3,7 +3,6 @@ import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { supabase } from "@/lib/supabase";
 import { getDatabase } from "@/lib/db";
-import { statsService } from "@/services/stats.service";
 import { authLogger, dbLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +49,12 @@ export function ProfilePage() {
       try {
         const db = getDatabase();
 
-        // Calcola statistiche del mese corrente
-        const monthlyStats = await statsService.calculateMonthlyStats(
-          user.id,
-          new Date()
-        );
+        // Calcola statistiche di tutti i tempi (non solo questo mese)
+        const allExpenses = await db.expenses
+          .where("user_id")
+          .equals(user.id)
+          .filter((exp) => !exp.deleted_at)
+          .toArray();
 
         // Conta le categorie
         const categories = await db.categories
@@ -62,12 +62,21 @@ export function ProfilePage() {
           .equals(user.id)
           .toArray();
 
-        setStats({
-          totalExpenses: monthlyStats.expenseCount,
-          totalAmount: monthlyStats.totalExpenses,
+        // Calcola l'importo totale
+        const totalAmount = allExpenses.reduce(
+          (sum, exp) => sum + exp.amount,
+          0
+        );
+
+        const newStats = {
+          totalExpenses: allExpenses.length,
+          totalAmount: totalAmount,
           categories: categories.length,
           lastSyncDate: new Date(),
-        });
+        };
+
+        console.log("Profile Stats:", newStats);
+        setStats(newStats);
       } catch (error) {
         console.error("Error loading stats:", error);
       }
@@ -234,18 +243,18 @@ export function ProfilePage() {
       {/* User Info Card */}
       <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle>{t("profile.title")}</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               {!isEditing && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="gap-2"
+                  className="gap-2 flex-1 sm:flex-none"
                 >
                   <Edit2 className="w-4 h-4" />
-                  {t("profile.editProfile")}
+                  <span className="sm:inline">{t("profile.editProfile")}</span>
                 </Button>
               )}
               <Dialog
@@ -257,9 +266,12 @@ export function ProfilePage() {
                     variant="destructive"
                     size="sm"
                     title={t("profile.logout")}
-                    className="w-10 h-10 p-0"
+                    className="gap-2 flex-1 sm:flex-none"
                   >
                     <LogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {t("profile.logout")}
+                    </span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -293,7 +305,9 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("profile.name")}</label>
+            <label className="text-xs sm:text-sm font-medium block">
+              {t("profile.name")}
+            </label>
             {isEditing ? (
               <Input
                 value={displayName}
@@ -302,21 +316,23 @@ export function ProfilePage() {
                 disabled={isSaving}
               />
             ) : (
-              <p className="text-lg font-semibold">
+              <p className="text-base sm:text-lg font-semibold break-words">
                 {displayName || t("profile.notSet")}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("profile.email")}</label>
-            <p className="text-sm text-muted-foreground break-all">
+            <label className="text-xs sm:text-sm font-medium block">
+              {t("profile.email")}
+            </label>
+            <p className="text-xs sm:text-sm text-muted-foreground break-all">
               {user.email}
             </p>
           </div>
 
           {isEditing && (
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
               <Button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
@@ -332,10 +348,12 @@ export function ProfilePage() {
                   setDisplayName(user.displayName || "");
                 }}
                 disabled={isSaving}
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-none"
               >
                 <X className="w-4 h-4" />
-                {t("profile.cancelEdit")}
+                <span className="hidden sm:inline">
+                  {t("profile.cancelEdit")}
+                </span>
               </Button>
             </div>
           )}
@@ -348,35 +366,39 @@ export function ProfilePage() {
           <CardTitle>{t("profile.statistics")}</CardTitle>
           <CardDescription>{t("profile.yourTrackingData")}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
-              <p className="text-sm text-muted-foreground mb-1">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.expenses")}
               </p>
-              <p className="text-2xl font-bold">{stats.totalExpenses}</p>
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
+                {stats.totalExpenses}
+              </p>
             </div>
 
-            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
-              <p className="text-sm text-muted-foreground mb-1">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.totalAmount")}
               </p>
-              <p className="text-2xl font-bold">
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
                 €{stats.totalAmount.toFixed(2)}
               </p>
             </div>
 
-            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
-              <p className="text-sm text-muted-foreground mb-1">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
+              <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
                 {t("profile.categories")}
               </p>
-              <p className="text-2xl font-bold">{stats.categories}</p>
+              <p className="text-3xl sm:text-2xl font-bold text-primary">
+                {stats.categories}
+              </p>
             </div>
           </div>
 
           {stats.lastSyncDate && (
-            <div className="mt-4 p-3 bg-secondary/50 rounded-lg text-sm border border-input shadow-xs">
-              <p className="text-muted-foreground">
+            <div className="mt-4 p-3 bg-secondary/50 rounded-lg text-sm border border-input shadow-xs text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {t("profile.lastSync")}:{" "}
                 <span className="font-medium">
                   {stats.lastSyncDate.toLocaleDateString(

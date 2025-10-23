@@ -98,7 +98,7 @@ export function ThemeSelector() {
         <Accordion
           type="single"
           collapsible
-          defaultValue="color-scheme"
+          defaultValue=""
           className="border border-input rounded-lg"
         >
           <AccordionItem value="color-scheme">

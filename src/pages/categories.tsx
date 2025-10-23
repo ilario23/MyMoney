@@ -17,6 +17,8 @@ import * as LucideIcons from "lucide-react";
 import { IconPicker } from "@/components/ui/icon-picker";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { getDatabase } from "@/lib/db";
+import { syncService } from "@/services/sync.service";
+import { syncLogger } from "@/lib/logger";
 
 export function CategoriesPage() {
   const { user } = useAuthStore();
@@ -105,6 +107,17 @@ export function CategoriesPage() {
         });
       }
 
+      syncLogger.success("Category saved locally - syncing with server");
+
+      // Trigger background sync if online (don't wait for it)
+      if (syncService.isAppOnline()) {
+        syncService.syncAfterChange(user.id).catch((error) => {
+          syncLogger.error("Background sync error:", error);
+        });
+      } else {
+        syncLogger.info("Offline - data saved locally, will sync when online");
+      }
+
       resetForm();
     } catch (error) {
       console.error("Error saving category:", error);
@@ -145,6 +158,19 @@ export function CategoriesPage() {
           deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
+
+        syncLogger.success("Category deleted locally - syncing with server");
+
+        // Trigger background sync if online (don't wait for it)
+        if (user && syncService.isAppOnline()) {
+          syncService.syncAfterChange(user.id).catch((error) => {
+            syncLogger.error("Background sync error:", error);
+          });
+        } else {
+          syncLogger.info(
+            "Offline - data saved locally, will sync when online"
+          );
+        }
       } catch (error) {
         console.error("Error deleting category:", error);
       }

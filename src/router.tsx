@@ -45,6 +45,9 @@ export function AppRoutes() {
           // Initialize app: Load from Dexie first, then sync with Supabase in background
           // This ensures data is available immediately while syncing remotely
           await syncService.initializeAtStartup(session.user.id);
+
+          // Setup realtime monitoring to detect remote changes
+          syncService.setupRealtimeMonitoring(session.user.id);
         }
       } catch (error) {
         console.error("Auth check error:", error);
@@ -68,10 +71,15 @@ export function AppRoutes() {
         });
       } else {
         setUser(null);
+        // Clean up realtime monitoring on logout
+        syncService.cleanupRealtimeMonitoring();
       }
     });
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+      syncService.cleanupRealtimeMonitoring();
+    };
   }, [setUser, setLoading]);
 
   if (isLoading) {

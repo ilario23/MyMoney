@@ -385,4 +385,36 @@ export const en: Record<TranslationKey, string> = {
 
   // Common - Drawer
   "common.close": "Close",
+
+  // Sync Indicator
+  "sync.offline": "Offline",
+  "sync.synced": "Synchronized",
+  "sync.pending": "{count} pending {singular}change{plural}s",
+  "sync.conflict": "Updates to download",
+  "sync.title.synced": "Synchronized",
+  "sync.title.pending": "Pending changes",
+  "sync.title.conflict": "Server data is more recent",
+  "sync.description.synced":
+    "Everything is synchronized between local and remote.",
+  "sync.description.pending": `You have {count} pending local {singular}change{plural}s.`,
+  "sync.description.conflict":
+    "The server has updates not present locally. Sync to download them.",
+  "sync.offline.message":
+    "You are offline. Changes will be synchronized when you are back online.",
+  "sync.icons.title": "Icon legend:",
+  "sync.icons.online": "You are online and connected",
+  "sync.icons.offline": "You are offline (no connection)",
+  "sync.colors.title": "Color legend:",
+  "sync.colors.synced": "Everything synchronized",
+  "sync.colors.pending": "Pending changes",
+  "sync.colors.conflict": "Server data is more recent",
+  "sync.colors.green": "Green",
+  "sync.colors.orange": "Orange",
+  "sync.colors.red": "Red",
+  "sync.pending.state.message":
+    "⏳ You have local changes not yet sent to the server.",
+  "sync.conflict.state.message": "🔄 The server has newer updates to download.",
+  "sync.close": "Close",
+  "sync.syncNow": "Sync now",
+  "sync.syncing": "Syncing...",
 } as const;

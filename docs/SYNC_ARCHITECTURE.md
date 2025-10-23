@@ -107,7 +107,7 @@ export interface CategoryDocType {
   user_id: string;
   name: string;
   // ... altri campi
-  updated_at: string;        // Quando è stato modificato
+  updated_at: string; // Quando è stato modificato
   synced_at?: string | null; // Quando è stato sincronizzato
 }
 
@@ -115,7 +115,7 @@ export interface ExpenseDocType {
   id: string;
   user_id: string;
   // ... altri campi
-  updated_at: string;        // Quando è stato modificato
+  updated_at: string; // Quando è stato modificato
   synced_at?: string | null; // Quando è stato sincronizzato
 }
 ```
@@ -141,13 +141,13 @@ const lastSyncTime = await syncService.getLastSuccessfulSyncTime();
 
 ```typescript
 const {
-  isSyncing,           // boolean: sta sincronizzando?
-  lastSync,            // Date | null: quando è stato l'ultimo sync riuscito
-  sync,                // () => Promise<void>: sync manuale
-  hasUnsyncedChanges,  // boolean: ha cambiamenti non sincati?
-  isOnline,            // boolean: sei online?
+  isSyncing, // boolean: sta sincronizzando?
+  lastSync, // Date | null: quando è stato l'ultimo sync riuscito
+  sync, // () => Promise<void>: sync manuale
+  hasUnsyncedChanges, // boolean: ha cambiamenti non sincati?
+  isOnline, // boolean: sei online?
   triggerBackgroundSync, // () => void: trigger manual background sync
-  unsyncedCount,       // number: quanti dati sono in sospeso?
+  unsyncedCount, // number: quanti dati sono in sospeso?
 } = useSync();
 ```
 
@@ -185,17 +185,17 @@ Ora puoi usare `getLastSuccessfulSyncTime()` per query efficienti:
 ```typescript
 // Prima: pull TUTTO ogni volta
 const { data } = await supabase
-  .from('expenses')
-  .select('*')
-  .gte('updated_at', '1970-01-01')  // ← inefficiente!
+  .from("expenses")
+  .select("*")
+  .gte("updated_at", "1970-01-01"); // ← inefficiente!
 
 // Adesso: pull solo quello che è cambiato DOPO l'ultimo sync riuscito
 const lastSync = await syncService.getLastSuccessfulSyncTime();
 const { data } = await supabase
-  .from('expenses')
-  .select('*')
-  .gte('updated_at', lastSync)  // ← delta sync! 🚀
-  .eq('user_id', userId)
+  .from("expenses")
+  .select("*")
+  .gte("updated_at", lastSync) // ← delta sync! 🚀
+  .eq("user_id", userId);
 ```
 
 ### **Ciclo Completo: Sync e Update**

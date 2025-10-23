@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { getDatabase } from "@/lib/db";
 import { renderIcon } from "@/lib/icon-renderer";
 import { syncService } from "@/services/sync.service";
-import type { CategoryDocType } from "@/lib/db-schemas";
+import type { CategoryDocType, ExpenseDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +24,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { v4 as uuidv4 } from "uuid";
-import { ArrowLeft, Plus, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+  Trash2,
+} from "lucide-react";
 
 export function ExpenseForm() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = !!id;
+
   const [type, setType] = useState<"expense" | "income" | "investment">(
     "expense"
   );
@@ -42,8 +59,12 @@ export function ExpenseForm() {
   const [categories, setCategories] = useState<CategoryDocType[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [expense, setExpense] = useState<ExpenseDocType | null>(null);
+  const [isLoadingExpense, setIsLoadingExpense] = useState(isEditing);
 
-  // Load categories from Dexie
+  // Load categories and expense (if editing) from Dexie
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
@@ -56,12 +77,31 @@ export function ExpenseForm() {
           .equals(user.id)
           .toArray();
         setCategories(userCategories);
+
+        // Load expense if editing
+        if (isEditing && id) {
+          const exp = await db.expenses.get(id);
+          if (!exp) {
+            setError(t("common.error") || "Expense not found");
+            setIsLoadingExpense(false);
+            return;
+          }
+
+          setExpense(exp);
+          setType(exp.type);
+          setDescription(exp.description || "");
+          setAmount(exp.amount.toString());
+          setCategoryId(exp.category_id);
+          setDate(exp.date.split("T")[0]);
+          setIsLoadingExpense(false);
+        }
       } catch (error) {
         dbLogger.error("Error loading data:", error);
+        setIsLoadingExpense(false);
       }
     };
     loadData();
-  }, [user]);
+  }, [user, id, isEditing, t]);
 
   // Helper: Build grouped category structure (only active categories of selected type)
   const getGroupedCategories = () => {
@@ -94,22 +134,38 @@ export function ExpenseForm() {
     try {
       const db = getDatabase();
 
-      const expense = {
-        id: uuidv4(),
-        user_id: user.id,
-        type,
-        amount: parseFloat(amount),
-        category_id: categoryId,
-        description,
-        date: new Date(date).toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        deleted_at: null,
-      };
+      if (isEditing && expense) {
+        // UPDATE existing expense
+        const updatedExpense: ExpenseDocType = {
+          ...expense,
+          type,
+          amount: parseFloat(amount),
+          category_id: categoryId,
+          description,
+          date: new Date(date).toISOString(),
+          updated_at: new Date().toISOString(),
+        };
 
-      await db.expenses.put(expense);
+        await db.expenses.put(updatedExpense);
+        syncLogger.success("Expense updated locally - syncing with server");
+      } else {
+        // CREATE new expense
+        const newExpense = {
+          id: uuidv4(),
+          user_id: user.id,
+          type,
+          amount: parseFloat(amount),
+          category_id: categoryId,
+          description,
+          date: new Date(date).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+        };
 
-      syncLogger.success("Expense saved locally - syncing with server");
+        await db.expenses.put(newExpense);
+        syncLogger.success("Expense saved locally - syncing with server");
+      }
 
       // Trigger background sync if online (don't wait for it)
       if (syncService.isAppOnline()) {
@@ -129,14 +185,58 @@ export function ExpenseForm() {
 
       // Redirect after 2s (give time to read any error message)
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate(isEditing ? "/expenses" : "/dashboard");
       }, 2000);
     } catch (error) {
-      dbLogger.error("Error adding expense:", error);
+      dbLogger.error("Error saving expense:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       setError(`Error: ${errorMsg}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user || !expense) return;
+
+    setIsDeleting(true);
+    setError("");
+
+    try {
+      const db = getDatabase();
+
+      // Soft delete
+      await db.expenses.update(expense.id, {
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      syncLogger.success("Expense deleted locally - syncing with server");
+
+      // Trigger background sync if online (don't wait for it)
+      if (syncService.isAppOnline()) {
+        syncService.syncAfterChange(user.id).catch((error) => {
+          syncLogger.error("Background sync error:", error);
+        });
+      } else {
+        syncLogger.info(
+          "Offline - data deleted locally, will sync when online"
+        );
+      }
+
+      setShowDeleteDialog(false);
+      setSuccess(true);
+
+      // Redirect after 2s
+      setTimeout(() => {
+        navigate("/expenses");
+      }, 2000);
+    } catch (error) {
+      dbLogger.error("Error deleting expense:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      setError(`Error: ${errorMsg}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -147,18 +247,30 @@ export function ExpenseForm() {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate(isEditing ? "/expenses" : "/dashboard")}
           className="rounded-full"
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-xl font-bold">{t("expense.title")}</h1>
+        <h1 className="text-xl font-bold">
+          {isEditing ? "Edit Expense" : t("expense.title")}
+        </h1>
       </div>
+
+      {isLoadingExpense && (
+        <Alert className="border border-primary/30 bg-primary/10">
+          <AlertDescription className="text-primary font-medium">
+            Loading...
+          </AlertDescription>
+        </Alert>
+      )}
 
       {success && (
         <Alert className="border border-primary/30 bg-primary/10">
           <AlertDescription className="text-primary font-medium">
-            {t("expense.addSuccess")}
+            {isEditing
+              ? "✓ Expense updated! Redirecting..."
+              : t("expense.addSuccess")}
           </AlertDescription>
         </Alert>
       )}
@@ -174,9 +286,13 @@ export function ExpenseForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            {t("expense.newTransaction")}
+            {isEditing ? "Edit Transaction" : t("expense.newTransaction")}
           </CardTitle>
-          <CardDescription>{t("expense.registerExpense")}</CardDescription>
+          <CardDescription>
+            {isEditing
+              ? "Update the transaction details"
+              : t("expense.registerExpense")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -350,7 +466,7 @@ export function ExpenseForm() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                disabled={isLoading || success}
+                disabled={isLoading || success || isLoadingExpense}
               />
             </div>
 
@@ -359,19 +475,71 @@ export function ExpenseForm() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => navigate("/dashboard")}
-                disabled={isLoading || success}
+                onClick={() => navigate(isEditing ? "/expenses" : "/dashboard")}
+                disabled={isLoading || success || isLoadingExpense}
               >
                 {t("expense.cancel")}
               </Button>
-              <Button type="submit" disabled={isLoading || success} size="lg">
+              <Button
+                type="submit"
+                disabled={isLoading || success || isLoadingExpense}
+                size="lg"
+              >
                 {isLoading
                   ? t("expense.saving")
                   : success
-                    ? t("expense.saved")
-                    : t("expense.addExpense")}
+                    ? "✓ " + (isEditing ? "Updated" : t("expense.saved"))
+                    : isEditing
+                      ? "Update"
+                      : t("expense.addExpense")}
               </Button>
             </div>
+
+            {/* Delete Button - only show when editing */}
+            {isEditing && (
+              <Dialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+              >
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full gap-2"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isLoading || success || isLoadingExpense}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Expense
+                </Button>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Expense?</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. The expense will be deleted
+                      from your account.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setShowDeleteDialog(false)}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </form>
         </CardContent>
       </Card>

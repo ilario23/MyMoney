@@ -3,6 +3,7 @@ import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { useQuery } from "@/hooks/useQuery";
 import { statsService } from "@/services/stats.service";
+import { renderIcon } from "@/lib/icon-renderer";
 import {
   Card,
   CardContent,
@@ -467,10 +468,15 @@ export function DashboardPage() {
                   >
                     <div className="flex-1">
                       <p className="font-medium">{expense.description}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {categoryObj
-                          ? `${categoryObj.icon} ${categoryObj.name}`
-                          : "Unknown"}
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        {categoryObj ? (
+                          <>
+                            {renderIcon(categoryObj.icon)}
+                            <span>{categoryObj.name}</span>
+                          </>
+                        ) : (
+                          "Unknown"
+                        )}
                       </p>
                     </div>
                     <div className="text-right">

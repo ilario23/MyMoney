@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/lib/auth.store";
-import { syncService } from "@/services/sync.service";
+import { syncService, type SyncHealthStatus } from "@/services/sync.service";
 
 interface UseSync {
   isSyncing: boolean;
@@ -10,6 +10,7 @@ interface UseSync {
   isOnline: boolean;
   triggerBackgroundSync: () => void;
   unsyncedCount: number;
+  healthStatus: SyncHealthStatus;
 }
 
 export function useSync(): UseSync {
@@ -18,6 +19,7 @@ export function useSync(): UseSync {
   const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(false);
   const [isOnline, setIsOnline] = useState(syncService.isAppOnline());
   const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const [healthStatus, setHealthStatus] = useState<SyncHealthStatus>("synced");
   const { user } = useAuthStore();
 
   // Update unsynced count
@@ -58,7 +60,8 @@ export function useSync(): UseSync {
   const triggerBackgroundSync = useCallback(() => {
     if (!user || !isOnline) return;
 
-    syncService.syncAfterChange(user.id)
+    syncService
+      .syncAfterChange(user.id)
       .then(() => updateUnsyncedCount())
       .catch((error) => {
         console.error("Background sync error:", error);
@@ -94,6 +97,7 @@ export function useSync(): UseSync {
       if (state.lastSync) {
         setLastSync(state.lastSync);
       }
+      setHealthStatus(state.healthStatus);
     });
 
     return () => unsubscribe();
@@ -112,5 +116,6 @@ export function useSync(): UseSync {
     isOnline,
     triggerBackgroundSync,
     unsyncedCount,
+    healthStatus,
   };
 }

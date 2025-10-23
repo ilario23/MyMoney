@@ -387,6 +387,38 @@ export const it = {
 
   // Common - Drawer
   "common.close": "Chiudi",
+
+  // Sync Indicator
+  "sync.offline": "Offline",
+  "sync.synced": "Sincronizzato",
+  "sync.pending": "{count} {singular}cambiamento{plural}i in sospeso",
+  "sync.conflict": "Aggiornamenti da scaricare",
+  "sync.title.synced": "Sincronizzato",
+  "sync.title.pending": "Cambiamenti in sospeso",
+  "sync.title.conflict": "Dati remoti più recenti",
+  "sync.description.synced": "Tutto è sincronizzato tra locale e remoto.",
+  "sync.description.pending": `Hai {count} {singular}cambiamento{plural}i non sincronizzati localmente.`,
+  "sync.description.conflict":
+    "Il server ha aggiornamenti non presenti localmente. Sincronizza per scaricarli.",
+  "sync.offline.message":
+    "Sei offline. I cambiamenti verranno sincronizzati quando tornerai online.",
+  "sync.icons.title": "Legenda icone:",
+  "sync.icons.online": "Sei online e connesso",
+  "sync.icons.offline": "Sei offline (nessuna connessione)",
+  "sync.colors.title": "Legenda colori:",
+  "sync.colors.synced": "Tutto sincronizzato",
+  "sync.colors.pending": "Cambiamenti in sospeso",
+  "sync.colors.conflict": "Dati remoti più recenti",
+  "sync.colors.green": "Verde",
+  "sync.colors.orange": "Arancione",
+  "sync.colors.red": "Rosso",
+  "sync.pending.state.message":
+    "⏳ Hai cambiamenti locali non ancora inviati al server.",
+  "sync.conflict.state.message":
+    "🔄 Il server ha aggiornamenti più recenti da scaricare.",
+  "sync.close": "Chiudi",
+  "sync.syncNow": "Sincronizza ora",
+  "sync.syncing": "Sincronizzando...",
 } as const;
 
 export type TranslationKey = keyof typeof it;
