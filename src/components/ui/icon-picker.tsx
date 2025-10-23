@@ -44,13 +44,9 @@ export function IconPicker({
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-between"
-            size="lg"
+            className="w-12 h-10 p-0 flex items-center justify-center"
           >
-            <div className="flex items-center gap-2">
-              {renderIcon(value)}
-              <span>{value || "Select an icon"}</span>
-            </div>
+            {renderIcon(value)}
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl">
@@ -81,9 +77,6 @@ export function IconPicker({
           </div>
         </DialogContent>
       </Dialog>
-      <p className="text-xs text-muted-foreground">
-        Selected: {value || "None"}
-      </p>
     </div>
   );
 }

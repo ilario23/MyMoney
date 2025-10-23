@@ -255,10 +255,10 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <TrendingUp className="h-4 w-4 text-green-600" />
                 <span>{t("dashboard.incomeThisMonth") || "Entrate"}</span>
               </div>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-3xl font-bold text-green-600">
                 {monthlyIncome.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -275,12 +275,12 @@ export function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Zap className="h-4 w-4 text-primary" />
+                <Zap className="h-4 w-4 text-blue-600" />
                 <span>
                   {t("dashboard.investmentsThisMonth") || "Investimenti"}
                 </span>
               </div>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-3xl font-bold text-blue-600">
                 {monthlyInvestment.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">

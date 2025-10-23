@@ -125,9 +125,9 @@ export function ExpensesPage() {
   const dateLocale = language === "it" ? it : enUS;
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header con bottone filtri */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <div>
           <h1 className="text-3xl font-bold">Spese</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -148,23 +148,31 @@ export function ExpensesPage() {
       </div>
 
       {/* Filter Panel - Desktop only (no drawer) */}
-      <div className="hidden md:block">
-        <ExpenseFilterPanel
-          filters={filters}
-          categories={categories}
-          onFilterChange={updateFilter}
-          onReset={resetFilters}
-          hasActiveFilters={hasActiveFilters}
-          resultCount={filteredExpenses.length}
-          onSaveFilter={handleSaveFilter}
-        />
+      <div
+        className="hidden md:block overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          maxHeight: showFilters ? "1000px" : "0px",
+          opacity: showFilters ? 1 : 0,
+        }}
+      >
+        <div className="pb-4">
+          <ExpenseFilterPanel
+            filters={filters}
+            categories={categories}
+            onFilterChange={updateFilter}
+            onReset={resetFilters}
+            hasActiveFilters={hasActiveFilters}
+            resultCount={filteredExpenses.length}
+            onSaveFilter={handleSaveFilter}
+          />
+        </div>
       </div>
 
       {/* Mobile Collapsible Filters */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-card rounded-lg border border-border/30 hover:bg-muted transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-card rounded-lg border border-input hover:bg-muted transition-colors"
         >
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4" />
@@ -197,7 +205,7 @@ export function ExpensesPage() {
 
       {/* Expenses List */}
       {loading ? (
-        <Card>
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <CardContent className="py-12 text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground">
@@ -206,7 +214,7 @@ export function ExpensesPage() {
           </CardContent>
         </Card>
       ) : filteredExpenses.length === 0 ? (
-        <Card>
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">
               {filters.searchQuery || hasActiveFilters
@@ -221,15 +229,18 @@ export function ExpensesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredExpenses.map((expense) => {
+        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+          {filteredExpenses.map((expense, index) => {
             const category = categories.get(expense.category_id);
             const typeStyle = getTypeStyle(expense.type);
 
             return (
               <div
                 key={expense.id}
-                className={`${typeStyle.shadowColor} rounded-lg cursor-pointer hover:shadow-lg transition-all p-4 shadow-md`}
+                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg cursor-pointer hover:shadow-lg transition-all p-4 border border-input shadow-xs`}
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                }}
                 onClick={() => navigate(`/expense/${expense.id}`)}
               >
                 <div className="flex items-center justify-between">

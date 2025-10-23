@@ -198,9 +198,9 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
         <Button
           variant="outline"
@@ -215,13 +215,13 @@ export function ProfilePage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert className="border border-primary/30 bg-primary/10">
+        <Alert className="border border-primary/30 bg-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
           <AlertDescription className="text-primary font-medium">
             ✓ {success}
           </AlertDescription>
@@ -229,7 +229,7 @@ export function ProfilePage() {
       )}
 
       {/* User Info Card */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{t("profile.title")}</CardTitle>
@@ -340,21 +340,21 @@ export function ProfilePage() {
       </Card>
 
       {/* Statistics Card */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 hover:shadow-lg transition-all">
         <CardHeader>
           <CardTitle>{t("profile.statistics")}</CardTitle>
           <CardDescription>{t("profile.yourTrackingData")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
               <p className="text-sm text-muted-foreground mb-1">
                 {t("profile.expenses")}
               </p>
               <p className="text-2xl font-bold">{stats.totalExpenses}</p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
               <p className="text-sm text-muted-foreground mb-1">
                 {t("profile.totalAmount")}
               </p>
@@ -363,7 +363,7 @@ export function ProfilePage() {
               </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs">
               <p className="text-sm text-muted-foreground mb-1">
                 {t("profile.categories")}
               </p>
@@ -372,7 +372,7 @@ export function ProfilePage() {
           </div>
 
           {stats.lastSyncDate && (
-            <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-sm">
+            <div className="mt-4 p-3 bg-secondary/50 rounded-lg text-sm border border-input shadow-xs">
               <p className="text-muted-foreground">
                 {t("profile.lastSync")}:{" "}
                 <span className="font-medium">
@@ -394,7 +394,7 @@ export function ProfilePage() {
       </Card>
 
       {/* Categories Management */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 hover:shadow-lg transition-all">
         <CardHeader>
           <CardTitle>{t("profile.categoriesManagement")}</CardTitle>
           <CardDescription>

@@ -7,6 +7,7 @@ import type { CategoryDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import * as LucideIcons from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,15 @@ export function ExpenseForm() {
   const [categories, setCategories] = useState<CategoryDocType[]>([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  // Helper: Render icon from name
+  const renderIcon = (iconName: string) => {
+    const IconComponent = (LucideIcons as any)[iconName];
+    if (!IconComponent) {
+      return <LucideIcons.HelpCircle className="w-4 h-4" />;
+    }
+    return <IconComponent className="w-4 h-4" />;
+  };
 
   // Load categories from Dexie
   useEffect(() => {
@@ -197,7 +207,7 @@ export function ExpenseForm() {
                   }}
                   className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
                     type === "income"
-                      ? "bg-primary text-primary-foreground shadow-lg"
+                      ? "bg-green-600 text-white shadow-lg"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   disabled={isLoading || success}
@@ -213,7 +223,7 @@ export function ExpenseForm() {
                   }}
                   className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${
                     type === "investment"
-                      ? "bg-accent text-accent-foreground shadow-lg"
+                      ? "bg-blue-600 text-white shadow-lg"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   disabled={isLoading || success}
@@ -290,7 +300,9 @@ export function ExpenseForm() {
                           <div key={parent.id}>
                             {/* Parent category */}
                             <SelectItem value={parent.id}>
-                              {parent.icon} {parent.name}
+                              <span className="flex items-center gap-2">
+                                {renderIcon(parent.icon)} {parent.name}
+                              </span>
                             </SelectItem>
                             {/* Child categories (indented) */}
                             {children.map((child) => (
@@ -299,7 +311,9 @@ export function ExpenseForm() {
                                 value={child.id}
                                 className="pl-8"
                               >
-                                {child.icon} {child.name}
+                                <span className="flex items-center gap-2">
+                                  {renderIcon(child.icon)} {child.name}
+                                </span>
                               </SelectItem>
                             ))}
                           </div>
