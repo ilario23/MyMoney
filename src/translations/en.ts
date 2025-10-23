@@ -7,6 +7,7 @@ import { type TranslationKey } from "./it";
 export const en: Record<TranslationKey, string> = {
   // Profile Page
   "profile.title": "Profile",
+  "profile.settings": "Settings",
   "profile.editProfile": "Edit Profile",
   "profile.cancelEdit": "Cancel Edit",
   "profile.saveChanges": "Save Changes",

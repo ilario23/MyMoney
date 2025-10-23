@@ -462,7 +462,7 @@ export function DashboardPage() {
                 return (
                   <div
                     key={expense.id}
-                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent cursor-pointer"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer shadow-sm transition-all"
                     onClick={() => navigate(`/expense/${expense.id}`)}
                   >
                     <div className="flex-1">

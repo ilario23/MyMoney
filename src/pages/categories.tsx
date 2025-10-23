@@ -6,6 +6,7 @@ import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, X, Edit2, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { IconPicker } from "@/components/ui/icon-picker";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { getDatabase } from "@/lib/db";
@@ -143,8 +144,7 @@ export function CategoriesPage() {
   };
 
   const renderCategoryIcon = (icon: string) => {
-    const LucideIcons = require("lucide-react");
-    const IconComponent = LucideIcons[icon];
+    const IconComponent = (LucideIcons as any)[icon];
     if (!IconComponent) {
       return <LucideIcons.HelpCircle className="w-5 h-5" />;
     }

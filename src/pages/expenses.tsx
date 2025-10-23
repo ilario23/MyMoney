@@ -1,25 +1,24 @@
-﻿import { useMemo, useState, useCallback } from "react";
+﻿import { useMemo, useCallback, useState } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { useQuery } from "@/hooks/useQuery";
+import { useExpenseFilters } from "@/hooks/useExpenseFilters";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { ExpenseFilterPanel } from "@/components/expense/expense-filters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
+import { Sliders, ChevronDown } from "lucide-react";
 import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
 
 export function ExpensesPage() {
   const { user } = useAuthStore();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showFilters, setShowFilters] = useState(false);
 
   // Memoize query function to avoid re-runs
   const expenseQueryFn = useCallback(
@@ -58,77 +57,66 @@ export function ExpensesPage() {
     return map;
   }, [categoryDocs]);
 
-  // Sort expenses
-  const sortedExpenses = useMemo(() => {
-    const sorted = [...expenseDocs];
-    sorted.sort((a, b) => {
-      let aVal: number;
-      let bVal: number;
+  // Use expense filters hook
+  const {
+    filters,
+    updateFilter,
+    resetFilters,
+    hasActiveFilters,
+    filteredExpenses,
+  } = useExpenseFilters(expenseDocs, categories);
 
-      if (sortBy === "date") {
-        aVal = new Date(a.date).getTime();
-        bVal = new Date(b.date).getTime();
-      } else {
-        aVal = a.amount;
-        bVal = b.amount;
-      }
+  // Handle saving filter
+  const handleSaveFilter = useCallback(
+    (filterName: string) => {
+      const savedFilter = {
+        name: filterName,
+        filters: filters,
+        createdAt: new Date().toISOString(),
+      };
 
-      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-    });
-    return sorted;
-  }, [expenseDocs, sortBy, sortOrder]);
-
-  // Filter expenses by search query
-  const filteredExpenses = useMemo(() => {
-    if (!searchQuery) return sortedExpenses;
-
-    const query = searchQuery.toLowerCase();
-    return sortedExpenses.filter((expense) => {
-      const description = expense.description?.toLowerCase() || "";
-      const category = categories.get(expense.category_id);
-      const categoryName = category?.name?.toLowerCase() || "";
-      const amount = expense.amount.toString();
-
-      return (
-        description.includes(query) ||
-        categoryName.includes(query) ||
-        amount.includes(query)
+      // Save to localStorage or Dexie
+      const savedFilters = JSON.parse(
+        localStorage.getItem("saved_filters") || "[]"
       );
-    });
-  }, [sortedExpenses, searchQuery, categories]);
+      savedFilters.push(savedFilter);
+      localStorage.setItem("saved_filters", JSON.stringify(savedFilters));
+
+      // Show success message (opzionale)
+      console.log(`Filtro "${filterName}" salvato con successo!`);
+    },
+    [filters]
+  );
 
   if (!user) {
     return null;
   }
 
-  // Helper: Get semantic classes for transaction type using theme tokens
+  // Helper: Get semantic classes for transaction type using shadow instead of background
   const getTypeStyle = (type: "expense" | "income" | "investment") => {
     switch (type) {
       case "expense":
         return {
-          bgColor: "bg-destructive/10",
-          borderColor: "border-destructive/40",
+          shadowColor: "shadow-destructive/20",
           textColor: "text-destructive",
-          badgeColor: "bg-destructive/15",
           amountColor: "text-destructive",
+          badgeColor: "bg-destructive/10 text-destructive",
           icon: "📤",
         };
       case "income":
         return {
-          bgColor: "bg-primary/10",
-          borderColor: "border-primary/40",
+          shadowColor: "shadow-primary/20",
           textColor: "text-primary",
-          badgeColor: "bg-primary/15",
           amountColor: "text-primary",
+          badgeColor: "bg-primary/10 text-primary",
           icon: "📥",
         };
       case "investment":
         return {
-          bgColor: "bg-primary/10",
-          borderColor: "border-primary/40",
-          textColor: "text-primary",
-          badgeColor: "bg-primary/15",
-          amountColor: "text-primary",
+          shadowColor: "shadow-accent/20",
+          textColor: "text-accent",
+          amountColor: "text-accent",
+          badgeColor: "bg-accent/10 text-accent",
           icon: "💰",
         };
     }
@@ -138,7 +126,7 @@ export function ExpensesPage() {
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Header */}
+      {/* Header con bottone filtri */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Spese</h1>
@@ -147,57 +135,65 @@ export function ExpensesPage() {
             {filteredExpenses.length === 1 ? "spesa" : "spese"}
           </p>
         </div>
-        <FloatingActionButton href="/expense/new" label="Add expense" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="p-2 hover:bg-muted rounded-lg transition-colors hidden md:block"
+            title="Filtri"
+          >
+            <Sliders className="w-5 h-5" />
+          </button>
+          <FloatingActionButton href="/expense/new" label="Add expense" />
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cerca spese..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-              </button>
+      {/* Filter Panel - Desktop only (no drawer) */}
+      <div className="hidden md:block">
+        <ExpenseFilterPanel
+          filters={filters}
+          categories={categories}
+          onFilterChange={updateFilter}
+          onReset={resetFilters}
+          hasActiveFilters={hasActiveFilters}
+          resultCount={filteredExpenses.length}
+          onSaveFilter={handleSaveFilter}
+        />
+      </div>
+
+      {/* Mobile Collapsible Filters */}
+      <div className="md:hidden space-y-3">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-card rounded-lg border border-border/30 hover:bg-muted transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Sliders className="w-4 h-4" />
+            <span className="font-medium text-sm">Filtri</span>
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                Attivo
+              </Badge>
             )}
           </div>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${
+              showFilters ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-          {/* Sort */}
-          <div className="flex gap-2">
-            <Button
-              variant={sortBy === "date" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSortBy("date")}
-            >
-              Data
-            </Button>
-            <Button
-              variant={sortBy === "amount" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSortBy("amount")}
-            >
-              Importo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            >
-              {sortOrder === "asc" ? "↑" : "↓"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {showFilters && (
+          <ExpenseFilterPanel
+            filters={filters}
+            categories={categories}
+            onFilterChange={updateFilter}
+            onReset={resetFilters}
+            hasActiveFilters={hasActiveFilters}
+            resultCount={filteredExpenses.length}
+            onSaveFilter={handleSaveFilter}
+          />
+        )}
+      </div>
 
       {/* Expenses List */}
       {loading ? (
@@ -213,9 +209,11 @@ export function ExpensesPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? "Nessuna spesa trovata" : "Nessuna spesa"}
+              {filters.searchQuery || hasActiveFilters
+                ? "Nessuna spesa trovata"
+                : "Nessuna spesa"}
             </p>
-            {!searchQuery && (
+            {!filters.searchQuery && !hasActiveFilters && (
               <Button onClick={() => navigate("/expense/new")}>
                 Aggiungi la prima spesa
               </Button>
@@ -231,7 +229,7 @@ export function ExpensesPage() {
             return (
               <div
                 key={expense.id}
-                className={`${typeStyle.bgColor} ${typeStyle.borderColor} border rounded-lg cursor-pointer hover:bg-accent hover:shadow-md transition-all p-4`}
+                className={`${typeStyle.shadowColor} rounded-lg cursor-pointer hover:shadow-lg transition-all p-4 shadow-md`}
                 onClick={() => navigate(`/expense/${expense.id}`)}
               >
                 <div className="flex items-center justify-between">
@@ -239,7 +237,7 @@ export function ExpensesPage() {
                     {/* Badge with type */}
                     <div className="flex items-center gap-2 mb-2">
                       <span
-                        className={`${typeStyle.badgeColor} ${typeStyle.textColor} text-xs font-semibold px-2 py-1 rounded`}
+                        className={`${typeStyle.badgeColor} text-xs font-semibold px-2 py-1 rounded`}
                       >
                         {expense.type.charAt(0).toUpperCase() +
                           expense.type.slice(1)}

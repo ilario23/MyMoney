@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Home, Receipt, Settings } from "lucide-react";
+import { Home, Receipt, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language";
 
@@ -24,7 +24,7 @@ export function Navigation() {
     },
     {
       path: "/profile",
-      icon: Settings,
+      icon: User,
       label: t("nav.profile"),
       special: false,
     },

@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/auth.store";
-import { useLanguage, type Language } from "@/lib/language";
+import { useLanguage } from "@/lib/language";
 import { supabase } from "@/lib/supabase";
 import { getDatabase } from "@/lib/db";
 import { statsService } from "@/services/stats.service";
-import { authLogger, dbLogger, syncLogger } from "@/lib/logger";
+import { authLogger, dbLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ThemeSelector } from "@/components/ui/theme-selector";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -23,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +24,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Edit2, Save, X } from "lucide-react";
-import packageJson from "../../package.json";
+import { LogOut, Edit2, Save, X, Settings } from "lucide-react";
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -212,6 +202,16 @@ export function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/settings")}
+          title={t("nav.settings")}
+          className="gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="hidden sm:inline">{t("nav.settings")}</span>
+        </Button>
       </div>
 
       {error && (
@@ -412,193 +412,6 @@ export function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-3">
             {t("profile.manageCategoriesDescription")}
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Language Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🌍 {t("profile.language")}</CardTitle>
-          <CardDescription>{t("profile.selectLanguage")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t("profile.language")}
-            </label>
-            <Select
-              value={language}
-              onValueChange={(value) => {
-                setLanguage(value as Language);
-                setSuccess(t("profile.languageUpdated"));
-                setTimeout(() => setSuccess(""), 3000);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="it">🇮🇹 Italiano</SelectItem>
-                <SelectItem value="en">🇬🇧 English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Theme Settings */}
-      <ThemeSelector />
-
-      {/* Account Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile.account")}</CardTitle>
-          <CardDescription>{t("profile.manageAccount")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div>
-              <h3 className="font-medium mb-2">{t("profile.appVersion")}</h3>
-              <Badge variant="outline">v{packageJson.version} - PWA</Badge>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">{t("profile.localDatabase")}</h3>
-              <Badge variant="outline">{t("profile.dexieIndexedDB")}</Badge>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">
-                {t("profile.synchronization")}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {t("profile.syncDescription")}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile.dataManagement")}</CardTitle>
-          <CardDescription>{t("profile.exportDeleteData")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
-                {t("profile.exportData")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t("profile.exportData")}</DialogTitle>
-                <DialogDescription>
-                  {t("profile.exportDescription")}
-                </DialogDescription>
-              </DialogHeader>
-              <Button
-                onClick={async () => {
-                  const db = getDatabase();
-                  const expenses = await db.expenses
-                    .where("user_id")
-                    .equals(user.id)
-                    .toArray();
-                  const categories = await db.categories
-                    .where("user_id")
-                    .equals(user.id)
-                    .toArray();
-                  const data = {
-                    user,
-                    expenses: expenses.map((e: (typeof expenses)[0]) => e),
-                    categories: categories.map(
-                      (c: (typeof categories)[0]) => c
-                    ),
-                    exportDate: new Date(),
-                  };
-                  const blob = new Blob([JSON.stringify(data, null, 2)], {
-                    type: "application/json",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `mymoney-backup-${Date.now()}.json`;
-                  a.click();
-                  setSuccess(t("profile.dataExported"));
-                }}
-                className="w-full"
-              >
-                ✓ {t("common.save")}
-              </Button>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="destructive" className="w-full">
-                {t("profile.deleteAllData")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t("profile.deleteAllData")}</DialogTitle>
-                <DialogDescription className="text-destructive">
-                  ⚠️ {t("profile.confirmDeleteAllData")}
-                </DialogDescription>
-              </DialogHeader>
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  if (!user) return;
-                  try {
-                    const db = getDatabase();
-
-                    // Soft delete: imposta deleted_at invece di eliminare fisicamente
-                    const expenses = await db.expenses
-                      .where("user_id")
-                      .equals(user.id)
-                      .toArray();
-
-                    for (const expense of expenses) {
-                      await db.expenses.put({
-                        ...expense,
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      });
-                    }
-
-                    // Elimina categorie custom
-                    const categories = await db.categories
-                      .where("user_id")
-                      .equals(user.id)
-                      .toArray();
-
-                    for (const category of categories) {
-                      await db.categories.put({
-                        ...category,
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      });
-                    }
-
-                    // La sincronizzazione avverrà automaticamente
-                    syncLogger.success("Data deletion queued for sync");
-
-                    setSuccess(t("profile.dataDeleted"));
-                    setTimeout(() => navigate("/dashboard"), 1500);
-                  } catch (error) {
-                    dbLogger.error("Error deleting data:", error);
-                    setError(t("profile.anErrorOccurred"));
-                  }
-                }}
-                className="w-full"
-              >
-                {t("profile.deleteConfirmation")}
-              </Button>
-            </DialogContent>
-          </Dialog>
         </CardContent>
       </Card>
     </div>

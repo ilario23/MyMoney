@@ -13,7 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, Monitor, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Sun, Moon, Monitor, ChevronUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PalettePreview } from "./palette-preview";
 
@@ -25,7 +31,6 @@ export function ThemeSelector() {
   const [config, setConfig] = useState(getThemeConfig());
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -90,110 +95,104 @@ export function ThemeSelector() {
         </div>
 
         {/* Color Scheme Selection */}
-        <div className="space-y-3 border rounded-lg">
-          <button
-            onClick={() => setIsColorSchemeOpen(!isColorSchemeOpen)}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-          >
-            <label className="text-sm font-medium cursor-pointer">
-              Color Scheme
-            </label>
-            {isColorSchemeOpen ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
-
-          {isColorSchemeOpen && (
-            <div className="px-4 pb-4 space-y-4 border-t">
-              {/* Neutral Schemes */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Neutral
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {AVAILABLE_COLOR_SCHEMES.filter((s) =>
-                    ["neutral", "stone", "zinc", "gray", "slate"].includes(
-                      s.value
-                    )
-                  ).map((scheme) => (
-                    <button
-                      key={scheme.value}
-                      onClick={() => handleColorSchemeChange(scheme.value)}
-                      className={`h-10 rounded-lg border-2 transition-all text-sm font-medium ${
-                        config.colorScheme === scheme.value
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border hover:bg-muted"
-                      }`}
-                      title={scheme.name}
-                    >
-                      {scheme.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Vivid Schemes */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Vivid
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {AVAILABLE_COLOR_SCHEMES.filter(
-                    (s) =>
-                      !["neutral", "stone", "zinc", "gray", "slate"].includes(
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue="color-scheme"
+          className="border rounded-lg shadow-xs"
+        >
+          <AccordionItem value="color-scheme">
+            <AccordionTrigger>Color Scheme</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                {/* Neutral Schemes */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Neutral
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {AVAILABLE_COLOR_SCHEMES.filter((s) =>
+                      ["neutral", "stone", "zinc", "gray", "slate"].includes(
                         s.value
                       )
-                  ).map((scheme) => (
-                    <button
-                      key={scheme.value}
-                      onClick={() => handleColorSchemeChange(scheme.value)}
-                      className={`h-10 rounded-lg border-2 transition-all text-sm font-medium ${
-                        config.colorScheme === scheme.value
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border hover:bg-muted"
-                      }`}
-                      title={scheme.name}
-                    >
-                      {scheme.name}
-                    </button>
-                  ))}
+                    ).map((scheme) => (
+                      <button
+                        key={scheme.value}
+                        onClick={() => handleColorSchemeChange(scheme.value)}
+                        className={`h-10 rounded-lg border transition-all text-sm font-medium shadow-xs ${
+                          config.colorScheme === scheme.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border hover:bg-muted"
+                        }`}
+                        title={scheme.name}
+                      >
+                        {scheme.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vivid Schemes */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Vivid
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {AVAILABLE_COLOR_SCHEMES.filter(
+                      (s) =>
+                        !["neutral", "stone", "zinc", "gray", "slate"].includes(
+                          s.value
+                        )
+                    ).map((scheme) => (
+                      <button
+                        key={scheme.value}
+                        onClick={() => handleColorSchemeChange(scheme.value)}
+                        className={`h-10 rounded-lg border transition-all text-sm font-medium shadow-xs ${
+                          config.colorScheme === scheme.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border hover:bg-muted"
+                        }`}
+                        title={scheme.name}
+                      >
+                        {scheme.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="pt-2 mt-4 border-t space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Current:{" "}
+                    {config.theme === "system"
+                      ? "System"
+                      : config.theme.charAt(0).toUpperCase() +
+                        config.theme.slice(1)}{" "}
+                    Mode •{" "}
+                    {AVAILABLE_COLOR_SCHEMES.find(
+                      (s) => s.value === config.colorScheme
+                    )?.name || config.colorScheme}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowPreview((p) => !p)}
+                    className="flex items-center gap-2"
+                  >
+                    {showPreview ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronUp className="w-4 h-4 rotate-180" />
+                    )}
+                    {showPreview ? "Hide" : "Show"} Palette
+                  </Button>
+                  {showPreview && <PalettePreview />}
                 </div>
               </div>
-
-              {/* Preview */}
-              <div className="pt-2 mt-4 border-t space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Current:{" "}
-                  {config.theme === "system"
-                    ? "System"
-                    : config.theme.charAt(0).toUpperCase() +
-                      config.theme.slice(1)}{" "}
-                  Mode •{" "}
-                  {AVAILABLE_COLOR_SCHEMES.find(
-                    (s) => s.value === config.colorScheme
-                  )?.name || config.colorScheme}
-                </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowPreview((p) => !p)}
-                  className="flex items-center gap-2"
-                >
-                  {showPreview ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                  {showPreview ? "Hide" : "Show"} Palette
-                </Button>
-                {showPreview && <PalettePreview />}
-              </div>
-            </div>
-          )}
-        </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

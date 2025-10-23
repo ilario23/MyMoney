@@ -12,6 +12,7 @@ import { LoginPage } from "@/pages/login";
 import { SignupPage } from "@/pages/signup";
 import { DashboardPage } from "@/pages/dashboard";
 import { ProfilePage } from "@/pages/profile";
+import { SettingsPage } from "@/pages/settings";
 import { CategoriesPage } from "@/pages/categories";
 import { StatisticsPage } from "@/pages/statistics";
 import { ExpenseForm } from "@/components/expense/expense-form";
@@ -126,6 +127,14 @@ export function AppRoutes() {
               element={
                 <Layout>
                   <ProfilePage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Layout>
+                  <SettingsPage />
                 </Layout>
               }
             />

@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Layers,
   User,
+  Sliders,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -37,6 +38,12 @@ const navItems = [
     path: "/profile",
     icon: User,
     labelKey: "nav.profile" as const,
+  },
+  {
+    id: "settings",
+    path: "/settings",
+    icon: Sliders,
+    labelKey: "nav.settings" as const,
   },
 ];
 

@@ -6,6 +6,7 @@
 export const it = {
   // Profile Page
   "profile.title": "Profilo",
+  "profile.settings": "Impostazioni",
   "profile.editProfile": "Modifica Profilo",
   "profile.cancelEdit": "Annulla Modifica",
   "profile.saveChanges": "Salva Cambiamenti",
