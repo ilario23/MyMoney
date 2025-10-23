@@ -112,51 +112,77 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stats_cache ENABLE ROW LEVEL SECURITY;
 
--- ====== RLS POLICIES FOR USERS ======
-CREATE POLICY "Users can read own data"
-ON public.users FOR SELECT USING (auth.uid() = id);
+-- ====== RLS POLICIES FOR USERS TABLE ======
+-- Only authenticated user can read their own profile
+CREATE POLICY "Users can read own profile"
+ON public.users FOR SELECT 
+USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own data"
-ON public.users FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+-- Only authenticated user can update their own profile
+CREATE POLICY "Users can update own profile"
+ON public.users FOR UPDATE 
+USING (auth.uid() = id) 
+WITH CHECK (auth.uid() = id);
 
--- ====== RLS POLICIES FOR CATEGORIES ======
+-- ⚠️ DELETE DISABLED - User profiles cannot be deleted (soft-delete only)
+-- No INSERT policy - profiles created by Supabase Auth only
+
+-- ====== RLS POLICIES FOR CATEGORIES TABLE ======
+-- Only authenticated user can read their own categories
 CREATE POLICY "Users can read own categories"
-ON public.categories FOR SELECT USING (auth.uid() = user_id);
+ON public.categories FOR SELECT 
+USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create categories"
-ON public.categories FOR INSERT WITH CHECK (true);
+-- Only authenticated user can create categories (for themselves only)
+CREATE POLICY "Users can create own categories"
+ON public.categories FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
 
+-- Only authenticated user can update their own categories
 CREATE POLICY "Users can update own categories"
-ON public.categories FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+ON public.categories FOR UPDATE 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own categories"
-ON public.categories FOR DELETE USING (auth.uid() = user_id);
+-- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
 
--- ====== RLS POLICIES FOR EXPENSES ======
+-- ====== RLS POLICIES FOR EXPENSES TABLE ======
+-- Only authenticated user can read their own expenses
 CREATE POLICY "Users can read own expenses"
-ON public.expenses FOR SELECT USING (auth.uid() = user_id);
+ON public.expenses FOR SELECT 
+USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create expenses"
-ON public.expenses FOR INSERT WITH CHECK (true);
+-- Only authenticated user can create expenses (for themselves only)
+CREATE POLICY "Users can create own expenses"
+ON public.expenses FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
 
+-- Only authenticated user can update their own expenses
 CREATE POLICY "Users can update own expenses"
-ON public.expenses FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+ON public.expenses FOR UPDATE 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own expenses"
-ON public.expenses FOR DELETE USING (auth.uid() = user_id);
+-- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
 
--- ====== RLS POLICIES FOR STATS_CACHE ======
+-- ====== RLS POLICIES FOR STATS_CACHE TABLE ======
+-- Only authenticated user can read their own stats
 CREATE POLICY "Users can read own stats"
-ON public.stats_cache FOR SELECT USING (auth.uid() = user_id);
+ON public.stats_cache FOR SELECT 
+USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can manage own stats"
-ON public.stats_cache FOR INSERT WITH CHECK (true);
+-- Only authenticated user can insert their own stats
+CREATE POLICY "Users can insert own stats"
+ON public.stats_cache FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
 
+-- Only authenticated user can update their own stats
 CREATE POLICY "Users can update own stats"
-ON public.stats_cache FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+ON public.stats_cache FOR UPDATE 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own stats"
-ON public.stats_cache FOR DELETE USING (auth.uid() = user_id);
+-- ⚠️ DELETE DISABLED - Use soft-delete via UPDATE deleted_at instead
 ```
 
 Clicca **"Run"** e aspetta che finisca (2-3 secondi).
@@ -165,7 +191,44 @@ Clicca **"Run"** e aspetta che finisca (2-3 secondi).
 
 ---
 
-## 🔐 Step 4: Abilita Email Authentication
+## � Step 3b: RLS Security Model
+
+**Key Principles:**
+
+1. **User Profiles (users table)**:
+   - ✅ Users can read only their own profile
+   - ✅ Users can update only their own profile
+   - ❌ No one can create user profiles (Supabase Auth manages this)
+   - ❌ Deletion completely disabled (prevents accidental data loss)
+
+2. **Categories & Expenses**:
+   - ✅ Users can CRUD only their own records
+   - ❌ Deletion disabled - use **soft-delete** instead
+
+3. **Soft-Delete Pattern**:
+
+   Instead of DELETE, update the `deleted_at` field:
+
+   ```sql
+   -- Soft-delete a category
+   UPDATE public.categories 
+   SET deleted_at = NOW(), updated_at = NOW()
+   WHERE id = 'category-id' AND user_id = auth.uid();
+
+   -- Query active records only
+   SELECT * FROM public.categories 
+   WHERE user_id = auth.uid() AND deleted_at IS NULL;
+   ```
+
+   **Benefits**:
+   - 🔄 Sync can recover deleted records if needed
+   - 📊 Historical data preserved for analytics
+   - 🔙 Undo is possible
+   - 🛡️ Prevents accidental permanent loss
+
+---
+
+## �🔐 Step 4: Abilita Email Authentication
 
 1. Vai a **Authentication** → **Providers**
 2. Clicca su **Email**
@@ -294,13 +357,27 @@ Niente di speciale da configurare - funziona già!
 
 ## 📝 Note Importanti
 
-### RLS Policies sono Permissive
+### RLS Policies - Sicurezza First
 
-Le policies usano `WITH CHECK (true)` per INSERT perché:
+**Regole di Accesso:**
 
-1. Durante il signup, `auth.uid()` non è ancora fully linked al record
-2. L'app valida i permissions nel frontend (signup.tsx, sync.service.ts)
-3. Security è mantenuto, solo senza errori RLS
+1. **INSERT**: Solo campo `user_id` nel WITH CHECK (non `true`)
+   - Categories: `WITH CHECK (auth.uid() = user_id)` → solo proprie
+   - Expenses: `WITH CHECK (auth.uid() = user_id)` → solo proprie
+   - Users: No INSERT policy → profili creati solo da Auth
+
+2. **DELETE**: Completamente disabilitato
+   - Nessuna policy DELETE creata
+   - Previene cancellazioni accidentali
+   - Usa soft-delete via UPDATE deleted_at
+
+3. **SELECT**: Solo record dell'utente autenticato
+   - `USING (auth.uid() = user_id)` su tutte le tabelle
+
+4. **UPDATE**: Solo record propri
+   - `USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)`
+
+Questa è la configurazione **più sicura**.
 
 ### Unique Constraint su Categorie
 

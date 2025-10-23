@@ -108,6 +108,7 @@ class SyncService {
 
   /**
    * Pull changes from Supabase
+   * Excludes soft-deleted records (deleted_at IS NULL)
    */
   private async pullFromSupabase(
     collectionName: "users" | "categories" | "expenses",
@@ -122,6 +123,7 @@ class SyncService {
       .from(collectionName)
       .select("*")
       .gte("updated_at", minTimestamp)
+      .is("deleted_at", null) // ← Filter out soft-deleted records
       .order("updated_at", { ascending: true });
 
     // Filter by user_id for collections that have it

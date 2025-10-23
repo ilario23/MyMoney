@@ -9,7 +9,7 @@
 export interface UserDocType {
   id: string;
   email: string;
-  full_name?: string | null;  // Local field name (mapped from display_name in Supabase)
+  full_name?: string | null; // Local field name (mapped from display_name in Supabase)
   avatar_url?: string | null;
   preferred_language: string;
   created_at: string;
@@ -27,8 +27,8 @@ export interface CategoryDocType {
   icon: string;
   color?: string | null;
   parent_id?: string | null;
-  is_custom: boolean;         // true = created by user, false = default
-  is_active: boolean;         // true = shown in expense form
+  is_custom: boolean; // true = created by user, false = default
+  is_active: boolean; // true = shown in expense form
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
