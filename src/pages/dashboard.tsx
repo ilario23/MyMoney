@@ -23,6 +23,7 @@ import {
   Target,
   BarChart3,
   Zap,
+  Expand,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { it, enUS } from "date-fns/locale";
@@ -428,8 +429,10 @@ export function DashboardPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/expenses")}
+              className="text-primary hover:text-primary/80 hover:bg-transparent p-0"
+              title="View all expenses"
             >
-              View All
+              <Expand className="w-5 h-5" />
             </Button>
           )}
         </CardHeader>
