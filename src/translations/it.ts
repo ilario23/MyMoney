@@ -102,6 +102,17 @@ export const it = {
     "Sincronizzabili: Sincronizzate con Supabase automaticamente",
   "categories.usedWarning":
     "Usate nelle spese: Quando elimini una categoria usata, riceverai un avviso",
+  "categories.selectCurrent": "Seleziona Livello Corrente",
+  "categories.parentCategory": "Categoria Genitore",
+  "categories.newCategoryTitle": "Crea Nuova Categoria",
+  "categories.editCategoryTitle": "Modifica Categoria",
+  "categories.rootCategory": "Categoria Radice",
+  "categories.nameLabel": "Nome Categoria",
+  "categories.typeLabel": "Tipo",
+  "categories.colorLabel": "Colore",
+  "categories.active": "Attiva",
+  "categories.createButton": "Crea",
+  "categories.updateButton": "Aggiorna",
 
   // Dashboard Page
   "dashboard.title": "Dashboard",
@@ -343,17 +354,10 @@ export const it = {
   "categories.type.expense": "Spesa",
   "categories.type.income": "Entrata",
   "categories.type.investment": "Investimento",
-  "categories.typeLabel": "Tipo",
-  "categories.newCategoryTitle": "Nuova Categoria",
-  "categories.editCategoryTitle": "Modifica Categoria",
-  "categories.nameLabel": "Nome",
-  "categories.colorLabel": "Colore",
-  "categories.active": "Attivo (mostra nel modulo)",
-  "categories.updateButton": "Aggiorna Categoria",
-  "categories.createButton": "Crea Categoria",
   "categories.deleteConfirmMessage":
     'Elimina categoria "{name}"? Questa azione non può essere annullata.',
   "categories.deleteConfirmButton": "Elimina",
+  "categories.subCategoryHint": " Sarà una sottocategoria",
 
   // Theme Selector
   "theme.appearance": "Aspetto",

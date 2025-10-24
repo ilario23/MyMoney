@@ -101,6 +101,16 @@ export const en: Record<TranslationKey, string> = {
   "categories.syncable": "Syncable: Synchronized with Supabase automatically",
   "categories.usedWarning":
     "Used in expenses: When you delete a category in use, you will receive a warning",
+  "categories.selectCurrent": "Select Current Level",
+  "categories.parentCategory": "Parent Category",
+  "categories.newCategoryTitle": "Create New Category",
+  "categories.editCategoryTitle": "Edit Category",
+  "categories.rootCategory": "Root Category",
+  "categories.nameLabel": "Category Name",
+  "categories.typeLabel": "Type",
+  "categories.active": "Active",
+  "categories.createButton": "Create",
+  "categories.updateButton": "Update",
 
   // Dashboard Page
   "dashboard.title": "Dashboard",
@@ -341,17 +351,11 @@ export const en: Record<TranslationKey, string> = {
   "categories.type.expense": "Expense",
   "categories.type.income": "Income",
   "categories.type.investment": "Investment",
-  "categories.typeLabel": "Type",
-  "categories.newCategoryTitle": "New Category",
-  "categories.editCategoryTitle": "Edit Category",
-  "categories.nameLabel": "Name",
-  "categories.colorLabel": "Color",
-  "categories.active": "Active (show in form)",
-  "categories.updateButton": "Update Category",
-  "categories.createButton": "Create Category",
   "categories.deleteConfirmMessage":
     'Delete category "{name}"? This action cannot be undone.',
   "categories.deleteConfirmButton": "Delete",
+  "categories.colorLabel": "Color",
+  "categories.subCategoryHint": " This will be a sub-category",
 
   // Theme Selector
   "theme.appearance": "Appearance",

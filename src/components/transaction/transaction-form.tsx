@@ -3,19 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { getDatabase } from "@/lib/db";
-import { renderIcon } from "@/lib/icon-renderer";
+
 import { syncService } from "@/services/sync.service";
 import type { CategoryDocType, TransactionDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import { CategorySelector } from "@/components/category-selector";
 import {
   Card,
   CardContent,
@@ -106,25 +101,6 @@ export function TransactionForm() {
   }, [user, id, isEditing, t]);
 
   // Helper: Build grouped category structure (only active categories of selected type)
-  const getGroupedCategories = () => {
-    const activeCategories = categories.filter(
-      (c) => !c.deleted_at && c.type === type
-    );
-    const topLevel = activeCategories.filter((c) => !c.parent_id);
-    const childrenMap = new Map<string, CategoryDocType[]>();
-
-    // Group children by parent
-    activeCategories.forEach((cat) => {
-      if (cat.parent_id) {
-        if (!childrenMap.has(cat.parent_id)) {
-          childrenMap.set(cat.parent_id, []);
-        }
-        childrenMap.get(cat.parent_id)!.push(cat);
-      }
-    });
-
-    return { topLevel, childrenMap };
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -423,45 +399,25 @@ export function TransactionForm() {
                   </AlertDescription>
                 </Alert>
               ) : (
-                <Select
-                  value={categoryId}
-                  onValueChange={setCategoryId}
-                  disabled={isLoading || success}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(() => {
-                      const { topLevel, childrenMap } = getGroupedCategories();
-                      return topLevel.map((parent) => {
-                        const children = childrenMap.get(parent.id) || [];
-                        return (
-                          <div key={parent.id}>
-                            {/* Parent category */}
-                            <SelectItem value={parent.id}>
-                              <span className="flex items-center gap-2">
-                                {renderIcon(parent.icon)} {parent.name}
-                              </span>
-                            </SelectItem>
-                            {/* Child categories (indented) */}
-                            {children.map((child) => (
-                              <SelectItem
-                                key={child.id}
-                                value={child.id}
-                                className="pl-8"
-                              >
-                                <span className="flex items-center gap-2">
-                                  {renderIcon(child.icon)} {child.name}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </SelectContent>
-                </Select>
+                <CategorySelector
+                  categories={categories.filter(
+                    (c) => !c.deleted_at && c.type === type
+                  )}
+                  categoryType={type}
+                  selectedCategoryId={categoryId || null}
+                  onSelectCategory={(catId) => setCategoryId(catId || "")}
+                  dialogTitle={
+                    isEditing ? "Seleziona categoria" : "Seleziona categoria"
+                  }
+                  dialogDescription={
+                    isEditing
+                      ? "Scegli la categoria per questa transazione."
+                      : "Scegli la categoria per questa transazione."
+                  }
+                  selectButtonLabel={"Seleziona"}
+                  cancelButtonLabel={"Indietro"}
+                  rootCategoryLabel={"Nessuna categoria"}
+                />
               )}
               <p className="text-xs text-muted-foreground">
                 {t("transaction.addHint")}

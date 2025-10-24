@@ -15,6 +15,7 @@ interface IconPickerProps {
   value: string;
   onChange: (icon: string) => void;
   className?: string;
+  color?: string | null;
 }
 
 /**
@@ -25,6 +26,7 @@ export function IconPicker({
   value,
   onChange,
   className = "",
+  color = null,
 }: IconPickerProps) {
   const icons = getAvailableIcons();
   const [open, setOpen] = useState(false);
@@ -45,6 +47,10 @@ export function IconPicker({
           <Button
             variant="outline"
             className="w-12 h-10 p-0 flex items-center justify-center"
+            style={{
+              backgroundColor: color || undefined,
+              color: color ? "white" : undefined,
+            }}
           >
             {renderIcon(value)}
           </Button>

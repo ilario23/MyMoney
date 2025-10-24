@@ -15,6 +15,7 @@ import { DashboardPage } from "@/pages/dashboard";
 import { ProfilePage } from "@/pages/profile";
 import { SettingsPage } from "@/pages/settings";
 import { CategoriesPage } from "@/pages/categories";
+import { CategoryFormPage } from "@/pages/category-form";
 import { StatisticsPage } from "@/pages/statistics";
 import { TransactionForm } from "@/components/transaction/transaction-form";
 import { TransactionsPage } from "@/pages/transactions";
@@ -154,6 +155,22 @@ export function AppRoutes() {
               element={
                 <Layout>
                   <CategoriesPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/categories/new"
+              element={
+                <Layout>
+                  <CategoryFormPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/categories/:id/edit"
+              element={
+                <Layout>
+                  <CategoryFormPage />
                 </Layout>
               }
             />

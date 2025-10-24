@@ -223,18 +223,18 @@ export function ProfilePage() {
       {/* User Info Card */}
       <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle>{t("profile.title")}</CardTitle>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2">
               {!isEditing && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="gap-2 flex-1 sm:flex-none"
+                  title={t("profile.editProfile")}
+                  className="p-2"
                 >
                   <Edit2 className="w-4 h-4" />
-                  <span className="sm:inline">{t("profile.editProfile")}</span>
                 </Button>
               )}
               <Dialog
@@ -245,12 +245,10 @@ export function ProfilePage() {
                   <Button
                     size="sm"
                     title={t("profile.logout")}
-                    className="gap-2 flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">
-                      {t("profile.logout")}
-                    </span>
+                    <span>{t("profile.logout")}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
