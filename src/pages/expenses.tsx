@@ -248,7 +248,7 @@ export function ExpensesPage() {
             return (
               <div
                 key={expense.id}
-                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs`}
+                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs bg-card`}
                 style={{
                   animationDelay: `${index * 50}ms`,
                 }}

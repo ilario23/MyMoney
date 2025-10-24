@@ -72,8 +72,6 @@ export function ProfilePage() {
           categories: categories.length,
           lastSyncDate: new Date(),
         };
-
-        console.log("Profile Stats:", newStats);
         setStats(newStats);
       } catch (error) {
         console.error("Error loading stats:", error);
@@ -245,10 +243,9 @@ export function ProfilePage() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    variant="destructive"
                     size="sm"
                     title={t("profile.logout")}
-                    className="gap-2 flex-1 sm:flex-none"
+                    className="gap-2 flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <LogOut className="w-4 h-4" />
                     <span className="hidden sm:inline">

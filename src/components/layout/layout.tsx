@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Navigation } from "./navigation";
 import { SyncIndicator } from "./sync-indicator";
 import { OfflineIndicator } from "./offline-indicator";
@@ -24,7 +24,10 @@ export function Layout({ children }: LayoutProps) {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-input bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
-          <div className="flex items-center gap-0">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-0 hover:opacity-80 transition-opacity"
+          >
             <div className="flex h-8 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-3xl leading-none">
               S
             </div>
@@ -32,7 +35,7 @@ export function Layout({ children }: LayoutProps) {
               <span className="hidden sm:inline">pendix App</span>
               <span className="sm:hidden">pendix</span>
             </h1>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-3">
             <SyncIndicator />
@@ -41,7 +44,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content with Sidebar */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 dark:from-primary/12 dark:via-background dark:to-secondary/12">
         {/* Desktop Sidebar */}
         <Sidebar />
 

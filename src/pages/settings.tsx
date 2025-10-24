@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import packageJson from "../../package.json";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronLeft } from "lucide-react";
 
 export function SettingsPage() {
   const { user, logout } = useAuthStore();
@@ -206,7 +206,17 @@ export function SettingsPage() {
     <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t("profile.settings")}</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/profile")}
+            className="md:hidden -ml-2"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-3xl font-bold">{t("profile.settings")}</h1>
+        </div>
       </div>
 
       {error && (
