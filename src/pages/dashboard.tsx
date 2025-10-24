@@ -435,7 +435,10 @@ export function DashboardPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/transactions")}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate("/transactions");
+              }}
               className="text-primary hover:text-primary/80 hover:bg-transparent p-0"
               title={t("dashboard.viewAllTransactions")}
             >
@@ -443,13 +446,25 @@ export function DashboardPage() {
             </Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent
+          className={
+            transactionDocs.length > 0
+              ? "cursor-pointer hover:bg-accent/40 transition-all rounded-lg"
+              : ""
+          }
+          onClick={() =>
+            transactionDocs.length > 0 && navigate("/transactions")
+          }
+        >
           {transactionDocs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>{t("dashboard.noTransactions")}</p>
               <Button
                 variant="link"
-                onClick={() => navigate("/transaction/new")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/transaction/new");
+                }}
                 className="mt-2"
               >
                 {t("dashboard.addFirstTransaction")}
@@ -464,8 +479,7 @@ export function DashboardPage() {
                   return (
                     <div
                       key={expense.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer shadow-sm transition-all"
-                      onClick={() => navigate(`/transaction/${expense.id}`)}
+                      className="flex items-center justify-between p-3 rounded-lg shadow-sm transition-all"
                     >
                       <div className="flex-1">
                         <p className="font-medium">{expense.description}</p>

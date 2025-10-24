@@ -1,10 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { useQuery } from "@/hooks/useQuery";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Edit2 } from "lucide-react";
+import { Trash2, Edit2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import * as LucideIcons from "lucide-react";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { getDatabase } from "@/lib/db";
@@ -12,6 +13,8 @@ import { syncService } from "@/services/sync.service";
 import { syncLogger } from "@/lib/logger";
 
 export function CategoriesPage() {
+  // Stato: solo un ramo aperto alla volta
+  const [openCategoryIds, setOpenCategoryIds] = useState<string[]>([]);
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -102,24 +105,44 @@ export function CategoriesPage() {
   const renderCategoryTree = (category: CategoryDocType, depth: number = 0) => {
     const children = childrenMap.get(category.id) || [];
     const marginLeft = depth > 0 ? depth * 16 : 0;
+    // Più compatto: icona e padding ridotti
     const iconSizeClass =
-      depth === 0 ? "w-10 h-10" : depth === 1 ? "w-8 h-8" : "w-6 h-6";
+      depth === 0 ? "w-12 h-12" : depth === 1 ? "w-10 h-10" : "w-8 h-8";
     const textSizeClass =
       depth === 0 ? "text-base" : depth === 1 ? "text-sm" : "text-xs";
-    const paddingClass = depth === 0 ? "p-4" : depth === 1 ? "p-3" : "p-2";
+    const paddingClass = depth === 0 ? "px-3" : depth === 1 ? "px-2.5" : "px-2";
+
+    // Espansione/collasso: solo un ramo aperto
+    const isOpen = openCategoryIds.includes(category.id);
+    const hasChildren = children.length > 0;
 
     return (
       <div key={category.id} style={{ marginLeft }}>
         <Card
-          className="hover:shadow-lg transition-all group border border-input"
+          className={
+            "hover:shadow-lg transition-all group border border-input" +
+            (hasChildren ? " cursor-pointer select-none" : "")
+          }
           style={{ opacity: category.is_active ? 1 : 0.6 }}
+          onClick={() => {
+            if (hasChildren) {
+              setOpenCategoryIds((prev) =>
+                isOpen
+                  ? prev.filter((id) => id !== category.id)
+                  : [...prev, category.id]
+              );
+            }
+          }}
         >
           <CardContent className={paddingClass}>
             <div className="flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div
-                  className={`${iconSizeClass} flex-shrink-0 rounded-lg flex items-center justify-center text-white`}
-                  style={{ backgroundColor: category.color || "#3B82F6" }}
+                  className={`${iconSizeClass} flex-shrink-0 rounded-lg flex items-center justify-center`}
+                  style={{
+                    backgroundColor:
+                      category.color || "var(--primary-foreground)",
+                  }}
                 >
                   {renderCategoryIcon(category.icon)}
                 </div>
@@ -138,7 +161,7 @@ export function CategoriesPage() {
                       {category.type === "investment" &&
                         t("categories.type.investment")}
                     </span>
-                    {children.length > 0 && (
+                    {hasChildren && (
                       <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
                         {children.length} sub-categor
                         {children.length === 1 ? "y" : "ies"}
@@ -152,16 +175,22 @@ export function CategoriesPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <div className="flex gap-1 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => handleEditCategory(category)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditCategory(category);
+                  }}
                   className="p-2 hover:bg-primary/15 rounded transition-colors"
                   title="Edit"
                 >
                   <Edit2 className="w-4 h-4 text-primary" />
                 </button>
                 <button
-                  onClick={() => handleDeleteCategory(category)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCategory(category);
+                  }}
                   className="p-2 hover:bg-destructive/10 rounded transition-colors"
                   title="Delete"
                 >
@@ -172,7 +201,7 @@ export function CategoriesPage() {
           </CardContent>
         </Card>
 
-        {children.length > 0 && (
+        {hasChildren && isOpen && (
           <div className="mt-2 space-y-2 border-l-2 border-muted pl-3">
             {children.map((child) => renderCategoryTree(child, depth + 1))}
           </div>
@@ -188,12 +217,18 @@ export function CategoriesPage() {
           <h1 className="text-3xl font-bold">{t("categories.title")}</h1>
           <p className="text-muted-foreground">{t("categories.description")}</p>
         </div>
-        <button
+        <Button
+          variant="default"
+          size="sm"
           onClick={() => navigate("/categories/new")}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium flex-shrink-0"
+          title={t("categories.createButton")}
+          className="gap-2"
         >
-          + {t("categories.createButton")}
-        </button>
+          <Plus className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {t("categories.createButton")}
+          </span>
+        </Button>
       </div>
 
       <div className="grid gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">

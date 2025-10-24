@@ -209,7 +209,7 @@ export function ProfilePage() {
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
         <Button
-          variant="outline"
+          variant="default"
           size="sm"
           onClick={() => navigate("/settings")}
           title={t("nav.settings")}
@@ -234,7 +234,7 @@ export function ProfilePage() {
                   title={t("profile.editProfile")}
                   className="p-2"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-4 h-4 text-primary" />
                 </Button>
               )}
               <Dialog

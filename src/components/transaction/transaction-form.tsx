@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -108,13 +108,11 @@ export function TransactionForm() {
 
     setIsLoading(true);
     setError("");
-
     try {
       const db = getDatabase();
-
       if (isEditing && transaction) {
         // UPDATE existing transaction
-        const updatedTransaction: TransactionDocType = {
+        const updatedTransaction = {
           ...transaction,
           type,
           amount: parseFloat(amount),
@@ -123,9 +121,9 @@ export function TransactionForm() {
           date: new Date(date).toISOString(),
           updated_at: new Date().toISOString(),
         };
-
         await db.transactions.put(updatedTransaction);
         syncLogger.success("Transaction updated locally - syncing with server");
+        toast.success(t("transaction.saved") || "Transaction updated locally");
       } else {
         // CREATE new transaction
         const newTransaction = {
@@ -140,9 +138,9 @@ export function TransactionForm() {
           updated_at: new Date().toISOString(),
           deleted_at: null,
         };
-
         await db.transactions.put(newTransaction);
         syncLogger.success("Transaction saved locally - syncing with server");
+        toast.success(t("transaction.saved") || "Transaction saved locally");
       }
 
       // Mark that local data has changed (CRUD operation)
@@ -151,6 +149,9 @@ export function TransactionForm() {
       // Trigger background sync if online (don't wait for it)
       if (syncService.isAppOnline()) {
         syncService.syncAfterChange(user.id).catch((error) => {
+          toast.error(
+            t("transaction.addError") || "Errore di sincronizzazione"
+          );
           syncLogger.error("Background sync error:", error);
         });
       } else {
@@ -164,10 +165,8 @@ export function TransactionForm() {
       setCategoryId("");
       setDate(new Date().toISOString().split("T")[0]);
 
-      // Redirect after 2s (give time to read any error message)
-      setTimeout(() => {
-        navigate(isEditing ? "/transactions" : "/dashboard");
-      }, 2000);
+      // Dopo la creazione o modifica, vai subito alla lista delle transazioni
+      navigate("/transactions");
     } catch (error) {
       dbLogger.error("Error saving transaction:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
@@ -224,6 +223,12 @@ export function TransactionForm() {
     }
   };
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   return (
     <div className="max-w-md mx-auto space-y-4">
       {/* Header with back button */}
@@ -240,33 +245,6 @@ export function TransactionForm() {
           {isEditing ? "Edit Transaction" : t("transaction.title")}
         </h1>
       </div>
-
-      {isLoadingTransaction && (
-        <Alert className="border border-primary/30 bg-primary/10">
-          <AlertDescription className="text-primary font-medium">
-            Loading...
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border border-primary/30 bg-primary/10">
-          <AlertDescription className="text-primary font-medium">
-            {isEditing
-              ? "✓ Transaction updated! Redirecting..."
-              : t("transaction.addSuccess")}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {error && (
-        <Alert className="border border-destructive/30 bg-destructive/10">
-          <AlertDescription className="text-destructive font-medium">
-            {error}
-          </AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
@@ -383,21 +361,24 @@ export function TransactionForm() {
                 {t("transaction.category")}
               </label>
               {categories.length === 0 ? (
-                <Alert className="border border-ring bg-muted">
-                  <AlertDescription className="text-muted-foreground flex items-center justify-between">
-                    <span>No categories yet. Create one first!</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate("/categories")}
-                      className="ml-2"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Create Category
-                    </Button>
-                  </AlertDescription>
-                </Alert>
+                <div className="flex items-center justify-between border border-ring bg-muted text-muted-foreground rounded px-3 py-2">
+                  <span>No categories yet. Create one first!</span>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      toast.info(
+                        "Vai alla pagina categorie per crearne una nuova."
+                      );
+                      navigate("/categories");
+                    }}
+                    className="ml-2 gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Create Category</span>
+                  </Button>
+                </div>
               ) : (
                 <CategorySelector
                   categories={categories.filter(

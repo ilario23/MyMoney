@@ -297,7 +297,7 @@ export function TransactionsPage() {
                   </div>
 
                   {/* Amount and Actions */}
-                  <div className="text-right ml-4 flex items-center gap-2">
+                  <div className="text-right ml-4 flex items-center gap-2 flex-shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                     <div>
                       <p
                         className={`text-xl font-bold ${typeStyle.amountColor}`}
