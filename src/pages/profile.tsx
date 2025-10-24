@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Edit2, Save, X, Settings } from "lucide-react";
+import { toast } from "sonner";
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -38,8 +38,6 @@ export function ProfilePage() {
     categories: 0,
     lastSyncDate: null as Date | null,
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Load user statistics
@@ -87,13 +85,11 @@ export function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!displayName.trim()) {
-      setError(t("profile.nameCannotBeEmpty"));
+      toast.error(t("profile.nameCannotBeEmpty"));
       return;
     }
 
     setIsSaving(true);
-    setError("");
-    setSuccess("");
 
     try {
       // Update display name in Supabase
@@ -102,11 +98,13 @@ export function ProfilePage() {
       });
 
       if (updateError) {
-        setError(t("profile.errorUpdatingProfile"));
+        const errorMsg = t("profile.errorUpdatingProfile");
+        toast.error(errorMsg);
         return;
       }
 
-      setSuccess(t("profile.profileUpdated"));
+      const successMsg = t("profile.profileUpdated");
+      toast.success(successMsg);
       setIsEditing(false);
 
       // Update local user in auth store
@@ -115,7 +113,8 @@ export function ProfilePage() {
       }
     } catch (err) {
       authLogger.error("Error updating profile:", err);
-      setError(t("profile.anErrorOccurred"));
+      const errorMsg = t("profile.anErrorOccurred");
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +193,7 @@ export function ProfilePage() {
       navigate("/login");
     } catch (error) {
       authLogger.error("Logout error:", error);
-      setError(t("profile.logoutError") || "Errore durante il logout");
+      toast.error(t("profile.logoutError") || "Errore durante il logout");
     }
   };
 
@@ -222,23 +221,6 @@ export function ProfilePage() {
           <span className="hidden sm:inline">{t("nav.settings")}</span>
         </Button>
       </div>
-
-      {error && (
-        <Alert
-          variant="destructive"
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
-        >
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border border-primary/30 bg-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-          <AlertDescription className="text-primary font-medium">
-            ✓ {success}
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* User Info Card */}
       <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">

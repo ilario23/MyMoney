@@ -22,10 +22,22 @@ export function useSync(): UseSync {
   const [healthStatus, setHealthStatus] = useState<SyncHealthStatus>("synced");
   const { user } = useAuthStore();
 
+  // Calculate health status based on unsynced count and online state
+  const calculateHealthStatus = useCallback(
+    async (count: number): Promise<SyncHealthStatus> => {
+      if (count > 0) {
+        return "pending";
+      }
+      return "synced";
+    },
+    []
+  );
+
   // Update unsynced count
   const updateUnsyncedCount = useCallback(async () => {
     if (!user) {
       setUnsyncedCount(0);
+      setHealthStatus("synced");
       return;
     }
 
@@ -33,10 +45,14 @@ export function useSync(): UseSync {
       const count = await syncService.getUnsyncedCount(user.id);
       setUnsyncedCount(count);
       setHasUnsyncedChanges(count > 0);
+
+      // Update health status based on unsynced count
+      const newStatus = await calculateHealthStatus(count);
+      setHealthStatus(newStatus);
     } catch (error) {
       console.error("Error updating unsynced count:", error);
     }
-  }, [user]);
+  }, [user, calculateHealthStatus]);
 
   const sync = useCallback(async () => {
     if (!user || isSyncing) return;
@@ -90,7 +106,7 @@ export function useSync(): UseSync {
     };
   }, [user, sync]);
 
-  // Subscribe to sync state changes
+  // Subscribe to sync state changes (includes healthStatus updates from flag changes)
   useEffect(() => {
     const unsubscribe = syncService.subscribe((state) => {
       setIsSyncing(state.status === "syncing");

@@ -204,32 +204,21 @@ export function DashboardPage() {
         <CardContent>
           {/* Mobile view */}
           <div className="md:hidden">
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                  <TrendingDown className="h-4 w-4 text-destructive" />
-                  <span>{t("dashboard.expensesThisMonth")}</span>
-                </div>
-                <div className="text-4xl font-bold text-destructive">
-                  {monthlyTotal.toFixed(2)}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t("dashboard.transactions").replace(
-                    "{count}",
-                    String(
-                      expenseDocs.filter((e: ExpenseDocType) => e.amount > 0)
-                        .length
-                    )
-                  )}
-                </p>
-              </div>
-              <div className="pt-3 border-t text-sm text-muted-foreground flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                <span>
-                  {t("dashboard.tapForStats") || "Tap per vedere statistiche"}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <TrendingDown className="h-4 w-4 text-destructive" />
+              <span>{t("dashboard.expensesThisMonth")}</span>
             </div>
+            <div className="text-4xl font-bold text-destructive">
+              {monthlyTotal.toFixed(2)}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("dashboard.transactions").replace(
+                "{count}",
+                String(
+                  expenseDocs.filter((e: ExpenseDocType) => e.amount > 0).length
+                )
+              )}
+            </p>
           </div>
 
           {/* Desktop view */}

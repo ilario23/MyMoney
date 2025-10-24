@@ -28,6 +28,7 @@ class SyncService {
   };
   private isOnline = navigator.onLine;
   private hasRemoteChanges = false;
+  private hasLocalChanges = false; // ← Flag per tracciare cambiamenti locali (CRUD)
   private realtimeSubscription: any = null;
 
   subscribe(listener: (state: SyncState) => void): () => void {
@@ -102,6 +103,9 @@ class SyncService {
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
 
+      // Clear local changes flag - sync was successful
+      this.clearLocalChanges();
+
       // Update health status after sync
       this.currentState.healthStatus = await this.calculateHealthStatus(userId);
 
@@ -160,22 +164,28 @@ class SyncService {
   }
 
   /**
-   * Pull changes from Supabase
+   * Pull changes from Supabase using DELTA SYNC
+   * Only pulls items that were modified AFTER the last successful sync
    * Excludes soft-deleted records (deleted_at IS NULL)
+   *
+   * Flow:
+   * 1. Get last successful sync timestamp from localStorage
+   * 2. Query Supabase only for items modified after that timestamp
+   * 3. Merge with local data via upsert
+   * 4. Update the last sync timestamp ONLY if pull succeeds
    */
   private async pullFromSupabase(
     collectionName: "users" | "categories" | "expenses",
     userId: string
   ): Promise<void> {
-    // Get last sync time from localStorage
-    const lastSyncKey = `last_sync_${collectionName}`;
-    const lastSync = localStorage.getItem(lastSyncKey);
-    const minTimestamp = lastSync || new Date(0).toISOString();
+    // Get last successful sync time for delta sync
+    const lastSuccessfulSync =
+      await this.getLastSuccessfulSyncTime(collectionName);
 
     let query = supabase
       .from(collectionName)
       .select("*")
-      .gte("updated_at", minTimestamp)
+      .gte("updated_at", lastSuccessfulSync) // ← DELTA SYNC: Only fetch changes since last sync
       .is("deleted_at", null) // ← Filter out soft-deleted records
       .order("updated_at", { ascending: true });
 
@@ -191,6 +201,7 @@ class SyncService {
     }
 
     if (!data || data.length === 0) {
+      syncLogger.info(`No new changes in ${collectionName} (delta sync)`);
       return;
     }
 
@@ -201,7 +212,9 @@ class SyncService {
       await table.put(doc);
     }
 
-    // Update last sync time
+    // Update last successful sync time ONLY for successful pull
+    // This timestamp will be used in the next delta query
+    const lastSyncKey = `last_sync_${collectionName}`;
     localStorage.setItem(lastSyncKey, new Date().toISOString());
 
     // Mark remote changes as processed (we've pulled them)
@@ -209,7 +222,9 @@ class SyncService {
       this.markRemoteChangesAsProcessed();
     }
 
-    syncLogger.info(`Pulled ${data.length} items from ${collectionName}`);
+    syncLogger.info(
+      `Pulled ${data.length} items from ${collectionName} (delta sync)`
+    );
   }
 
   /**
@@ -338,6 +353,9 @@ class SyncService {
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
 
+      // Clear local changes flag - sync was successful
+      this.clearLocalChanges();
+
       // Update health status after successful sync
       this.currentState.healthStatus = await this.calculateHealthStatus(userId);
 
@@ -417,18 +435,34 @@ class SyncService {
   }
 
   /**
-   * Get last successful sync timestamp
+   * Get last successful sync timestamp for a specific collection
    * Used for efficient delta queries to Supabase
+   * Returns the timestamp of the last successful pull for delta sync queries
+   *
+   * Delta sync logic:
+   * - Each collection tracks its own last_sync_<collection> timestamp
+   * - Next pull queries: .gte("updated_at", lastSuccessfulSync)
+   * - This only fetches items modified AFTER that timestamp
+   * - Much more efficient than pulling everything every time
+   *
+   * @param collectionName - The collection to get last sync for (users, categories, expenses)
+   * @returns ISO timestamp string (or epoch if never synced)
    */
-  async getLastSuccessfulSyncTime(): Promise<string> {
-    const lastSyncKey = "last_sync_expenses";
+  async getLastSuccessfulSyncTime(
+    collectionName?: "users" | "categories" | "expenses"
+  ): Promise<string> {
+    // If no collection specified, use the main sync timestamp (for backward compatibility)
+    const lastSyncKey = collectionName
+      ? `last_sync_${collectionName}`
+      : "last_sync_expenses";
+
     const lastSync = localStorage.getItem(lastSyncKey);
 
     if (lastSync) {
       return lastSync;
     }
 
-    // If no sync has happened yet, return epoch
+    // If no sync has happened yet, return epoch (pull everything from start)
     return new Date(0).toISOString();
   }
 
@@ -487,6 +521,35 @@ class SyncService {
       syncLogger.error("Error calculating health status:", error);
       return "synced"; // Default to synced on error
     }
+  }
+
+  /**
+   * Mark that local data has changed (CRUD operation on expenses/categories)
+   * Called from components when they modify data locally
+   * Triggers health status to show "pending"
+   */
+  markLocalChangesAsChanged(): void {
+    this.hasLocalChanges = true;
+    // Recalculate health status to show "pending"
+    this.currentState.healthStatus = "pending";
+    this.notifyListeners();
+    syncLogger.info("Local changes detected - marking as pending");
+  }
+
+  /**
+   * Clear the local changes flag after successful sync
+   * Called from backgroundSync or syncAfterChange when push succeeds
+   */
+  clearLocalChanges(): void {
+    this.hasLocalChanges = false;
+    syncLogger.info("Local changes cleared after sync");
+  }
+
+  /**
+   * Check if there are local changes pending
+   */
+  hasLocalChangesPending(): boolean {
+    return this.hasLocalChanges;
   }
 
   /**

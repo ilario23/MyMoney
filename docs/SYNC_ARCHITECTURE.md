@@ -132,10 +132,48 @@ export interface ExpenseDocType {
 const count = await syncService.getUnsyncedCount(userId);
 // Ritorna: numero di categorie + spese non sincate
 
-// Ottenere il timestamp dell'ultimo sync riuscito
-const lastSyncTime = await syncService.getLastSuccessfulSyncTime();
-// Utile per query più raffinate a Supabase
+// Ottenere il timestamp dell'ultimo sync riuscito (per delta sync)
+const lastSyncTime = await syncService.getLastSuccessfulSyncTime("expenses");
+// Ritorna: timestamp ISO del pull precedente
+// Primo sync? → ritorna epoch ("1970-01-01")
+// Usi questo nelle query a Supabase per delta sync
 ```
+
+### **Come Funziona il Delta Sync Internamente**
+
+Ogni volta che `pullFromSupabase()` viene chiamato:
+
+1. **Recupera il timestamp precedente**
+
+   ```typescript
+   const lastSync = await this.getLastSuccessfulSyncTime(collectionName);
+   // Es: "2025-10-24T10:30:00Z"
+   ```
+
+2. **Query a Supabase con gte("updated_at", lastSync)**
+
+   ```typescript
+   .gte("updated_at", lastSync)  // ← Solo items modificati DOPO questo timestamp
+   ```
+
+3. **Merge in Dexie (upsert)**
+
+   ```typescript
+   for (const doc of data) {
+     await table.put(doc); // ← Se esiste → update, altrimenti → insert
+   }
+   ```
+
+4. **Aggiorna il timestamp SOLO se il pull ha successo**
+   ```typescript
+   localStorage.setItem(lastSyncKey, new Date().toISOString());
+   ```
+
+**Risultato:**
+
+- Primo sync: tira TUTTI i dati (perché il timestamp è epoch)
+- Sync successivi: tira SOLO i cambiamenti (perché il timestamp è recente)
+- Se un sync fallisce: mantiene il timestamp vecchio e riprova da lì
 
 ### **Nel Hook useSync**
 
@@ -178,24 +216,53 @@ export function SyncStatus() {
 }
 ```
 
-### **Query Più Raffinate a Supabase**
+### **Delta Sync: Query Efficienti a Supabase**
 
-Ora puoi usare `getLastSuccessfulSyncTime()` per query efficienti:
+Il sistema usa **delta sync** per ridurre il traffico:
 
 ```typescript
-// Prima: pull TUTTO ogni volta
+// Primo sync (all'avvio): pull TUTTO
+// localStorage non ha "last_sync_expenses"
+// → getLastSuccessfulSyncTime() ritorna epoch (1970-01-01)
 const { data } = await supabase
   .from("expenses")
   .select("*")
-  .gte("updated_at", "1970-01-01"); // ← inefficiente!
-
-// Adesso: pull solo quello che è cambiato DOPO l'ultimo sync riuscito
-const lastSync = await syncService.getLastSuccessfulSyncTime();
-const { data } = await supabase
-  .from("expenses")
-  .select("*")
-  .gte("updated_at", lastSync) // ← delta sync! 🚀
+  .gte("updated_at", "1970-01-01") // ← pull tutto
   .eq("user_id", userId);
+// Dopo: localStorage["last_sync_expenses"] = "2025-10-24T10:30:00Z"
+
+// Sync successivi: pull solo le novità
+const lastSync = await syncService.getLastSuccessfulSyncTime("expenses");
+// → "2025-10-24T10:30:00Z"
+const { data } = await supabase
+  .from("expenses")
+  .select("*")
+  .gte("updated_at", "2025-10-24T10:30:00Z") // ← solo cambiamenti! 🚀
+  .eq("user_id", userId);
+// Risultato: Se 100 spese ma 3 modificate → tira solo 3 ✅
+```
+
+**Flusso Completo:**
+
+```
+1. initializeAtStartup() → backgroundSync()
+   ↓
+2. pullFromSupabase("expenses", userId)
+   ├─ Prendi: localStorage["last_sync_expenses"]
+   ├─ Se null → usa epoch ("1970-01-01")
+   ├─ Query: .gte("updated_at", epoch) → tira TUTTO
+   ├─ Merge in Dexie via upsert
+   └─ Salva: localStorage["last_sync_expenses"] = NOW()
+
+   … 2 ore dopo …
+
+3. backgroundSync() (sync periodico/manuale)
+   ↓
+4. pullFromSupabase("expenses", userId)
+   ├─ Prendi: localStorage["last_sync_expenses"] = "2025-10-24T10:30:00Z"
+   ├─ Query: .gte("updated_at", "2025-10-24T10:30:00Z") → tira solo nuovi/modificati ✅
+   ├─ Merge in Dexie
+   └─ Salva: localStorage["last_sync_expenses"] = NOW()
 ```
 
 ### **Ciclo Completo: Sync e Update**

@@ -109,6 +109,9 @@ export function CategoriesPage() {
 
       syncLogger.success("Category saved locally - syncing with server");
 
+      // Mark that local data has changed (CRUD operation)
+      syncService.markLocalChangesAsChanged();
+
       // Trigger background sync if online (don't wait for it)
       if (syncService.isAppOnline()) {
         syncService.syncAfterChange(user.id).catch((error) => {
@@ -160,6 +163,9 @@ export function CategoriesPage() {
         });
 
         syncLogger.success("Category deleted locally - syncing with server");
+
+        // Mark that local data has changed (CRUD operation)
+        syncService.markLocalChangesAsChanged();
 
         // Trigger background sync if online (don't wait for it)
         if (user && syncService.isAppOnline()) {
