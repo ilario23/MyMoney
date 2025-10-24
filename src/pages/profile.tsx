@@ -33,7 +33,7 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [stats, setStats] = useState({
-    totalExpenses: 0,
+    totalTransactions: 0,
     totalAmount: 0,
     categories: 0,
     lastSyncDate: null as Date | null,
@@ -48,10 +48,10 @@ export function ProfilePage() {
         const db = getDatabase();
 
         // Calcola statistiche di tutti i tempi (non solo questo mese)
-        const allExpenses = await db.expenses
+        const allTransactions = await db.transactions
           .where("user_id")
           .equals(user.id)
-          .filter((exp) => !exp.deleted_at)
+          .filter((trans) => !trans.deleted_at)
           .toArray();
 
         // Conta le categorie
@@ -61,13 +61,13 @@ export function ProfilePage() {
           .toArray();
 
         // Calcola l'importo totale
-        const totalAmount = allExpenses.reduce(
-          (sum, exp) => sum + exp.amount,
+        const totalAmount = allTransactions.reduce(
+          (sum, trans) => sum + trans.amount,
           0
         );
 
         const newStats = {
-          totalExpenses: allExpenses.length,
+          totalTransactions: allTransactions.length,
           totalAmount: totalAmount,
           categories: categories.length,
           lastSyncDate: new Date(),
@@ -349,10 +349,10 @@ export function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
               <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
-                {t("profile.expenses")}
+                {t("profile.transactions")}
               </p>
               <p className="text-3xl sm:text-2xl font-bold text-primary">
-                {stats.totalExpenses}
+                {stats.totalTransactions}
               </p>
             </div>
 

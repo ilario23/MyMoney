@@ -16,12 +16,10 @@ import { ProfilePage } from "@/pages/profile";
 import { SettingsPage } from "@/pages/settings";
 import { CategoriesPage } from "@/pages/categories";
 import { StatisticsPage } from "@/pages/statistics";
-import { ExpenseForm } from "@/components/expense/expense-form";
-import { ExpensesPage } from "@/pages/expenses";
-
-function NotFound() {
-  return <div className="text-center py-12">Pagina non trovata</div>;
-}
+import { TransactionForm } from "@/components/transaction/transaction-form";
+import { TransactionsPage } from "@/pages/transactions";
+import { NotFoundPage } from "@/pages/not-found";
+import { UnauthorizedPage } from "@/pages/unauthorized";
 
 export function AppRoutes() {
   const { user, isLoading, setUser, setLoading } = useAuthStore();
@@ -112,26 +110,26 @@ export function AppRoutes() {
               }
             />
             <Route
-              path="/expense/new"
+              path="/transaction/new"
               element={
                 <Layout>
-                  <ExpenseForm />
+                  <TransactionForm />
                 </Layout>
               }
             />
             <Route
-              path="/expense/:id"
+              path="/transaction/:id"
               element={
                 <Layout>
-                  <ExpenseForm />
+                  <TransactionForm />
                 </Layout>
               }
             />
             <Route
-              path="/expenses"
+              path="/transactions"
               element={
                 <Layout>
-                  <ExpensesPage />
+                  <TransactionsPage />
                 </Layout>
               }
             />
@@ -174,11 +172,13 @@ export function AppRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Show Unauthorized for any other protected route when not logged in */}
+            <Route path="*" element={<UnauthorizedPage />} />
           </>
         )}
 
-        {/* 404 */}
-        <Route path="*" element={<NotFound />} />
+        {/* 404 - Only shown when logged in and route doesn't exist */}
+        {user && <Route path="*" element={<NotFoundPage />} />}
       </Routes>
     </Router>
   );

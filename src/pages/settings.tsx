@@ -320,7 +320,7 @@ export function SettingsPage() {
               <Button
                 onClick={async () => {
                   const db = getDatabase();
-                  const expenses = await db.expenses
+                  const transactions = await db.transactions
                     .where("user_id")
                     .equals(user.id)
                     .toArray();
@@ -330,7 +330,9 @@ export function SettingsPage() {
                     .toArray();
                   const data = {
                     user,
-                    expenses: expenses.map((e: (typeof expenses)[0]) => e),
+                    transactions: transactions.map(
+                      (e: (typeof transactions)[0]) => e
+                    ),
                     categories: categories.map(
                       (c: (typeof categories)[0]) => c
                     ),
@@ -357,16 +359,14 @@ export function SettingsPage() {
             <DialogTrigger asChild>
               <Button variant="destructive" className="w-full">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Clear Local Cache
+                {t("profile.clearLocalCache")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Clear Local Cache</DialogTitle>
+                <DialogTitle>{t("profile.clearLocalCache")}</DialogTitle>
                 <DialogDescription className="text-destructive">
-                  ⚠️ Questo cancellerà la cache locale (IndexedDB,
-                  localStorage). I tuoi dati rimangono in Supabase. Sarai
-                  disconnesso.
+                  {t("profile.clearCacheDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Button
@@ -375,7 +375,7 @@ export function SettingsPage() {
                 className="w-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Clear Cache & Logout
+                {t("profile.clearCacheButton")}
               </Button>
             </DialogContent>
           </Dialog>

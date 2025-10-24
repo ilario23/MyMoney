@@ -93,7 +93,7 @@ class SyncService {
     this.notifyListeners();
 
     try {
-      const collections = ["users", "categories", "expenses"] as const;
+      const collections = ["users", "categories", "transactions"] as const;
 
       for (const collectionName of collections) {
         await this.syncCollection(collectionName, userId);
@@ -143,17 +143,17 @@ class SyncService {
   /**
    * Sync a single collection
    * Note: Users are PULL-ONLY (read from Supabase)
-   *       Categories and Expenses are PULL + PUSH (bidirectional sync)
+   *       Categories and Transactions are PULL + PUSH (bidirectional sync)
    */
   private async syncCollection(
-    collectionName: "users" | "categories" | "expenses",
+    collectionName: "users" | "categories" | "transactions",
     userId: string
   ): Promise<void> {
     try {
       // Always pull from Supabase
       await this.pullFromSupabase(collectionName, userId);
 
-      // Only push changes for categories and expenses
+      // Only push changes for categories and transactions
       if (collectionName !== "users") {
         await this.pushToSupabase(collectionName, userId);
       }
@@ -175,7 +175,7 @@ class SyncService {
    * 4. Update the last sync timestamp ONLY if pull succeeds
    */
   private async pullFromSupabase(
-    collectionName: "users" | "categories" | "expenses",
+    collectionName: "users" | "categories" | "transactions",
     userId: string
   ): Promise<void> {
     // Get last successful sync time for delta sync
@@ -229,11 +229,11 @@ class SyncService {
 
   /**
    * Push local changes to Supabase
-   * Called only for categories and expenses, never for users
+   * Called only for categories and transactions, never for users
    * Uses INSERT or UPDATE separately to respect RLS policies
    */
   private async pushToSupabase(
-    collectionName: "categories" | "expenses",
+    collectionName: "categories" | "transactions",
     userId: string
   ): Promise<void> {
     const db = getDatabase();
@@ -342,8 +342,8 @@ class SyncService {
     syncLogger.info("Syncing changes for user:", userId);
 
     try {
-      // Only push categories and expenses (what the user just changed)
-      const collectionsToSync = ["categories", "expenses"] as const;
+      // Only push categories and transactions (what the user just changed)
+      const collectionsToSync = ["categories", "transactions"] as const;
 
       for (const collectionName of collectionsToSync) {
         await this.pushToSupabase(collectionName, userId);
@@ -410,20 +410,20 @@ class SyncService {
         })
         .toArray();
 
-      const unsyncedExpenses = await db.expenses
+      const unsyncedTransactions = await db.transactions
         .where("user_id")
         .equals(userId)
-        .filter((exp: any) => {
-          if (!exp.synced_at) return true;
-          return new Date(exp.updated_at) > new Date(exp.synced_at);
+        .filter((trx: any) => {
+          if (!trx.synced_at) return true;
+          return new Date(trx.updated_at) > new Date(trx.synced_at);
         })
         .toArray();
 
-      const total = unsyncedCategories.length + unsyncedExpenses.length;
+      const total = unsyncedCategories.length + unsyncedTransactions.length;
 
       if (total > 0) {
         syncLogger.info(
-          `Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedExpenses.length} expenses)`
+          `Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedTransactions.length} transactions)`
         );
       }
 
@@ -445,16 +445,16 @@ class SyncService {
    * - This only fetches items modified AFTER that timestamp
    * - Much more efficient than pulling everything every time
    *
-   * @param collectionName - The collection to get last sync for (users, categories, expenses)
+   * @param collectionName - The collection to get last sync for (users, categories, transactions)
    * @returns ISO timestamp string (or epoch if never synced)
    */
   async getLastSuccessfulSyncTime(
-    collectionName?: "users" | "categories" | "expenses"
+    collectionName?: "users" | "categories" | "transactions"
   ): Promise<string> {
     // If no collection specified, use the main sync timestamp (for backward compatibility)
     const lastSyncKey = collectionName
       ? `last_sync_${collectionName}`
-      : "last_sync_expenses";
+      : "last_sync_transactions";
 
     const lastSync = localStorage.getItem(lastSyncKey);
 
@@ -471,7 +471,7 @@ class SyncService {
    * Updates synced_at timestamp for all given items
    */
   private async markAsSynced(
-    collectionName: "categories" | "expenses",
+    collectionName: "categories" | "transactions",
     itemIds: string[]
   ): Promise<void> {
     if (itemIds.length === 0) return;
@@ -562,7 +562,7 @@ class SyncService {
       return;
     }
 
-    // Subscribe to changes in categories and expenses tables
+    // Subscribe to changes in categories and transactions tables
     const subscription = supabase
       .channel(`sync-monitoring:${userId}`)
       .on(
@@ -584,12 +584,12 @@ class SyncService {
         {
           event: "*",
           schema: "public",
-          table: "expenses",
+          table: "transactions",
           filter: `user_id=eq.${userId}`,
         },
         () => {
           this.hasRemoteChanges = true;
-          syncLogger.info("Remote changes detected in expenses");
+          syncLogger.info("Remote changes detected in transactions");
           this.notifyListeners();
         }
       )

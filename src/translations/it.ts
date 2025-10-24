@@ -15,7 +15,7 @@ export const it = {
   "profile.email": "Email",
   "profile.statistics": "Statistiche",
   "profile.yourTrackingData": "I tuoi dati di tracciamento",
-  "profile.expenses": "Spese Registrate",
+  "profile.transactions": "Transazioni Registrate",
   "profile.totalAmount": "Importo Totale",
   "profile.categories": "Categorie",
   "profile.lastSync": "Ultima sincronizzazione",
@@ -54,6 +54,10 @@ export const it = {
   "profile.dataDeleted": "Tutti i dati sono stati eliminati",
   "profile.dataExported": "Dati esportati con successo",
   "profile.dexieIndexedDB": "Dexie (IndexedDB)",
+  "profile.clearLocalCache": "Cancella Cache Locale",
+  "profile.clearCacheDescription":
+    "⚠️ Questo cancellerà la cache locale (IndexedDB, localStorage). I tuoi dati rimangono in Supabase. Sarai disconnesso.",
+  "profile.clearCacheButton": "Cancella Cache & Logout",
 
   // Categories Page
   "categories.title": "Categorie",
@@ -106,27 +110,28 @@ export const it = {
   "dashboard.yourExpenses": "Le tue spese",
   "dashboard.totalExpenses": "Totale Spese",
   "dashboard.thisMonth": "Questo Mese",
-  "dashboard.recentExpenses": "Spese Recenti",
-  "dashboard.addExpense": "+ Aggiungi Spesa",
-  "dashboard.noExpenses": "Nessuna spesa registrata",
+  "dashboard.recentTransactions": "Transazioni Recenti",
+  "dashboard.addTransaction": "+ Aggiungi Transazione",
+  "dashboard.noTransactions": "Nessuna transazione registrata",
   "dashboard.addFirst": "Aggiungi la tua prima spesa per iniziare",
   "dashboard.categoryBreakdown": "Breakdown per Categoria",
-  "dashboard.loadingExpenses": "Caricamento spese...",
+  "dashboard.loadingTransactions": "Caricamento transazioni...",
   "dashboard.errorLoading": "Errore nel caricamento",
-  "dashboard.expensesThisMonth": "Spese questo mese",
+  "dashboard.transactionsThisMonth": "Transazioni questo mese",
   "dashboard.incomeThisMonth": "Entrate questo mese",
   "dashboard.investmentsThisMonth": "Investimenti questo mese",
   "dashboard.netBalance": "Saldo netto",
   "dashboard.transactions": "{count} transazioni",
   "dashboard.totalTransactions": "{count} transazioni totali",
   "dashboard.recentDescription": "Le ultime transazioni di questo mese",
+  "dashboard.viewAllTransactions": "Visualizza tutte le transazioni",
   "dashboard.monthlySummary": "Riepilogo Mensile",
-  "dashboard.newExpense": "Nuova spesa",
+  "dashboard.newTransaction": "Nuova transazione",
   "dashboard.topCategories": "Top Categorie",
   "dashboard.topCategoriesDesc": "Dove spendi di più",
   "dashboard.overallStats": "Statistiche Generali",
   "dashboard.overallStatsDesc": "Tutte le tue spese",
-  "dashboard.avgExpense": "Media per Spesa",
+  "dashboard.avgExpense": "Media per Transazione",
   "dashboard.vsLastMonth": "vs Mese Scorso",
   "dashboard.tapForStats": "Tap per statistiche complete",
   "dashboard.expense": "spesa",
@@ -135,7 +140,7 @@ export const it = {
   // Statistics Page
   "statistics.title": "Statistiche",
   "statistics.subtitle": "Analisi dettagliata delle tue spese",
-  "dashboard.addFirstExpense": "Aggiungi la prima spesa",
+  "dashboard.addFirstTransaction": "Aggiungi la prima transazione",
 
   // Expense Form
   "expense.title": "Aggiungi Spesa",
@@ -191,14 +196,14 @@ export const it = {
 
   // Navigation
   "nav.dashboard": "Dashboard",
-  "nav.expenses": "Spese",
+  "nav.transactions": "Transazioni",
   "nav.categories": "Categorie",
   "nav.profile": "Profilo",
   "nav.settings": "Impostazioni",
   "nav.groups": "Gruppi",
   "nav.sharedExpenses": "Spese Condivise",
   "nav.home": "Home",
-  "nav.newExpense": "Nuova",
+  "nav.newTransaction": "Nuova",
 
   // Auth
   "auth.login": "Accedi",
@@ -323,15 +328,15 @@ export const it = {
   // Common
   "common.dismiss": "Chiudi",
 
-  // Expenses Page
-  "expenses.title": "Spese",
-  "expenses.expenseCount": "{count} spesa",
-  "expenses.expenseCountPlural": "{count} spese",
-  "expenses.filters": "Filtri",
-  "expenses.activeFilter": "Attivo",
-  "expenses.noExpensesFiltered": "Nessuna spesa trovata",
-  "expenses.noExpenses": "Nessuna spesa",
-  "expenses.addFirstExpense": "Aggiungi la prima spesa",
+  // Transactions Page
+  "transactions.title": "Transazioni",
+  "transactions.transactionCount": "{count} transazione",
+  "transactions.transactionCountPlural": "{count} transazioni",
+  "transactions.filters": "Filtri",
+  "transactions.activeFilter": "Attivo",
+  "transactions.noTransactionsFiltered": "Nessuna transazione trovata",
+  "transactions.noTransactions": "Nessuna transazione",
+  "transactions.addFirstTransaction": "Aggiungi la prima transazione",
 
   // Categories Page (general)
   "categories.archiveButton": "Archiviato",
@@ -366,12 +371,32 @@ export const it = {
   "theme.hide": "Nascondi",
   "theme.palette": "Tavolozza",
 
-  // Expense Filters
-  "expenses.filters.title": "Filtri",
-  "expenses.filters.results": "risultato",
-  "expenses.filters.resultsPlural": "risultati",
-  "expenses.filters.search": "Ricerca",
-  "expenses.filters.searchPlaceholder": "Descrizione, categoria, importo...",
+  // Transaction Filters
+  "transactions.filters.title": "Filtri",
+  "transactions.filters.results": "risultato",
+  "transactions.filters.resultsPlural": "risultati",
+  "transactions.filters.search": "Ricerca",
+  "transactions.filters.searchPlaceholder":
+    "Descrizione, categoria, importo...",
+  "transactions.filters.type": "Tipo",
+  "transactions.filters.categories": "Categorie",
+  "transactions.filters.selectCategories": "Seleziona categorie...",
+  "transactions.filters.categoriesSelected": "{count} categor{singular}ia",
+  "transactions.filters.noCategoriesAvailable": "Nessuna categoria disponibile",
+  "transactions.filters.period": "Periodo",
+  "transactions.filters.from": "Da",
+  "transactions.filters.to": "A",
+  "transactions.filters.amount": "Importo (€)",
+  "transactions.filters.min": "Min",
+  "transactions.filters.max": "Max",
+  "transactions.filters.sortBy": "Ordina per",
+  "transactions.filters.sortDate": "Data",
+  "transactions.filters.sortAmount": "Importo",
+  "transactions.filters.sortCategory": "Categoria",
+  "transactions.filters.reset": "Ripristina filtri",
+  "transactions.filters.saveFilter": "Salva questo filtro",
+  "transactions.filters.filterName": "Nome filtro...",
+  "transactions.filters.save": "Salva",
   "expenses.filters.type": "Tipo",
   "expenses.filters.categories": "Categorie",
   "expenses.filters.selectCategories": "Seleziona categorie...",
@@ -391,6 +416,34 @@ export const it = {
   "expenses.filters.saveFilter": "Salva questo filtro",
   "expenses.filters.filterName": "Nome filtro...",
   "expenses.filters.save": "Salva",
+
+  // Transaction Form
+  "transaction.title": "Aggiungi Transazione",
+  "transaction.newTransaction": "Nuova Transazione",
+  "transaction.registerTransaction": "Registra una nuova transazione",
+  "transaction.description": "Descrizione",
+  "transaction.amount": "Importo",
+  "transaction.category": "Categoria",
+  "transaction.date": "Data",
+  "transaction.addHint":
+    "Per aggiungere categorie personalizzate, vai su Profilo → Categorie",
+  "transaction.descriptionPlaceholder": "Es. Colazione",
+  "transaction.amountPlaceholder": "0.00",
+  "transaction.addSuccess": "✓ Transazione aggiunta! Reindirizzamento...",
+  "transaction.addError": "Errore nell'aggiunta della transazione",
+  "transaction.selectCategory": "Seleziona categoria",
+  "transaction.backToDashboard": "Torna alla Dashboard",
+  "transaction.delete": "Elimina Transazione",
+  "transaction.deleteConfirmTitle": "Eliminare la transazione?",
+  "transaction.deleteConfirmMessage":
+    "Questa azione non può essere annullata. La transazione verrà eliminata dal tuo account.",
+  "transaction.deleteButton": "Elimina",
+  "transaction.deleteCancel": "Annulla",
+  "transaction.deleting": "Eliminazione...",
+  "transaction.saving": "Salvataggio...",
+  "transaction.saved": "Salvato! ✓",
+  "transaction.cancel": "Annulla",
+  "transaction.addTransaction": "Aggiungi Transazione",
 
   // Common - Drawer
   "common.close": "Chiudi",
@@ -426,6 +479,21 @@ export const it = {
   "sync.close": "Chiudi",
   "sync.syncNow": "Sincronizza ora",
   "sync.syncing": "Sincronizzando...",
+
+  // Not Found Page (404)
+  "notfound.title": "Pagina Non Trovata",
+  "notfound.description":
+    "Scusa, la pagina che stai cercando non esiste o è stata spostata.",
+  "notfound.code": "404",
+  "notfound.button.home": "Torna a Home",
+  "notfound.button.login": "Vai al Login",
+
+  // Unauthorized Page
+  "unauthorized.title": "Accesso Negato",
+  "unauthorized.description":
+    "Non hai i permessi per accedere a questa pagina. Effettua il login per continuare.",
+  "unauthorized.code": "401",
+  "unauthorized.button": "Vai al Login",
 } as const;
 
 export type TranslationKey = keyof typeof it;

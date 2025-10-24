@@ -64,9 +64,9 @@ export function StatisticsPage() {
           new Date()
         );
 
-        setTotalExpenses(stats.expenseCount);
+        setTotalExpenses(stats.transactionCount);
         setAvgExpense(stats.dailyAverage);
-        setMonthlyTotal(stats.totalExpenses);
+        setMonthlyTotal(stats.totalTransactions);
 
         // Get top categories
         const topCats = stats.topCategories.slice(0, 5).map((cat) => ({
@@ -85,10 +85,10 @@ export function StatisticsPage() {
           previousMonth
         );
 
-        if (prevStats.totalExpenses > 0) {
+        if (prevStats.totalTransactions > 0) {
           const change =
-            ((stats.totalExpenses - prevStats.totalExpenses) /
-              prevStats.totalExpenses) *
+            ((stats.totalTransactions - prevStats.totalTransactions) /
+              prevStats.totalTransactions) *
             100;
           setPercentageChange(change);
         }

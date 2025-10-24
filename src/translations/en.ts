@@ -16,7 +16,7 @@ export const en: Record<TranslationKey, string> = {
   "profile.email": "Email",
   "profile.statistics": "Statistics",
   "profile.yourTrackingData": "Your tracking data",
-  "profile.expenses": "Registered Expenses",
+  "profile.transactions": "Registered Transactions",
   "profile.totalAmount": "Total Amount",
   "profile.categories": "Categories",
   "profile.lastSync": "Last synchronization",
@@ -54,6 +54,10 @@ export const en: Record<TranslationKey, string> = {
   "profile.dataDeleted": "All data has been deleted",
   "profile.dataExported": "Data exported successfully",
   "profile.dexieIndexedDB": "Dexie (IndexedDB)",
+  "profile.clearLocalCache": "Clear Local Cache",
+  "profile.clearCacheDescription":
+    "⚠️ This will delete your local cache (IndexedDB, localStorage). Your data remains in Supabase. You will be logged out.",
+  "profile.clearCacheButton": "Clear Cache & Logout",
 
   // Categories Page
   "categories.title": "Categories",
@@ -105,22 +109,24 @@ export const en: Record<TranslationKey, string> = {
   "dashboard.yourExpenses": "Your Expenses",
   "dashboard.totalExpenses": "Total Expenses",
   "dashboard.thisMonth": "This Month",
-  "dashboard.recentExpenses": "Recent Expenses",
-  "dashboard.addExpense": "+ Add Expense",
-  "dashboard.noExpenses": "No expenses recorded",
+  "dashboard.recentTransactions": "Recent Transactions",
+  "dashboard.addTransaction": "+ Add Transaction",
+  "dashboard.noTransactions": "No transactions recorded",
+  "dashboard.addFirstTransaction": "Add your first transaction",
   "dashboard.addFirst": "Add your first expense to get started",
   "dashboard.categoryBreakdown": "Breakdown by Category",
-  "dashboard.loadingExpenses": "Loading expenses...",
+  "dashboard.loadingTransactions": "Loading transactions...",
   "dashboard.errorLoading": "Error loading",
-  "dashboard.expensesThisMonth": "Expenses this month",
+  "dashboard.transactionsThisMonth": "Transactions this month",
   "dashboard.incomeThisMonth": "Income this month",
   "dashboard.investmentsThisMonth": "Investments this month",
   "dashboard.netBalance": "Net balance",
   "dashboard.transactions": "{count} transactions",
   "dashboard.totalTransactions": "{count} total transactions",
   "dashboard.recentDescription": "Latest transactions this month",
+  "dashboard.viewAllTransactions": "View all transactions",
   "dashboard.monthlySummary": "Monthly Summary",
-  "dashboard.newExpense": "New expense",
+  "dashboard.newTransaction": "New transaction",
   "dashboard.topCategories": "Top Categories",
   "dashboard.topCategoriesDesc": "Where you spend the most",
   "dashboard.overallStats": "Overall Statistics",
@@ -134,9 +140,8 @@ export const en: Record<TranslationKey, string> = {
   // Statistics Page
   "statistics.title": "Statistics",
   "statistics.subtitle": "Detailed analysis of your expenses",
-  "dashboard.addFirstExpense": "Add first expense",
 
-  // Expense Form
+  // Expense Form (Legacy - use Transaction instead)
   "expense.title": "Add Expense",
   "expense.newTransaction": "New Transaction",
   "expense.registerExpense": "Register a new expense",
@@ -189,14 +194,14 @@ export const en: Record<TranslationKey, string> = {
 
   // Navigation
   "nav.dashboard": "Dashboard",
-  "nav.expenses": "Expenses",
+  "nav.transactions": "Transactions",
   "nav.categories": "Categories",
   "nav.profile": "Profile",
   "nav.settings": "Settings",
   "nav.groups": "Groups",
   "nav.sharedExpenses": "Shared Expenses",
   "nav.home": "Home",
-  "nav.newExpense": "New",
+  "nav.newTransaction": "New",
 
   // Auth
   "auth.login": "Login",
@@ -321,15 +326,15 @@ export const en: Record<TranslationKey, string> = {
   // Common
   "common.dismiss": "Dismiss",
 
-  // Expenses Page
-  "expenses.title": "Expenses",
-  "expenses.expenseCount": "{count} expense",
-  "expenses.expenseCountPlural": "{count} expenses",
-  "expenses.filters": "Filters",
-  "expenses.activeFilter": "Active",
-  "expenses.noExpensesFiltered": "No expenses found",
-  "expenses.noExpenses": "No expenses",
-  "expenses.addFirstExpense": "Add your first expense",
+  // Transactions Page
+  "transactions.title": "Transactions",
+  "transactions.transactionCount": "{count} transaction",
+  "transactions.transactionCountPlural": "{count} transactions",
+  "transactions.filters": "Filters",
+  "transactions.activeFilter": "Active",
+  "transactions.noTransactionsFiltered": "No transactions found",
+  "transactions.noTransactions": "No transactions",
+  "transactions.addFirstTransaction": "Add your first transaction",
 
   // Categories Page (general)
   "categories.archiveButton": "Archived",
@@ -364,12 +369,31 @@ export const en: Record<TranslationKey, string> = {
   "theme.hide": "Hide",
   "theme.palette": "Palette",
 
-  // Expense Filters
-  "expenses.filters.title": "Filters",
-  "expenses.filters.results": "result",
-  "expenses.filters.resultsPlural": "results",
-  "expenses.filters.search": "Search",
-  "expenses.filters.searchPlaceholder": "Description, category, amount...",
+  // Transaction Filters
+  "transactions.filters.title": "Filters",
+  "transactions.filters.results": "result",
+  "transactions.filters.resultsPlural": "results",
+  "transactions.filters.search": "Search",
+  "transactions.filters.searchPlaceholder": "Description, category, amount...",
+  "transactions.filters.type": "Type",
+  "transactions.filters.categories": "Categories",
+  "transactions.filters.selectCategories": "Select categories...",
+  "transactions.filters.categoriesSelected": "{count} categor{singular}ies",
+  "transactions.filters.noCategoriesAvailable": "No categories available",
+  "transactions.filters.period": "Period",
+  "transactions.filters.from": "From",
+  "transactions.filters.to": "To",
+  "transactions.filters.amount": "Amount (€)",
+  "transactions.filters.min": "Min",
+  "transactions.filters.max": "Max",
+  "transactions.filters.sortBy": "Sort by",
+  "transactions.filters.sortDate": "Date",
+  "transactions.filters.sortAmount": "Amount",
+  "transactions.filters.sortCategory": "Category",
+  "transactions.filters.reset": "Reset filters",
+  "transactions.filters.saveFilter": "Save this filter",
+  "transactions.filters.filterName": "Filter name...",
+  "transactions.filters.save": "Save",
   "expenses.filters.type": "Type",
   "expenses.filters.categories": "Categories",
   "expenses.filters.selectCategories": "Select categories...",
@@ -389,6 +413,33 @@ export const en: Record<TranslationKey, string> = {
   "expenses.filters.saveFilter": "Save this filter",
   "expenses.filters.filterName": "Filter name...",
   "expenses.filters.save": "Save",
+
+  // Transaction Form
+  "transaction.title": "Add Transaction",
+  "transaction.newTransaction": "New Transaction",
+  "transaction.registerTransaction": "Register a new transaction",
+  "transaction.description": "Description",
+  "transaction.amount": "Amount",
+  "transaction.category": "Category",
+  "transaction.date": "Date",
+  "transaction.addHint": "To add custom categories, go to Profile → Categories",
+  "transaction.descriptionPlaceholder": "E.g., Breakfast",
+  "transaction.amountPlaceholder": "0.00",
+  "transaction.addSuccess": "✓ Transaction added! Redirecting...",
+  "transaction.addError": "Error adding transaction",
+  "transaction.selectCategory": "Select category",
+  "transaction.backToDashboard": "Back to Dashboard",
+  "transaction.delete": "Delete Transaction",
+  "transaction.deleteConfirmTitle": "Delete transaction?",
+  "transaction.deleteConfirmMessage":
+    "This action cannot be undone. The transaction will be deleted from your account.",
+  "transaction.deleteButton": "Delete",
+  "transaction.deleteCancel": "Cancel",
+  "transaction.deleting": "Deleting...",
+  "transaction.saving": "Saving...",
+  "transaction.saved": "Saved! ✓",
+  "transaction.cancel": "Cancel",
+  "transaction.addTransaction": "Add Transaction",
 
   // Common - Drawer
   "common.close": "Close",
@@ -424,4 +475,19 @@ export const en: Record<TranslationKey, string> = {
   "sync.close": "Close",
   "sync.syncNow": "Sync now",
   "sync.syncing": "Syncing...",
+
+  // Not Found Page (404)
+  "notfound.title": "Page Not Found",
+  "notfound.description":
+    "Sorry, the page you're looking for doesn't exist or has been moved.",
+  "notfound.code": "404",
+  "notfound.button.home": "Go to Home",
+  "notfound.button.login": "Go to Login",
+
+  // Unauthorized Page
+  "unauthorized.title": "Access Denied",
+  "unauthorized.description":
+    "You don't have permission to access this page. Please login to continue.",
+  "unauthorized.code": "401",
+  "unauthorized.button": "Go to Login",
 } as const;

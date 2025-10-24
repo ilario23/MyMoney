@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
-import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
+import type { TransactionDocType, CategoryDocType } from "@/lib/db-schemas";
 
-export interface ExpenseFilters {
+export interface TransactionFilters {
   searchQuery: string;
   selectedCategories: string[];
   selectedTypes: Array<"expense" | "income" | "investment">;
@@ -13,7 +13,7 @@ export interface ExpenseFilters {
   sortOrder: "asc" | "desc";
 }
 
-export const DEFAULT_FILTERS: ExpenseFilters = {
+export const DEFAULT_FILTERS: TransactionFilters = {
   searchQuery: "",
   selectedCategories: [],
   selectedTypes: [],
@@ -21,15 +21,18 @@ export const DEFAULT_FILTERS: ExpenseFilters = {
   sortOrder: "desc",
 };
 
-export function useExpenseFilters(
-  expenses: ExpenseDocType[],
+export function useTransactionFilters(
+  transactions: TransactionDocType[],
   categories: Map<string, CategoryDocType>
 ) {
-  const [filters, setFilters] = useState<ExpenseFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS);
 
   // Update individual filters
   const updateFilter = useCallback(
-    <K extends keyof ExpenseFilters>(key: K, value: ExpenseFilters[K]) => {
+    <K extends keyof TransactionFilters>(
+      key: K,
+      value: TransactionFilters[K]
+    ) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
     },
     []
@@ -54,17 +57,17 @@ export function useExpenseFilters(
   }, [filters]);
 
   // Apply filters and sorting
-  const filteredExpenses = useMemo(() => {
-    let result = [...expenses];
+  const filteredTransactions = useMemo(() => {
+    let result = [...transactions];
 
     // 1. Filter by search query (description, category name, amount)
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      result = result.filter((expense) => {
-        const description = expense.description?.toLowerCase() || "";
-        const category = categories.get(expense.category_id);
+      result = result.filter((transaction) => {
+        const description = transaction.description?.toLowerCase() || "";
+        const category = categories.get(transaction.category_id);
         const categoryName = category?.name?.toLowerCase() || "";
-        const amount = expense.amount.toString();
+        const amount = transaction.amount.toString();
 
         return (
           description.includes(query) ||
@@ -76,15 +79,15 @@ export function useExpenseFilters(
 
     // 2. Filter by selected categories
     if (filters.selectedCategories.length > 0) {
-      result = result.filter((expense) =>
-        filters.selectedCategories.includes(expense.category_id)
+      result = result.filter((transaction) =>
+        filters.selectedCategories.includes(transaction.category_id)
       );
     }
 
     // 3. Filter by selected types
     if (filters.selectedTypes.length > 0) {
-      result = result.filter((expense) =>
-        filters.selectedTypes.includes(expense.type)
+      result = result.filter((transaction) =>
+        filters.selectedTypes.includes(transaction.type)
       );
     }
 
@@ -92,7 +95,7 @@ export function useExpenseFilters(
     if (filters.dateFrom) {
       const from = new Date(filters.dateFrom).getTime();
       result = result.filter(
-        (expense) => new Date(expense.date).getTime() >= from
+        (transaction) => new Date(transaction.date).getTime() >= from
       );
     }
 
@@ -101,20 +104,20 @@ export function useExpenseFilters(
       // Set to end of day
       const toEndOfDay = to + 86400000;
       result = result.filter(
-        (expense) => new Date(expense.date).getTime() < toEndOfDay
+        (transaction) => new Date(transaction.date).getTime() < toEndOfDay
       );
     }
 
     // 5. Filter by amount range
     if (filters.minAmount !== undefined) {
       result = result.filter(
-        (expense) => Math.abs(expense.amount) >= filters.minAmount!
+        (transaction) => Math.abs(transaction.amount) >= filters.minAmount!
       );
     }
 
     if (filters.maxAmount !== undefined) {
       result = result.filter(
-        (expense) => Math.abs(expense.amount) <= filters.maxAmount!
+        (transaction) => Math.abs(transaction.amount) <= filters.maxAmount!
       );
     }
 
@@ -153,13 +156,13 @@ export function useExpenseFilters(
     });
 
     return result;
-  }, [expenses, categories, filters]);
+  }, [transactions, categories, filters]);
 
   return {
     filters,
     updateFilter,
     resetFilters,
     hasActiveFilters,
-    filteredExpenses,
+    filteredTransactions,
   };
 }

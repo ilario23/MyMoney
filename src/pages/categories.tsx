@@ -47,19 +47,19 @@ export function CategoriesPage() {
     "categories"
   );
 
-  // Get count of expenses for each category to determine if deletion is allowed
-  const { data: expenseDocs } = useQuery(
+  // Get count of transactions for each category to determine if deletion is allowed
+  const { data: transactionDocs } = useQuery(
     useCallback(
       (table: any) =>
         user
           ? table
               .where("user_id")
               .equals(user.id)
-              .filter((exp: any) => !exp.deleted_at)
+              .filter((trx: any) => !trx.deleted_at)
           : Promise.resolve([]),
       [user?.id]
     ),
-    "expenses"
+    "transactions"
   );
 
   const resetForm = () => {
@@ -140,14 +140,14 @@ export function CategoriesPage() {
   };
 
   const handleDeleteCategory = async (cat: CategoryDocType) => {
-    // Count expenses using this category
-    const expensesUsingCategory = expenseDocs.filter(
-      (exp: any) => exp.category_id === cat.id && !exp.deleted_at
+    // Count transactions using this category
+    const transactionsUsingCategory = transactionDocs.filter(
+      (trx: any) => trx.category_id === cat.id && !trx.deleted_at
     ).length;
 
-    if (expensesUsingCategory > 0) {
+    if (transactionsUsingCategory > 0) {
       alert(
-        `Cannot delete category "${cat.name}": ${expensesUsingCategory} expense(s) are using it. Deactivate it instead.`
+        `Cannot delete category "${cat.name}": ${transactionsUsingCategory} transaction(s) are using it. Deactivate it instead.`
       );
       return;
     }
@@ -323,7 +323,10 @@ export function CategoriesPage() {
                     id="is_active"
                     checked={formData.is_active}
                     onChange={(e) =>
-                      setFormData({ ...formData, is_active: e.target.checked })
+                      setFormData({
+                        ...formData,
+                        is_active: e.target.checked,
+                      })
                     }
                     className="w-4 h-4"
                   />

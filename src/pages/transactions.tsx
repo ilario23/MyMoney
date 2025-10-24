@@ -1,4 +1,4 @@
-﻿import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { renderIcon } from "@/lib/icon-renderer";
@@ -21,7 +21,7 @@ import { it, enUS } from "date-fns/locale";
 import { Sliders, Edit2 } from "lucide-react";
 import type { TransactionDocType, CategoryDocType } from "@/lib/db-schemas";
 
-export function ExpensesPage() {
+export function TransactionsPage() {
   const { user } = useAuthStore();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export function ExpensesPage() {
         ? table
             .where("user_id")
             .equals(user.id)
-            .filter((trx: TransactionDocType) => !trx.deleted_at)
+            .filter((trans: TransactionDocType) => !trans.deleted_at)
         : Promise.resolve([]),
     [user?.id]
   );
@@ -247,85 +247,81 @@ export function ExpensesPage() {
         </Card>
       ) : (
         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-          {filteredTransactions.map(
-            (transaction: TransactionDocType, index: number) => {
-              const category = categories.get(transaction.category_id);
-              const typeStyle = getTypeStyle(transaction.type);
+          {filteredTransactions.map((transaction, index) => {
+            const category = categories.get(transaction.category_id);
+            const typeStyle = getTypeStyle(transaction.type);
 
-              return (
-                <div
-                  key={transaction.id}
-                  className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs bg-card`}
-                  style={{
-                    animationDelay: `${index * 50}ms`,
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => navigate(`/transaction/${transaction.id}`)}
-                    >
-                      {/* Badge with type */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className={`${typeStyle.badgeColor} text-xs font-semibold px-2 py-1 rounded`}
-                        >
-                          {transaction.type.charAt(0).toUpperCase() +
-                            transaction.type.slice(1)}
-                        </span>
-                      </div>
-
-                      {/* Description */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5">
-                          {category?.icon ? renderIcon(category.icon) : ""}
-                        </div>
-                        <h3 className="font-medium truncate">
-                          {transaction.description}
-                        </h3>
-                      </div>
-
-                      {/* Category and date */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{category?.name || "Senza categoria"}</span>
-                        <span>•</span>
-                        <span>
-                          {format(new Date(transaction.date), "d MMM yyyy", {
-                            locale: dateLocale,
-                          })}
-                        </span>
-                      </div>
+            return (
+              <div
+                key={transaction.id}
+                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs bg-card`}
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => navigate(`/transaction/${transaction.id}`)}
+                  >
+                    {/* Badge with type */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className={`${typeStyle.badgeColor} text-xs font-semibold px-2 py-1 rounded`}
+                      >
+                        {transaction.type.charAt(0).toUpperCase() +
+                          transaction.type.slice(1)}
+                      </span>
                     </div>
 
-                    {/* Amount and Actions */}
-                    <div className="text-right ml-4 flex items-center gap-2">
-                      <div>
-                        <p
-                          className={`text-xl font-bold ${typeStyle.amountColor}`}
-                        >
-                          {transaction.type === "income" ? "+" : "-"}
-                          {Math.abs(transaction.amount).toFixed(2)}€
-                        </p>
+                    {/* Description */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5">
+                        {category?.icon ? renderIcon(category.icon) : ""}
                       </div>
+                      <h3 className="font-medium truncate">
+                        {transaction.description}
+                      </h3>
+                    </div>
 
-                      {/* Edit button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() =>
-                          navigate(`/transaction/${transaction.id}`)
-                        }
-                        title="Edit transaction"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
+                    {/* Category and date */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{category?.name || "Senza categoria"}</span>
+                      <span>•</span>
+                      <span>
+                        {format(new Date(transaction.date), "d MMM yyyy", {
+                          locale: dateLocale,
+                        })}
+                      </span>
                     </div>
                   </div>
+
+                  {/* Amount and Actions */}
+                  <div className="text-right ml-4 flex items-center gap-2">
+                    <div>
+                      <p
+                        className={`text-xl font-bold ${typeStyle.amountColor}`}
+                      >
+                        {transaction.type === "income" ? "+" : "-"}
+                        {Math.abs(transaction.amount).toFixed(2)}€
+                      </p>
+                    </div>
+
+                    {/* Edit button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => navigate(`/transaction/${transaction.id}`)}
+                      title="Edit transaction"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              );
-            }
-          )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

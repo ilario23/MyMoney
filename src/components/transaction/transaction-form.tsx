@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/language";
 import { getDatabase } from "@/lib/db";
 import { renderIcon } from "@/lib/icon-renderer";
 import { syncService } from "@/services/sync.service";
-import type { CategoryDocType, ExpenseDocType } from "@/lib/db-schemas";
+import type { CategoryDocType, TransactionDocType } from "@/lib/db-schemas";
 import { dbLogger, syncLogger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +41,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-export function ExpenseForm() {
+export function TransactionForm() {
   const { user } = useAuthStore();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -61,10 +61,12 @@ export function ExpenseForm() {
   const [error, setError] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [expense, setExpense] = useState<ExpenseDocType | null>(null);
-  const [isLoadingExpense, setIsLoadingExpense] = useState(isEditing);
+  const [transaction, setTransaction] = useState<TransactionDocType | null>(
+    null
+  );
+  const [isLoadingTransaction, setIsLoadingTransaction] = useState(isEditing);
 
-  // Load categories and expense (if editing) from Dexie
+  // Load categories and transaction (if editing) from Dexie
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
@@ -78,26 +80,26 @@ export function ExpenseForm() {
           .toArray();
         setCategories(userCategories);
 
-        // Load expense if editing
+        // Load transaction if editing
         if (isEditing && id) {
-          const exp = await db.expenses.get(id);
-          if (!exp) {
-            setError(t("common.error") || "Expense not found");
-            setIsLoadingExpense(false);
+          const trans = await db.transactions.get(id);
+          if (!trans) {
+            setError(t("common.error") || "Transaction not found");
+            setIsLoadingTransaction(false);
             return;
           }
 
-          setExpense(exp);
-          setType(exp.type);
-          setDescription(exp.description || "");
-          setAmount(exp.amount.toString());
-          setCategoryId(exp.category_id);
-          setDate(exp.date.split("T")[0]);
-          setIsLoadingExpense(false);
+          setTransaction(trans);
+          setType(trans.type);
+          setDescription(trans.description || "");
+          setAmount(trans.amount.toString());
+          setCategoryId(trans.category_id);
+          setDate(trans.date.split("T")[0]);
+          setIsLoadingTransaction(false);
         }
       } catch (error) {
         dbLogger.error("Error loading data:", error);
-        setIsLoadingExpense(false);
+        setIsLoadingTransaction(false);
       }
     };
     loadData();
@@ -134,10 +136,10 @@ export function ExpenseForm() {
     try {
       const db = getDatabase();
 
-      if (isEditing && expense) {
-        // UPDATE existing expense
-        const updatedExpense: ExpenseDocType = {
-          ...expense,
+      if (isEditing && transaction) {
+        // UPDATE existing transaction
+        const updatedTransaction: TransactionDocType = {
+          ...transaction,
           type,
           amount: parseFloat(amount),
           category_id: categoryId,
@@ -146,11 +148,11 @@ export function ExpenseForm() {
           updated_at: new Date().toISOString(),
         };
 
-        await db.expenses.put(updatedExpense);
-        syncLogger.success("Expense updated locally - syncing with server");
+        await db.transactions.put(updatedTransaction);
+        syncLogger.success("Transaction updated locally - syncing with server");
       } else {
-        // CREATE new expense
-        const newExpense = {
+        // CREATE new transaction
+        const newTransaction = {
           id: uuidv4(),
           user_id: user.id,
           type,
@@ -163,8 +165,8 @@ export function ExpenseForm() {
           deleted_at: null,
         };
 
-        await db.expenses.put(newExpense);
-        syncLogger.success("Expense saved locally - syncing with server");
+        await db.transactions.put(newTransaction);
+        syncLogger.success("Transaction saved locally - syncing with server");
       }
 
       // Mark that local data has changed (CRUD operation)
@@ -188,10 +190,10 @@ export function ExpenseForm() {
 
       // Redirect after 2s (give time to read any error message)
       setTimeout(() => {
-        navigate(isEditing ? "/expenses" : "/dashboard");
+        navigate(isEditing ? "/transactions" : "/dashboard");
       }, 2000);
     } catch (error) {
-      dbLogger.error("Error saving expense:", error);
+      dbLogger.error("Error saving transaction:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       setError(`Error: ${errorMsg}`);
     } finally {
@@ -200,7 +202,7 @@ export function ExpenseForm() {
   };
 
   const handleDelete = async () => {
-    if (!user || !expense) return;
+    if (!user || !transaction) return;
 
     setIsDeleting(true);
     setError("");
@@ -209,12 +211,12 @@ export function ExpenseForm() {
       const db = getDatabase();
 
       // Soft delete
-      await db.expenses.update(expense.id, {
+      await db.transactions.update(transaction.id, {
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
 
-      syncLogger.success("Expense deleted locally - syncing with server");
+      syncLogger.success("Transaction deleted locally - syncing with server");
 
       // Mark that local data has changed (CRUD operation)
       syncService.markLocalChangesAsChanged();
@@ -235,10 +237,10 @@ export function ExpenseForm() {
 
       // Redirect after 2s
       setTimeout(() => {
-        navigate("/expenses");
+        navigate("/transactions");
       }, 2000);
     } catch (error) {
-      dbLogger.error("Error deleting expense:", error);
+      dbLogger.error("Error deleting transaction:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       setError(`Error: ${errorMsg}`);
     } finally {
@@ -253,17 +255,17 @@ export function ExpenseForm() {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate(isEditing ? "/expenses" : "/dashboard")}
+          onClick={() => navigate(isEditing ? "/transactions" : "/dashboard")}
           className="rounded-full"
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <h1 className="text-xl font-bold">
-          {isEditing ? "Edit Expense" : t("expense.title")}
+          {isEditing ? "Edit Transaction" : t("transaction.title")}
         </h1>
       </div>
 
-      {isLoadingExpense && (
+      {isLoadingTransaction && (
         <Alert className="border border-primary/30 bg-primary/10">
           <AlertDescription className="text-primary font-medium">
             Loading...
@@ -275,8 +277,8 @@ export function ExpenseForm() {
         <Alert className="border border-primary/30 bg-primary/10">
           <AlertDescription className="text-primary font-medium">
             {isEditing
-              ? "✓ Expense updated! Redirecting..."
-              : t("expense.addSuccess")}
+              ? "✓ Transaction updated! Redirecting..."
+              : t("transaction.addSuccess")}
           </AlertDescription>
         </Alert>
       )}
@@ -292,12 +294,12 @@ export function ExpenseForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            {isEditing ? "Edit Transaction" : t("expense.newTransaction")}
+            {isEditing ? "Edit Transaction" : t("transaction.newTransaction")}
           </CardTitle>
           <CardDescription>
             {isEditing
               ? "Update the transaction details"
-              : t("expense.registerExpense")}
+              : t("transaction.registerTransaction")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -374,10 +376,10 @@ export function ExpenseForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {t("expense.description")}
+                {t("transaction.description")}
               </label>
               <Input
-                placeholder={t("expense.descriptionPlaceholder")}
+                placeholder={t("transaction.descriptionPlaceholder")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isLoading || success}
@@ -387,11 +389,11 @@ export function ExpenseForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {t("expense.amount")}
+                {t("transaction.amount")}
               </label>
               <Input
                 type="number"
-                placeholder={t("expense.amountPlaceholder")}
+                placeholder={t("transaction.amountPlaceholder")}
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -402,7 +404,7 @@ export function ExpenseForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {t("expense.category")}
+                {t("transaction.category")}
               </label>
               {categories.length === 0 ? (
                 <Alert className="border border-ring bg-muted">
@@ -462,17 +464,19 @@ export function ExpenseForm() {
                 </Select>
               )}
               <p className="text-xs text-muted-foreground">
-                {t("expense.addHint")}
+                {t("transaction.addHint")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("expense.date")}</label>
+              <label className="text-sm font-medium">
+                {t("transaction.date")}
+              </label>
               <Input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                disabled={isLoading || success || isLoadingExpense}
+                disabled={isLoading || success || isLoadingTransaction}
               />
             </div>
 
@@ -481,23 +485,25 @@ export function ExpenseForm() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => navigate(isEditing ? "/expenses" : "/dashboard")}
-                disabled={isLoading || success || isLoadingExpense}
+                onClick={() =>
+                  navigate(isEditing ? "/transactions" : "/dashboard")
+                }
+                disabled={isLoading || success || isLoadingTransaction}
               >
-                {t("expense.cancel")}
+                {t("transaction.cancel")}
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || success || isLoadingExpense}
+                disabled={isLoading || success || isLoadingTransaction}
                 size="lg"
               >
                 {isLoading
-                  ? t("expense.saving")
+                  ? t("transaction.saving")
                   : success
-                    ? "✓ " + (isEditing ? "Updated" : t("expense.saved"))
+                    ? "✓ " + (isEditing ? "Updated" : t("transaction.saved"))
                     : isEditing
                       ? "Update"
-                      : t("expense.addExpense")}
+                      : t("transaction.addTransaction")}
               </Button>
             </div>
 
@@ -512,16 +518,18 @@ export function ExpenseForm() {
                   variant="destructive"
                   className="w-full gap-2"
                   onClick={() => setShowDeleteDialog(true)}
-                  disabled={isLoading || success || isLoadingExpense}
+                  disabled={isLoading || success || isLoadingTransaction}
                 >
                   <Trash2 className="w-4 h-4" />
-                  {t("expense.delete")}
+                  {t("transaction.delete")}
                 </Button>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{t("expense.deleteConfirmTitle")}</DialogTitle>
+                    <DialogTitle>
+                      {t("transaction.deleteConfirmTitle")}
+                    </DialogTitle>
                     <DialogDescription>
-                      {t("expense.deleteConfirmMessage")}
+                      {t("transaction.deleteConfirmMessage")}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="flex gap-2">
@@ -531,7 +539,7 @@ export function ExpenseForm() {
                       onClick={() => setShowDeleteDialog(false)}
                       disabled={isDeleting}
                     >
-                      {t("expense.deleteCancel")}
+                      {t("transaction.deleteCancel")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -540,8 +548,8 @@ export function ExpenseForm() {
                       disabled={isDeleting}
                     >
                       {isDeleting
-                        ? t("expense.deleting")
-                        : t("expense.deleteButton")}
+                        ? t("transaction.deleting")
+                        : t("transaction.deleteButton")}
                     </Button>
                   </div>
                 </DialogContent>

@@ -35,9 +35,9 @@ export interface CategoryDocType {
 }
 
 /**
- * Expense document type
+ * Transaction document type
  */
-export interface ExpenseDocType {
+export interface TransactionDocType {
   id: string;
   user_id: string;
   category_id: string;
@@ -50,6 +50,11 @@ export interface ExpenseDocType {
   synced_at?: string | null; // Track when this was last synced to Supabase
   deleted_at?: string | null;
 }
+
+/**
+ * @deprecated Use TransactionDocType instead
+ */
+export type ExpenseDocType = TransactionDocType;
 
 /**
  * Stats cache document type (local-only, not synced with Supabase)
