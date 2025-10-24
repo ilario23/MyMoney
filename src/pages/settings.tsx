@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import packageJson from "../../package.json";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronLeft } from "lucide-react";
 
 export function SettingsPage() {
   const { user, logout } = useAuthStore();
@@ -206,7 +206,17 @@ export function SettingsPage() {
     <div className="max-w-2xl mx-auto space-y-6 pb-20 px-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t("profile.settings")}</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/profile")}
+            className="md:hidden -ml-2"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-3xl font-bold">{t("profile.settings")}</h1>
+        </div>
       </div>
 
       {error && (
@@ -310,7 +320,7 @@ export function SettingsPage() {
               <Button
                 onClick={async () => {
                   const db = getDatabase();
-                  const expenses = await db.expenses
+                  const transactions = await db.transactions
                     .where("user_id")
                     .equals(user.id)
                     .toArray();
@@ -320,7 +330,9 @@ export function SettingsPage() {
                     .toArray();
                   const data = {
                     user,
-                    expenses: expenses.map((e: (typeof expenses)[0]) => e),
+                    transactions: transactions.map(
+                      (e: (typeof transactions)[0]) => e
+                    ),
                     categories: categories.map(
                       (c: (typeof categories)[0]) => c
                     ),
@@ -347,16 +359,14 @@ export function SettingsPage() {
             <DialogTrigger asChild>
               <Button variant="destructive" className="w-full">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Clear Local Cache
+                {t("profile.clearLocalCache")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Clear Local Cache</DialogTitle>
+                <DialogTitle>{t("profile.clearLocalCache")}</DialogTitle>
                 <DialogDescription className="text-destructive">
-                  ⚠️ Questo cancellerà la cache locale (IndexedDB,
-                  localStorage). I tuoi dati rimangono in Supabase. Sarai
-                  disconnesso.
+                  {t("profile.clearCacheDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Button
@@ -365,7 +375,7 @@ export function SettingsPage() {
                 className="w-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Clear Cache & Logout
+                {t("profile.clearCacheButton")}
               </Button>
             </DialogContent>
           </Dialog>

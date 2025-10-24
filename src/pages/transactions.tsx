@@ -1,11 +1,11 @@
-﻿import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useAuthStore } from "@/lib/auth.store";
 import { useLanguage } from "@/lib/language";
 import { renderIcon } from "@/lib/icon-renderer";
 import { useQuery } from "@/hooks/useQuery";
-import { useExpenseFilters } from "@/hooks/useExpenseFilters";
+import { useTransactionFilters } from "@/hooks/useTransactionFilters";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
-import { ExpenseFilterPanel } from "@/components/expense/expense-filters";
+import { TransactionFilterPanel } from "@/components/transaction/transaction-filters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,22 +19,22 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
 import { Sliders, Edit2 } from "lucide-react";
-import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
+import type { TransactionDocType, CategoryDocType } from "@/lib/db-schemas";
 
-export function ExpensesPage() {
+export function TransactionsPage() {
   const { user } = useAuthStore();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
 
   // Memoize query function to avoid re-runs
-  const expenseQueryFn = useCallback(
+  const transactionQueryFn = useCallback(
     (table: any) =>
       user
         ? table
             .where("user_id")
             .equals(user.id)
-            .filter((exp: ExpenseDocType) => !exp.deleted_at)
+            .filter((trans: TransactionDocType) => !trans.deleted_at)
         : Promise.resolve([]),
     [user?.id]
   );
@@ -51,7 +51,10 @@ export function ExpensesPage() {
   );
 
   // Reactive queries using Dexie with Observable
-  const { data: expenseDocs, loading } = useQuery(expenseQueryFn, "expenses");
+  const { data: transactionDocs, loading } = useQuery(
+    transactionQueryFn,
+    "transactions"
+  );
 
   const { data: categoryDocs } = useQuery(categoryQueryFn, "categories");
 
@@ -64,14 +67,14 @@ export function ExpensesPage() {
     return map;
   }, [categoryDocs]);
 
-  // Use expense filters hook
+  // Use transaction filters hook
   const {
     filters,
     updateFilter,
     resetFilters,
     hasActiveFilters,
-    filteredExpenses,
-  } = useExpenseFilters(expenseDocs, categories);
+    filteredTransactions,
+  } = useTransactionFilters(transactionDocs, categories);
 
   // Handle saving filter
   const handleSaveFilter = useCallback(
@@ -136,13 +139,13 @@ export function ExpensesPage() {
       {/* Header con bottone filtri */}
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <div>
-          <h1 className="text-3xl font-bold">{t("nav.expenses")}</h1>
+          <h1 className="text-3xl font-bold">{t("nav.transactions")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filteredExpenses.length === 1
-              ? t("expenses.expenseCount").replace("{count}", "1")
-              : t("expenses.expenseCountPlural").replace(
+            {filteredTransactions.length === 1
+              ? t("transactions.transactionCount").replace("{count}", "1")
+              : t("transactions.transactionCountPlural").replace(
                   "{count}",
-                  filteredExpenses.length.toString()
+                  filteredTransactions.length.toString()
                 )}
           </p>
         </div>
@@ -150,7 +153,7 @@ export function ExpensesPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="p-2 hover:bg-muted rounded-lg transition-colors hidden md:block"
-            title={t("expenses.filters")}
+            title={t("transactions.filters")}
           >
             <Sliders className="w-5 h-5" />
           </button>
@@ -159,22 +162,22 @@ export function ExpensesPage() {
             <button
               onClick={() => setShowFilters(true)}
               className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors text-primary"
-              title={t("expenses.filters")}
+              title={t("transactions.filters")}
             >
               <Sliders className="w-5 h-5" />
             </button>
             <DrawerContent className="max-h-[80vh]">
               <DrawerHeader className="border-b border-border/30">
-                <DrawerTitle>{t("expenses.filters.title")}</DrawerTitle>
+                <DrawerTitle>{t("transactions.filters.title")}</DrawerTitle>
               </DrawerHeader>
               <div className="overflow-y-auto flex-1 px-4 py-4">
-                <ExpenseFilterPanel
+                <TransactionFilterPanel
                   filters={filters}
                   categories={categories}
                   onFilterChange={updateFilter}
                   onReset={resetFilters}
                   hasActiveFilters={hasActiveFilters}
-                  resultCount={filteredExpenses.length}
+                  resultCount={filteredTransactions.length}
                   onSaveFilter={handleSaveFilter}
                 />
               </div>
@@ -187,7 +190,10 @@ export function ExpensesPage() {
               </div>
             </DrawerContent>
           </Drawer>
-          <FloatingActionButton href="/expense/new" label="Add expense" />
+          <FloatingActionButton
+            href="/transaction/new"
+            label="Add transaction"
+          />
         </div>
       </div>
 
@@ -200,13 +206,13 @@ export function ExpensesPage() {
         }}
       >
         <div className="pb-4">
-          <ExpenseFilterPanel
+          <TransactionFilterPanel
             filters={filters}
             categories={categories}
             onFilterChange={updateFilter}
             onReset={resetFilters}
             hasActiveFilters={hasActiveFilters}
-            resultCount={filteredExpenses.length}
+            resultCount={filteredTransactions.length}
             onSaveFilter={handleSaveFilter}
           />
         </div>
@@ -214,7 +220,7 @@ export function ExpensesPage() {
 
       {/* Mobile Collapsible Filters */}
 
-      {/* Expenses List */}
+      {/* Transactions List */}
       {loading ? (
         <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <CardContent className="py-12 text-center">
@@ -224,31 +230,31 @@ export function ExpensesPage() {
             </p>
           </CardContent>
         </Card>
-      ) : filteredExpenses.length === 0 ? (
+      ) : filteredTransactions.length === 0 ? (
         <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">
               {filters.searchQuery || hasActiveFilters
-                ? t("expenses.noExpensesFiltered")
-                : t("expenses.noExpenses")}
+                ? t("transactions.noTransactionsFiltered")
+                : t("transactions.noTransactions")}
             </p>
             {!filters.searchQuery && !hasActiveFilters && (
-              <Button onClick={() => navigate("/expense/new")}>
-                {t("expenses.addFirstExpense")}
+              <Button onClick={() => navigate("/transaction/new")}>
+                {t("transactions.addFirstTransaction")}
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-          {filteredExpenses.map((expense, index) => {
-            const category = categories.get(expense.category_id);
-            const typeStyle = getTypeStyle(expense.type);
+          {filteredTransactions.map((transaction, index) => {
+            const category = categories.get(transaction.category_id);
+            const typeStyle = getTypeStyle(transaction.type);
 
             return (
               <div
-                key={expense.id}
-                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs`}
+                key={transaction.id}
+                className={`animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-lg hover:shadow-lg transition-all p-4 border border-input shadow-xs bg-card`}
                 style={{
                   animationDelay: `${index * 50}ms`,
                 }}
@@ -256,15 +262,15 @@ export function ExpensesPage() {
                 <div className="flex items-center justify-between">
                   <div
                     className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => navigate(`/expense/${expense.id}`)}
+                    onClick={() => navigate(`/transaction/${transaction.id}`)}
                   >
                     {/* Badge with type */}
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={`${typeStyle.badgeColor} text-xs font-semibold px-2 py-1 rounded`}
                       >
-                        {expense.type.charAt(0).toUpperCase() +
-                          expense.type.slice(1)}
+                        {transaction.type.charAt(0).toUpperCase() +
+                          transaction.type.slice(1)}
                       </span>
                     </div>
 
@@ -274,7 +280,7 @@ export function ExpensesPage() {
                         {category?.icon ? renderIcon(category.icon) : ""}
                       </div>
                       <h3 className="font-medium truncate">
-                        {expense.description}
+                        {transaction.description}
                       </h3>
                     </div>
 
@@ -283,7 +289,7 @@ export function ExpensesPage() {
                       <span>{category?.name || "Senza categoria"}</span>
                       <span>•</span>
                       <span>
-                        {format(new Date(expense.date), "d MMM yyyy", {
+                        {format(new Date(transaction.date), "d MMM yyyy", {
                           locale: dateLocale,
                         })}
                       </span>
@@ -291,13 +297,13 @@ export function ExpensesPage() {
                   </div>
 
                   {/* Amount and Actions */}
-                  <div className="text-right ml-4 flex items-center gap-2">
+                  <div className="text-right ml-4 flex items-center gap-2 flex-shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                     <div>
                       <p
                         className={`text-xl font-bold ${typeStyle.amountColor}`}
                       >
-                        {expense.type === "income" ? "+" : "-"}
-                        {Math.abs(expense.amount).toFixed(2)}€
+                        {transaction.type === "income" ? "+" : "-"}
+                        {Math.abs(transaction.amount).toFixed(2)}€
                       </p>
                     </div>
 
@@ -306,8 +312,8 @@ export function ExpensesPage() {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => navigate(`/expense/${expense.id}`)}
-                      title="Edit expense"
+                      onClick={() => navigate(`/transaction/${transaction.id}`)}
+                      title="Edit transaction"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>

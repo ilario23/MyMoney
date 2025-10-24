@@ -22,10 +22,16 @@ const navItems = [
     labelKey: "nav.dashboard" as const,
   },
   {
-    id: "expenses",
-    path: "/expenses",
+    id: "statistics",
+    path: "/statistics",
+    icon: BarChart3,
+    labelKey: "profile.statistics" as const,
+  },
+  {
+    id: "transactions",
+    path: "/transactions",
     icon: ShoppingCart,
-    labelKey: "nav.expenses" as const,
+    labelKey: "nav.transactions" as const,
   },
   {
     id: "categories",

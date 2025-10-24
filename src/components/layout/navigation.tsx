@@ -17,9 +17,9 @@ export function Navigation() {
   const navItems = [
     { path: "/dashboard", icon: Home, label: t("nav.home"), special: false },
     {
-      path: "/expenses",
+      path: "/transactions",
       icon: Receipt,
-      label: t("nav.expenses"),
+      label: t("nav.transactions"),
       special: false,
     },
     {

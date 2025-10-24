@@ -17,12 +17,12 @@ export interface UseQueryOptions {
  *
  * Usage: useQuery(
  *   (table) => table.where('user_id').equals(userId).filter(e => !e.deleted_at),
- *   'expenses'
+ *   'transactions'
  * )
  */
 export function useQuery<T = any>(
   queryFn: (table: Table<T>) => any, // Returns a Dexie Query or Promise
-  collectionName: "users" | "categories" | "expenses" | "stats_cache",
+  collectionName: "users" | "categories" | "transactions" | "stats_cache",
   options?: UseQueryOptions
 ) {
   const [data, setData] = useState<T[]>(options?.initialData || []);
@@ -99,7 +99,7 @@ export function useQuery<T = any>(
  */
 export function useQueryOne<T = any>(
   queryFn: (table: Table<T>) => any, // Returns a Dexie Query or Promise
-  collectionName: "users" | "categories" | "expenses" | "stats_cache"
+  collectionName: "users" | "categories" | "transactions" | "stats_cache"
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,7 +177,7 @@ export function useQueryOne<T = any>(
  * Hook for database operations
  */
 export function useDB(
-  collectionName: "users" | "categories" | "expenses" | "stats_cache"
+  collectionName: "users" | "categories" | "transactions" | "stats_cache"
 ) {
   const db = getDatabase();
   const table = db[collectionName as keyof typeof db] as Table<any>;

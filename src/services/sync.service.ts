@@ -28,6 +28,7 @@ class SyncService {
   };
   private isOnline = navigator.onLine;
   private hasRemoteChanges = false;
+  private hasLocalChanges = false; // ← Flag per tracciare cambiamenti locali (CRUD)
   private realtimeSubscription: any = null;
 
   subscribe(listener: (state: SyncState) => void): () => void {
@@ -92,7 +93,7 @@ class SyncService {
     this.notifyListeners();
 
     try {
-      const collections = ["users", "categories", "expenses"] as const;
+      const collections = ["users", "categories", "transactions"] as const;
 
       for (const collectionName of collections) {
         await this.syncCollection(collectionName, userId);
@@ -101,6 +102,9 @@ class SyncService {
       this.currentState.status = "completed";
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
+
+      // Clear local changes flag - sync was successful
+      this.clearLocalChanges();
 
       // Update health status after sync
       this.currentState.healthStatus = await this.calculateHealthStatus(userId);
@@ -139,17 +143,17 @@ class SyncService {
   /**
    * Sync a single collection
    * Note: Users are PULL-ONLY (read from Supabase)
-   *       Categories and Expenses are PULL + PUSH (bidirectional sync)
+   *       Categories and Transactions are PULL + PUSH (bidirectional sync)
    */
   private async syncCollection(
-    collectionName: "users" | "categories" | "expenses",
+    collectionName: "users" | "categories" | "transactions",
     userId: string
   ): Promise<void> {
     try {
       // Always pull from Supabase
       await this.pullFromSupabase(collectionName, userId);
 
-      // Only push changes for categories and expenses
+      // Only push changes for categories and transactions
       if (collectionName !== "users") {
         await this.pushToSupabase(collectionName, userId);
       }
@@ -160,22 +164,28 @@ class SyncService {
   }
 
   /**
-   * Pull changes from Supabase
+   * Pull changes from Supabase using DELTA SYNC
+   * Only pulls items that were modified AFTER the last successful sync
    * Excludes soft-deleted records (deleted_at IS NULL)
+   *
+   * Flow:
+   * 1. Get last successful sync timestamp from localStorage
+   * 2. Query Supabase only for items modified after that timestamp
+   * 3. Merge with local data via upsert
+   * 4. Update the last sync timestamp ONLY if pull succeeds
    */
   private async pullFromSupabase(
-    collectionName: "users" | "categories" | "expenses",
+    collectionName: "users" | "categories" | "transactions",
     userId: string
   ): Promise<void> {
-    // Get last sync time from localStorage
-    const lastSyncKey = `last_sync_${collectionName}`;
-    const lastSync = localStorage.getItem(lastSyncKey);
-    const minTimestamp = lastSync || new Date(0).toISOString();
+    // Get last successful sync time for delta sync
+    const lastSuccessfulSync =
+      await this.getLastSuccessfulSyncTime(collectionName);
 
     let query = supabase
       .from(collectionName)
       .select("*")
-      .gte("updated_at", minTimestamp)
+      .gte("updated_at", lastSuccessfulSync) // ← DELTA SYNC: Only fetch changes since last sync
       .is("deleted_at", null) // ← Filter out soft-deleted records
       .order("updated_at", { ascending: true });
 
@@ -191,6 +201,7 @@ class SyncService {
     }
 
     if (!data || data.length === 0) {
+      syncLogger.info(`No new changes in ${collectionName} (delta sync)`);
       return;
     }
 
@@ -201,7 +212,9 @@ class SyncService {
       await table.put(doc);
     }
 
-    // Update last sync time
+    // Update last successful sync time ONLY for successful pull
+    // This timestamp will be used in the next delta query
+    const lastSyncKey = `last_sync_${collectionName}`;
     localStorage.setItem(lastSyncKey, new Date().toISOString());
 
     // Mark remote changes as processed (we've pulled them)
@@ -209,16 +222,18 @@ class SyncService {
       this.markRemoteChangesAsProcessed();
     }
 
-    syncLogger.info(`Pulled ${data.length} items from ${collectionName}`);
+    syncLogger.info(
+      `Pulled ${data.length} items from ${collectionName} (delta sync)`
+    );
   }
 
   /**
    * Push local changes to Supabase
-   * Called only for categories and expenses, never for users
+   * Called only for categories and transactions, never for users
    * Uses INSERT or UPDATE separately to respect RLS policies
    */
   private async pushToSupabase(
-    collectionName: "categories" | "expenses",
+    collectionName: "categories" | "transactions",
     userId: string
   ): Promise<void> {
     const db = getDatabase();
@@ -327,8 +342,8 @@ class SyncService {
     syncLogger.info("Syncing changes for user:", userId);
 
     try {
-      // Only push categories and expenses (what the user just changed)
-      const collectionsToSync = ["categories", "expenses"] as const;
+      // Only push categories and transactions (what the user just changed)
+      const collectionsToSync = ["categories", "transactions"] as const;
 
       for (const collectionName of collectionsToSync) {
         await this.pushToSupabase(collectionName, userId);
@@ -337,6 +352,9 @@ class SyncService {
       // Only update lastSync and error if push succeeds
       this.currentState.lastSync = new Date();
       this.currentState.error = null;
+
+      // Clear local changes flag - sync was successful
+      this.clearLocalChanges();
 
       // Update health status after successful sync
       this.currentState.healthStatus = await this.calculateHealthStatus(userId);
@@ -392,20 +410,20 @@ class SyncService {
         })
         .toArray();
 
-      const unsyncedExpenses = await db.expenses
+      const unsyncedTransactions = await db.transactions
         .where("user_id")
         .equals(userId)
-        .filter((exp: any) => {
-          if (!exp.synced_at) return true;
-          return new Date(exp.updated_at) > new Date(exp.synced_at);
+        .filter((trx: any) => {
+          if (!trx.synced_at) return true;
+          return new Date(trx.updated_at) > new Date(trx.synced_at);
         })
         .toArray();
 
-      const total = unsyncedCategories.length + unsyncedExpenses.length;
+      const total = unsyncedCategories.length + unsyncedTransactions.length;
 
       if (total > 0) {
         syncLogger.info(
-          `Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedExpenses.length} expenses)`
+          `Found ${total} unsynced items (${unsyncedCategories.length} categories, ${unsyncedTransactions.length} transactions)`
         );
       }
 
@@ -417,18 +435,34 @@ class SyncService {
   }
 
   /**
-   * Get last successful sync timestamp
+   * Get last successful sync timestamp for a specific collection
    * Used for efficient delta queries to Supabase
+   * Returns the timestamp of the last successful pull for delta sync queries
+   *
+   * Delta sync logic:
+   * - Each collection tracks its own last_sync_<collection> timestamp
+   * - Next pull queries: .gte("updated_at", lastSuccessfulSync)
+   * - This only fetches items modified AFTER that timestamp
+   * - Much more efficient than pulling everything every time
+   *
+   * @param collectionName - The collection to get last sync for (users, categories, transactions)
+   * @returns ISO timestamp string (or epoch if never synced)
    */
-  async getLastSuccessfulSyncTime(): Promise<string> {
-    const lastSyncKey = "last_sync_expenses";
+  async getLastSuccessfulSyncTime(
+    collectionName?: "users" | "categories" | "transactions"
+  ): Promise<string> {
+    // If no collection specified, use the main sync timestamp (for backward compatibility)
+    const lastSyncKey = collectionName
+      ? `last_sync_${collectionName}`
+      : "last_sync_transactions";
+
     const lastSync = localStorage.getItem(lastSyncKey);
 
     if (lastSync) {
       return lastSync;
     }
 
-    // If no sync has happened yet, return epoch
+    // If no sync has happened yet, return epoch (pull everything from start)
     return new Date(0).toISOString();
   }
 
@@ -437,7 +471,7 @@ class SyncService {
    * Updates synced_at timestamp for all given items
    */
   private async markAsSynced(
-    collectionName: "categories" | "expenses",
+    collectionName: "categories" | "transactions",
     itemIds: string[]
   ): Promise<void> {
     if (itemIds.length === 0) return;
@@ -490,6 +524,35 @@ class SyncService {
   }
 
   /**
+   * Mark that local data has changed (CRUD operation on expenses/categories)
+   * Called from components when they modify data locally
+   * Triggers health status to show "pending"
+   */
+  markLocalChangesAsChanged(): void {
+    this.hasLocalChanges = true;
+    // Recalculate health status to show "pending"
+    this.currentState.healthStatus = "pending";
+    this.notifyListeners();
+    syncLogger.info("Local changes detected - marking as pending");
+  }
+
+  /**
+   * Clear the local changes flag after successful sync
+   * Called from backgroundSync or syncAfterChange when push succeeds
+   */
+  clearLocalChanges(): void {
+    this.hasLocalChanges = false;
+    syncLogger.info("Local changes cleared after sync");
+  }
+
+  /**
+   * Check if there are local changes pending
+   */
+  hasLocalChangesPending(): boolean {
+    return this.hasLocalChanges;
+  }
+
+  /**
    * Setup realtime subscription to detect remote changes
    * Only subscribes when user logs in, runs in background
    */
@@ -499,7 +562,7 @@ class SyncService {
       return;
     }
 
-    // Subscribe to changes in categories and expenses tables
+    // Subscribe to changes in categories and transactions tables
     const subscription = supabase
       .channel(`sync-monitoring:${userId}`)
       .on(
@@ -521,12 +584,12 @@ class SyncService {
         {
           event: "*",
           schema: "public",
-          table: "expenses",
+          table: "transactions",
           filter: `user_id=eq.${userId}`,
         },
         () => {
           this.hasRemoteChanges = true;
-          syncLogger.info("Remote changes detected in expenses");
+          syncLogger.info("Remote changes detected in transactions");
           this.notifyListeners();
         }
       )

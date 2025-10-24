@@ -8,7 +8,7 @@ import { dbLogger } from "./logger";
 import type {
   UserDocType,
   CategoryDocType,
-  ExpenseDocType,
+  TransactionDocType,
   StatsCacheDocType,
 } from "./db-schemas";
 
@@ -19,7 +19,7 @@ import type {
 export class MyMoneyDB extends Dexie {
   users!: Table<UserDocType>;
   categories!: Table<CategoryDocType>;
-  expenses!: Table<ExpenseDocType>;
+  transactions!: Table<TransactionDocType>;
   stats_cache!: Table<StatsCacheDocType>;
 
   constructor() {
@@ -27,7 +27,7 @@ export class MyMoneyDB extends Dexie {
     this.version(1).stores({
       users: "id, email, updated_at",
       categories: "id, user_id, updated_at",
-      expenses: "id, user_id, category_id, date, updated_at",
+      transactions: "id, user_id, category_id, date, updated_at",
       stats_cache: "id, user_id, period, updated_at",
     });
   }
@@ -108,7 +108,7 @@ export async function exportDatabaseJSON(): Promise<Record<string, any[]>> {
 
   result.users = await db.users.toArray();
   result.categories = await db.categories.toArray();
-  result.expenses = await db.expenses.toArray();
+  result.transactions = await db.transactions.toArray();
   result.stats_cache = await db.stats_cache.toArray();
 
   return result;

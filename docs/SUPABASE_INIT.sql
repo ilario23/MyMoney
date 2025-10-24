@@ -28,7 +28,8 @@
 -- Note: Policies are dropped automatically when tables are dropped with CASCADE
 
 DROP TABLE IF EXISTS public.stats_cache CASCADE;
-DROP TABLE IF EXISTS public.expenses CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.expenses CASCADE; -- Legacy table name, dropped for cleanup
 DROP TABLE IF EXISTS public.categories CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
 
@@ -84,7 +85,7 @@ COMMENT ON COLUMN public.categories.is_active IS 'Controls visibility in transac
 COMMENT ON COLUMN public.categories.deleted_at IS 'Soft-delete timestamp (NULL = active)';
 
 -- Table 3: transactions (user transactions - expenses, income, investments)
-CREATE TABLE public.expenses (
+CREATE TABLE public.transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   category_id UUID NOT NULL REFERENCES public.categories(id) ON DELETE SET NULL,
@@ -97,11 +98,11 @@ CREATE TABLE public.expenses (
   deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-COMMENT ON TABLE public.expenses IS 'Transactions (expenses, income, investments) - supports soft-delete via deleted_at';
-COMMENT ON COLUMN public.expenses.type IS 'Transaction type: expense, income, or investment';
-COMMENT ON COLUMN public.expenses.amount IS 'Amount in EUR (€), 2 decimal places';
-COMMENT ON COLUMN public.expenses.date IS 'Transaction date (YYYY-MM-DD format)';
-COMMENT ON COLUMN public.expenses.deleted_at IS 'Soft-delete timestamp (NULL = active)';
+COMMENT ON TABLE public.transactions IS 'Transactions (expenses, income, investments) - supports soft-delete via deleted_at';
+COMMENT ON COLUMN public.transactions.type IS 'Transaction type: expense, income, or investment';
+COMMENT ON COLUMN public.transactions.amount IS 'Amount in EUR (€), 2 decimal places';
+COMMENT ON COLUMN public.transactions.date IS 'Transaction date (YYYY-MM-DD format)';
+COMMENT ON COLUMN public.transactions.deleted_at IS 'Soft-delete timestamp (NULL = active)';
 
 -- Table 4: stats_cache (monthly statistics cache)
 CREATE TABLE public.stats_cache (
@@ -137,14 +138,14 @@ CREATE INDEX idx_categories_active ON public.categories(user_id, is_active)
 WHERE deleted_at IS NULL;
 COMMENT ON INDEX idx_categories_active IS 'Fast lookup of active categories for transaction form';
 
-CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
+CREATE INDEX idx_expenses_user_id ON public.transactions(user_id);
 COMMENT ON INDEX idx_expenses_user_id IS 'Fast lookup of transactions by user';
 
-CREATE INDEX idx_expenses_type ON public.expenses(user_id, type) 
+CREATE INDEX idx_expenses_type ON public.transactions(user_id, type) 
 WHERE deleted_at IS NULL;
 COMMENT ON INDEX idx_expenses_type IS 'Fast lookup of transactions by type';
 
-CREATE INDEX idx_expenses_user_date ON public.expenses(user_id, date);
+CREATE INDEX idx_expenses_user_date ON public.transactions(user_id, date);
 COMMENT ON INDEX idx_expenses_user_date IS 'Fast lookup of transactions for date range queries';
 
 CREATE INDEX idx_stats_cache_user_id ON public.stats_cache(user_id);
@@ -156,7 +157,7 @@ COMMENT ON INDEX idx_stats_cache_user_id IS 'Fast lookup of cached stats by user
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stats_cache ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
@@ -270,23 +271,23 @@ ON public.categories FOR UPDATE
 USING (auth.uid() = user_id) 
 WITH CHECK (auth.uid() = user_id);
 
--- ====== RLS POLICIES FOR EXPENSES TABLE ======
+-- ====== RLS POLICIES FOR TRANSACTIONS TABLE ======
 -- Rules:
--- - SELECT: User can read only own expenses
+-- - SELECT: User can read only own transactions
 -- - INSERT: User can create only for self (auth.uid() = user_id)
--- - UPDATE: User can update only own expenses
+-- - UPDATE: User can update only own transactions
 -- - DELETE: DISABLED (use soft-delete via UPDATE deleted_at)
 
-CREATE POLICY "Users can read own expenses"
-ON public.expenses FOR SELECT 
+CREATE POLICY "Users can read own transactions"
+ON public.transactions FOR SELECT 
 USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create own expenses"
-ON public.expenses FOR INSERT 
+CREATE POLICY "Users can create own transactions"
+ON public.transactions FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own expenses"
-ON public.expenses FOR UPDATE 
+CREATE POLICY "Users can update own transactions"
+ON public.transactions FOR UPDATE 
 USING (auth.uid() = user_id) 
 WITH CHECK (auth.uid() = user_id);
 
@@ -365,14 +366,15 @@ WITH CHECK (auth.uid() = user_id);
  * └──────────────┴────────────────────────┴─────────────────────────────┘
  * 
  * ┌─────────────────────────────────────────────────────────────────────┐
- * │ expenses (User's expenses in EUR)                                   │
+ * │ transactions (User's expenses in EUR)                               │
  * ├──────────────┬────────────────────────┬─────────────────────────────┤
  * │ id (UUID)    │ Primary Key            │ Generated automatically      │
  * │ user_id (FK) │ Foreign Key → users.id │ Links to user               │
  * │ category_id  │ Foreign Key → cat.id   │ Links to category           │
+ * │ type         │ TEXT NOT NULL          │ expense/income/investment   │
  * │ amount       │ DECIMAL(10,2) NOT NULL │ Amount in EUR (€)           │
  * │ description  │ TEXT                   │ Optional note               │
- * │ date         │ DATE NOT NULL          │ Expense date                │
+ * │ date         │ DATE NOT NULL          │ Transaction date            │
  * │ created_at   │ TIMESTAMP              │ Auto-set                    │
  * │ updated_at   │ TIMESTAMP              │ Auto-updated                │
  * │ deleted_at   │ TIMESTAMP NULL         │ Soft-delete marker          │

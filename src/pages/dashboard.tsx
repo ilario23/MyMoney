@@ -23,10 +23,11 @@ import {
   Target,
   BarChart3,
   Zap,
+  Expand,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { it, enUS } from "date-fns/locale";
-import type { ExpenseDocType, CategoryDocType } from "@/lib/db-schemas";
+import type { TransactionDocType, CategoryDocType } from "@/lib/db-schemas";
 
 export function DashboardPage() {
   const { user } = useAuthStore();
@@ -39,17 +40,17 @@ export function DashboardPage() {
   const monthEnd = endOfMonth(now).toISOString().split("T")[0];
 
   // Memoize query functions
-  const expenseQueryFn = useCallback(
+  const transactionQueryFn = useCallback(
     (table: any) =>
       user
         ? table
             .where("user_id")
             .equals(user.id)
             .filter(
-              (exp: ExpenseDocType) =>
-                !exp.deleted_at &&
-                exp.date >= monthStart &&
-                exp.date <= monthEnd
+              (trans: TransactionDocType) =>
+                !trans.deleted_at &&
+                trans.date >= monthStart &&
+                trans.date <= monthEnd
             )
         : Promise.resolve([]),
     [user?.id, monthStart, monthEnd]
@@ -67,7 +68,10 @@ export function DashboardPage() {
   );
 
   // Reactive queries using Dexie
-  const { data: expenseDocs } = useQuery(expenseQueryFn, "expenses");
+  const { data: transactionDocs } = useQuery(
+    transactionQueryFn,
+    "transactions"
+  );
 
   const { data: categoryDocs } = useQuery(categoryQueryFn, "categories");
 
@@ -91,26 +95,26 @@ export function DashboardPage() {
   // Calculate monthly totals by type
   const monthlyTotal = useMemo(
     () =>
-      expenseDocs
+      transactionDocs
         .filter((e) => e.amount > 0 && e.type === "expense")
         .reduce((sum, e) => sum + e.amount, 0),
-    [expenseDocs]
+    [transactionDocs]
   );
 
   const monthlyIncome = useMemo(
     () =>
-      expenseDocs
+      transactionDocs
         .filter((e) => e.amount < 0 && e.type === "income")
         .reduce((sum, e) => sum + Math.abs(e.amount), 0),
-    [expenseDocs]
+    [transactionDocs]
   );
 
   const monthlyInvestment = useMemo(
     () =>
-      expenseDocs
+      transactionDocs
         .filter((e) => e.amount > 0 && e.type === "investment")
         .reduce((sum, e) => sum + e.amount, 0),
-    [expenseDocs]
+    [transactionDocs]
   );
 
   // Load stats
@@ -120,7 +124,7 @@ export function DashboardPage() {
     const loadStats = async () => {
       try {
         const stats = await statsService.calculateMonthlyStats(user.id, now);
-        setTotalExpenses(stats.expenseCount);
+        setTotalExpenses(stats.transactionCount);
         setAvgExpense(stats.dailyAverage);
 
         const topCats = stats.topCategories.slice(0, 5).map((cat) => ({
@@ -138,10 +142,10 @@ export function DashboardPage() {
           previousMonth
         );
 
-        if (prevStats.totalExpenses > 0) {
+        if (prevStats.totalTransactions > 0) {
           const change =
-            ((stats.totalExpenses - prevStats.totalExpenses) /
-              prevStats.totalExpenses) *
+            ((stats.totalTransactions - prevStats.totalTransactions) /
+              prevStats.totalTransactions) *
             100;
           setPercentageChange(change);
         }
@@ -174,7 +178,7 @@ export function DashboardPage() {
             {format(new Date(), "EEEE, d MMMM yyyy", { locale: dateLocale })}
           </p>
         </div>
-        <FloatingActionButton href="/expense/new" label="Add expense" />
+        <FloatingActionButton href="/transaction/new" label="Add transaction" />
       </div>
 
       {/* Summary Card */}
@@ -204,32 +208,23 @@ export function DashboardPage() {
         <CardContent>
           {/* Mobile view */}
           <div className="md:hidden">
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                  <TrendingDown className="h-4 w-4 text-destructive" />
-                  <span>{t("dashboard.expensesThisMonth")}</span>
-                </div>
-                <div className="text-4xl font-bold text-destructive">
-                  {monthlyTotal.toFixed(2)}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t("dashboard.transactions").replace(
-                    "{count}",
-                    String(
-                      expenseDocs.filter((e: ExpenseDocType) => e.amount > 0)
-                        .length
-                    )
-                  )}
-                </p>
-              </div>
-              <div className="pt-3 border-t text-sm text-muted-foreground flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                <span>
-                  {t("dashboard.tapForStats") || "Tap per vedere statistiche"}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <TrendingDown className="h-4 w-4 text-destructive" />
+              <span>{t("dashboard.transactionsThisMonth")}</span>
             </div>
+            <div className="text-4xl font-bold text-destructive">
+              {monthlyTotal.toFixed(2)}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("dashboard.transactions").replace(
+                "{count}",
+                String(
+                  transactionDocs.filter(
+                    (e: TransactionDocType) => e.amount > 0
+                  ).length
+                )
+              )}
+            </p>
           </div>
 
           {/* Desktop view */}
@@ -237,7 +232,9 @@ export function DashboardPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingDown className="h-4 w-4 text-destructive" />
-                <span>{t("dashboard.expensesThisMonth") || "Spese"}</span>
+                <span>
+                  {t("dashboard.transactionsThisMonth") || "Transazioni"}
+                </span>
               </div>
               <div className="text-3xl font-bold text-destructive">
                 {monthlyTotal.toFixed(2)}
@@ -246,8 +243,8 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter(
-                      (e: ExpenseDocType) => e.type === "expense"
+                    transactionDocs.filter(
+                      (e: TransactionDocType) => e.type === "expense"
                     ).length
                   )
                 )}
@@ -266,8 +263,8 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter(
-                      (e: ExpenseDocType) => e.type === "income"
+                    transactionDocs.filter(
+                      (e: TransactionDocType) => e.type === "income"
                     ).length
                   )
                 )}
@@ -288,8 +285,8 @@ export function DashboardPage() {
                 {t("dashboard.transactions").replace(
                   "{count}",
                   String(
-                    expenseDocs.filter(
-                      (e: ExpenseDocType) => e.type === "investment"
+                    transactionDocs.filter(
+                      (e: TransactionDocType) => e.type === "investment"
                     ).length
                   )
                 )}
@@ -425,76 +422,94 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Recent Expenses */}
+      {/* Recent Transactions */}
       <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle>{t("dashboard.recentExpenses")}</CardTitle>
+            <CardTitle>{t("dashboard.recentTransactions")}</CardTitle>
             <CardDescription>
               {t("dashboard.recentDescription")}
             </CardDescription>
           </div>
-          {expenseDocs.length > 0 && (
+          {transactionDocs.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/expenses")}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate("/transactions");
+              }}
+              className="text-primary hover:text-primary/80 hover:bg-transparent p-0"
+              title={t("dashboard.viewAllTransactions")}
             >
-              View All
+              <Expand className="w-5 h-5" />
             </Button>
           )}
         </CardHeader>
-        <CardContent>
-          {expenseDocs.length === 0 ? (
+        <CardContent
+          className={
+            transactionDocs.length > 0
+              ? "cursor-pointer hover:bg-accent/40 transition-all rounded-lg"
+              : ""
+          }
+          onClick={() =>
+            transactionDocs.length > 0 && navigate("/transactions")
+          }
+        >
+          {transactionDocs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>{t("dashboard.noExpenses")}</p>
+              <p>{t("dashboard.noTransactions")}</p>
               <Button
                 variant="link"
-                onClick={() => navigate("/expense/new")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/transaction/new");
+                }}
                 className="mt-2"
               >
-                {t("dashboard.addFirstExpense")}
+                {t("dashboard.addFirstTransaction")}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              {expenseDocs.slice(0, 3).map((expense: ExpenseDocType) => {
-                const categoryObj = categories.get(expense.category_id);
-                return (
-                  <div
-                    key={expense.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer shadow-sm transition-all"
-                    onClick={() => navigate(`/expense/${expense.id}`)}
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">{expense.description}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        {categoryObj ? (
-                          <>
-                            {renderIcon(categoryObj.icon)}
-                            <span>{categoryObj.name}</span>
-                          </>
-                        ) : (
-                          "Unknown"
-                        )}
-                      </p>
+              {transactionDocs
+                .slice(0, 3)
+                .map((expense: TransactionDocType) => {
+                  const categoryObj = categories.get(expense.category_id);
+                  return (
+                    <div
+                      key={expense.id}
+                      className="flex items-center justify-between p-3 rounded-lg shadow-sm transition-all"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium">{expense.description}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          {categoryObj ? (
+                            <>
+                              {renderIcon(categoryObj.icon)}
+                              <span>{categoryObj.name}</span>
+                            </>
+                          ) : (
+                            "Unknown"
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`font-bold ${expense.amount > 0 ? "text-destructive" : "text-primary"}`}
+                        >
+                          {expense.amount > 0 ? "-" : "+"}
+                          {Math.abs(expense.amount).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(expense.date), "d MMM", {
+                            locale: dateLocale,
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-bold ${expense.amount > 0 ? "text-destructive" : "text-primary"}`}
-                      >
-                        {expense.amount > 0 ? "-" : "+"}
-                        {Math.abs(expense.amount).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(expense.date), "d MMM", {
-                          locale: dateLocale,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </CardContent>

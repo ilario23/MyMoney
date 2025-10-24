@@ -105,7 +105,7 @@ export const DrawerOverlay = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 bg-black/80 transition-opacity duration-300 opacity-100",
+        "fixed inset-0 z-50 bg-black/80 transition-opacity duration-200 opacity-100 animate-in fade-in",
         className
       )}
       onClick={() => setOpen(false)}
@@ -129,7 +129,7 @@ export const DrawerContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[10px] border border-border bg-background animate-in slide-in-from-bottom-4 duration-500",
+          "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[10px] border border-border bg-background animate-in slide-in-from-bottom duration-300",
           className
         )}
         onClick={(e) => e.stopPropagation()}

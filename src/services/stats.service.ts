@@ -1,12 +1,12 @@
 // Stats Service v3.0 - Local statistics calculation
 import { getDatabase } from "@/lib/db";
-import type { ExpenseDocType, StatsCacheDocType } from "@/lib/db-schemas";
+import type { TransactionDocType, StatsCacheDocType } from "@/lib/db-schemas";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export interface StatsData {
   period: string;
-  totalExpenses: number;
-  expenseCount: number;
+  totalTransactions: number;
+  transactionCount: number;
   topCategories: Array<{
     categoryId: string;
     categoryName: string;
@@ -36,16 +36,27 @@ class StatsService {
     const start = startOfMonth(date);
     const end = endOfMonth(date);
 
-    const expenses = await db.expenses
+    const transactions = await db.transactions
       .where("user_id")
       .equals(userId)
-      .filter((exp) => {
-        const expDate = new Date(exp.date);
-        return expDate >= start && expDate <= end && !exp.deleted_at;
+      .filter((trx) => {
+        const trxDate = new Date(trx.date);
+        return trxDate >= start && trxDate <= end && !trx.deleted_at;
       })
       .toArray();
 
-    const stats = this.processExpenses(expenses, periodKey);
+    // Load categories for id->name mapping
+    const userCategories = await db.categories
+      .where("user_id")
+      .equals(userId)
+      .toArray();
+    const categoryIdMap = new Map(userCategories.map((c) => [c.id, c.name]));
+
+    const stats = this.processTransactions(
+      transactions,
+      periodKey,
+      categoryIdMap
+    );
 
     // Update cache
     await this.updateCache(userId, stats);
@@ -53,24 +64,29 @@ class StatsService {
     return stats;
   }
 
-  private processExpenses(
-    expenses: ExpenseDocType[],
-    period: string
+  private processTransactions(
+    transactions: TransactionDocType[],
+    period: string,
+    categoryIdMap: Map<string, string>
   ): StatsData {
+    // Only consider expenses (amount > 0, type === 'expense') for stats
+    const expenses = transactions.filter(
+      (trx) => trx.amount > 0 && trx.type === "expense"
+    );
     let totalExpenses = 0;
     const categoryMap = new Map();
 
-    for (const expense of expenses) {
-      totalExpenses += expense.amount;
+    for (const transaction of expenses) {
+      totalExpenses += transaction.amount;
 
-      const catId = expense.category_id || "uncategorized";
+      const catId = transaction.category_id || "uncategorized";
       const existing = categoryMap.get(catId) || {
         count: 0,
         amount: 0,
-        name: "Uncategorized",
+        name: categoryIdMap.get(catId) || "Sconosciuta",
       };
       existing.count++;
-      existing.amount += expense.amount;
+      existing.amount += transaction.amount;
       categoryMap.set(catId, existing);
     }
 
@@ -89,8 +105,8 @@ class StatsService {
 
     return {
       period,
-      totalExpenses,
-      expenseCount: expenses.length,
+      totalTransactions: totalExpenses,
+      transactionCount: expenses.length,
       topCategories,
       dailyAverage,
       monthlyAverage: totalExpenses,
@@ -113,8 +129,8 @@ class StatsService {
 
     return {
       period: cached.period,
-      totalExpenses: cached.total_expenses,
-      expenseCount: cached.expense_count,
+      totalTransactions: cached.total_expenses,
+      transactionCount: cached.expense_count,
       topCategories,
       dailyAverage: cached.daily_average,
       monthlyAverage: cached.monthly_average,
@@ -129,8 +145,8 @@ class StatsService {
       id: `${userId}-${stats.period}`,
       user_id: userId,
       period: stats.period,
-      total_expenses: stats.totalExpenses,
-      expense_count: stats.expenseCount,
+      total_expenses: stats.totalTransactions,
+      expense_count: stats.transactionCount,
       top_categories: stats.topCategories.map((cat) => ({
         category_id: cat.categoryId,
         category_name: cat.categoryName,

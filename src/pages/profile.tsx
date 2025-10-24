@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Edit2, Save, X, Settings } from "lucide-react";
+import { toast } from "sonner";
 
 export function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -33,13 +33,11 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [stats, setStats] = useState({
-    totalExpenses: 0,
+    totalTransactions: 0,
     totalAmount: 0,
     categories: 0,
     lastSyncDate: null as Date | null,
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Load user statistics
@@ -50,10 +48,10 @@ export function ProfilePage() {
         const db = getDatabase();
 
         // Calcola statistiche di tutti i tempi (non solo questo mese)
-        const allExpenses = await db.expenses
+        const allTransactions = await db.transactions
           .where("user_id")
           .equals(user.id)
-          .filter((exp) => !exp.deleted_at)
+          .filter((trans) => !trans.deleted_at)
           .toArray();
 
         // Conta le categorie
@@ -63,19 +61,17 @@ export function ProfilePage() {
           .toArray();
 
         // Calcola l'importo totale
-        const totalAmount = allExpenses.reduce(
-          (sum, exp) => sum + exp.amount,
+        const totalAmount = allTransactions.reduce(
+          (sum, trans) => sum + trans.amount,
           0
         );
 
         const newStats = {
-          totalExpenses: allExpenses.length,
+          totalTransactions: allTransactions.length,
           totalAmount: totalAmount,
           categories: categories.length,
           lastSyncDate: new Date(),
         };
-
-        console.log("Profile Stats:", newStats);
         setStats(newStats);
       } catch (error) {
         console.error("Error loading stats:", error);
@@ -87,13 +83,11 @@ export function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!displayName.trim()) {
-      setError(t("profile.nameCannotBeEmpty"));
+      toast.error(t("profile.nameCannotBeEmpty"));
       return;
     }
 
     setIsSaving(true);
-    setError("");
-    setSuccess("");
 
     try {
       // Update display name in Supabase
@@ -102,11 +96,13 @@ export function ProfilePage() {
       });
 
       if (updateError) {
-        setError(t("profile.errorUpdatingProfile"));
+        const errorMsg = t("profile.errorUpdatingProfile");
+        toast.error(errorMsg);
         return;
       }
 
-      setSuccess(t("profile.profileUpdated"));
+      const successMsg = t("profile.profileUpdated");
+      toast.success(successMsg);
       setIsEditing(false);
 
       // Update local user in auth store
@@ -115,7 +111,8 @@ export function ProfilePage() {
       }
     } catch (err) {
       authLogger.error("Error updating profile:", err);
-      setError(t("profile.anErrorOccurred"));
+      const errorMsg = t("profile.anErrorOccurred");
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +191,7 @@ export function ProfilePage() {
       navigate("/login");
     } catch (error) {
       authLogger.error("Logout error:", error);
-      setError(t("profile.logoutError") || "Errore durante il logout");
+      toast.error(t("profile.logoutError") || "Errore durante il logout");
     }
   };
 
@@ -212,7 +209,7 @@ export function ProfilePage() {
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <h1 className="text-3xl font-bold">{t("profile.title")}</h1>
         <Button
-          variant="outline"
+          variant="default"
           size="sm"
           onClick={() => navigate("/settings")}
           title={t("nav.settings")}
@@ -223,38 +220,21 @@ export function ProfilePage() {
         </Button>
       </div>
 
-      {error && (
-        <Alert
-          variant="destructive"
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
-        >
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border border-primary/30 bg-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-          <AlertDescription className="text-primary font-medium">
-            ✓ {success}
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* User Info Card */}
       <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 hover:shadow-lg transition-all">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle>{t("profile.title")}</CardTitle>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2">
               {!isEditing && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="gap-2 flex-1 sm:flex-none"
+                  title={t("profile.editProfile")}
+                  className="p-2"
                 >
-                  <Edit2 className="w-4 h-4" />
-                  <span className="sm:inline">{t("profile.editProfile")}</span>
+                  <Edit2 className="w-4 h-4 text-primary" />
                 </Button>
               )}
               <Dialog
@@ -263,15 +243,12 @@ export function ProfilePage() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    variant="destructive"
                     size="sm"
                     title={t("profile.logout")}
-                    className="gap-2 flex-1 sm:flex-none"
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">
-                      {t("profile.logout")}
-                    </span>
+                    <span>{t("profile.logout")}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -370,10 +347,10 @@ export function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 bg-secondary rounded-lg border border-input shadow-xs flex flex-col items-center sm:items-start justify-between h-full min-h-24">
               <p className="text-sm sm:text-sm text-muted-foreground mb-3 font-medium line-clamp-2">
-                {t("profile.expenses")}
+                {t("profile.transactions")}
               </p>
               <p className="text-3xl sm:text-2xl font-bold text-primary">
-                {stats.totalExpenses}
+                {stats.totalTransactions}
               </p>
             </div>
 

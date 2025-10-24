@@ -4,6 +4,7 @@ import { useLanguage } from "@/lib/language";
 import { getDatabase } from "@/lib/db";
 import type { CategoryDocType } from "@/lib/db-schemas";
 import { statsService } from "@/services/stats.service";
+import { renderIcon } from "@/lib/icon-renderer";
 import {
   Card,
   CardContent,
@@ -64,9 +65,9 @@ export function StatisticsPage() {
           new Date()
         );
 
-        setTotalExpenses(stats.expenseCount);
+        setTotalExpenses(stats.transactionCount);
         setAvgExpense(stats.dailyAverage);
-        setMonthlyTotal(stats.totalExpenses);
+        setMonthlyTotal(stats.totalTransactions);
 
         // Get top categories
         const topCats = stats.topCategories.slice(0, 5).map((cat) => ({
@@ -85,10 +86,10 @@ export function StatisticsPage() {
           previousMonth
         );
 
-        if (prevStats.totalExpenses > 0) {
+        if (prevStats.totalTransactions > 0) {
           const change =
-            ((stats.totalExpenses - prevStats.totalExpenses) /
-              prevStats.totalExpenses) *
+            ((stats.totalTransactions - prevStats.totalTransactions) /
+              prevStats.totalTransactions) *
             100;
           setPercentageChange(change);
         }
@@ -132,11 +133,9 @@ export function StatisticsPage() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">
-            {t("statistics.title") || "Statistiche"}
-          </h1>
+          <h1 className="text-3xl font-bold">{t("statistics.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {t("statistics.subtitle") || "Analisi dettagliata delle tue spese"}
+            {t("statistics.subtitle")}
           </p>
         </div>
       </div>
@@ -147,12 +146,10 @@ export function StatisticsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <PieChart className="h-5 w-5 text-primary animate-pulse" />
-              <CardTitle>
-                {t("dashboard.topCategories") || "Top Categorie"}
-              </CardTitle>
+              <CardTitle>{t("dashboard.topCategories")}</CardTitle>
             </div>
             <CardDescription>
-              {t("dashboard.topCategoriesDesc") || "Dove spendi di più"}
+              {t("dashboard.topCategoriesDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,7 +170,9 @@ export function StatisticsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-lg">
-                          {categoryInfo?.icon || "📌"}
+                          {categoryInfo?.icon
+                            ? renderIcon(categoryInfo.icon)
+                            : "📌"}
                         </span>
                         <span className="font-medium truncate">
                           {cat.category}
@@ -193,7 +192,7 @@ export function StatisticsPage() {
                           />
                         </div>
                         <span className="text-sm font-semibold text-muted-foreground w-16 text-right">
-                          €{cat.total.toFixed(0)}
+                          {"€" + cat.total.toFixed(0)}
                         </span>
                       </div>
                     </div>
@@ -210,13 +209,9 @@ export function StatisticsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Target className="h-5 w-5 text-primary animate-pulse" />
-            <CardTitle>
-              {t("dashboard.overallStats") || "Statistiche Generali"}
-            </CardTitle>
+            <CardTitle>{t("dashboard.overallStats")}</CardTitle>
           </div>
-          <CardDescription>
-            {t("dashboard.overallStatsDesc") || "Tutte le tue spese"}
-          </CardDescription>
+          <CardDescription>{t("dashboard.overallStatsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -224,7 +219,7 @@ export function StatisticsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {t("dashboard.totalExpenses") || "Spese Totali"}
+                  {t("dashboard.totalExpenses")}
                 </p>
                 <p className="text-2xl font-bold">{totalExpenses}</p>
               </div>
@@ -237,9 +232,11 @@ export function StatisticsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {t("dashboard.avgExpense") || "Media per Spesa"}
+                  {t("dashboard.avgExpense")}
                 </p>
-                <p className="text-2xl font-bold">€{avgExpense.toFixed(2)}</p>
+                <p className="text-2xl font-bold">
+                  {"€" + avgExpense.toFixed(2)}
+                </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-primary/15 dark:bg-primary/25 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-primary" />
@@ -251,7 +248,7 @@ export function StatisticsPage() {
               <div className="flex items-center justify-between pt-4 border-t">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {t("dashboard.vsLastMonth") || "vs Mese Scorso"}
+                    {t("dashboard.vsLastMonth")}
                   </p>
                   <p
                     className={`text-xl font-bold ${percentageChange > 0 ? "text-destructive" : "text-primary"}`}
