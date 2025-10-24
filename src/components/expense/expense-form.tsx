@@ -515,14 +515,13 @@ export function ExpenseForm() {
                   disabled={isLoading || success || isLoadingExpense}
                 >
                   <Trash2 className="w-4 h-4" />
-                  Delete Expense
+                  {t("expense.delete")}
                 </Button>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Delete Expense?</DialogTitle>
+                    <DialogTitle>{t("expense.deleteConfirmTitle")}</DialogTitle>
                     <DialogDescription>
-                      This action cannot be undone. The expense will be deleted
-                      from your account.
+                      {t("expense.deleteConfirmMessage")}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="flex gap-2">
@@ -532,7 +531,7 @@ export function ExpenseForm() {
                       onClick={() => setShowDeleteDialog(false)}
                       disabled={isDeleting}
                     >
-                      Cancel
+                      {t("expense.deleteCancel")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -540,7 +539,9 @@ export function ExpenseForm() {
                       onClick={handleDelete}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? "Deleting..." : "Delete"}
+                      {isDeleting
+                        ? t("expense.deleting")
+                        : t("expense.deleteButton")}
                     </Button>
                   </div>
                 </DialogContent>

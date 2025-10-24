@@ -162,6 +162,13 @@ export const en: Record<TranslationKey, string> = {
   "expense.filterAll": "All Expenses",
   "expense.filterGroup": "Group Only",
   "expense.createdBy": "by",
+  "expense.delete": "Delete Expense",
+  "expense.deleteConfirmTitle": "Delete Expense?",
+  "expense.deleteConfirmMessage":
+    "This action cannot be undone. The expense will be deleted from your account.",
+  "expense.deleteButton": "Delete",
+  "expense.deleteCancel": "Cancel",
+  "expense.deleting": "Deleting...",
 
   // Common
   "common.loading": "Loading...",

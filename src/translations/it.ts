@@ -164,6 +164,13 @@ export const it = {
   "expense.filterAll": "Tutte le Spese",
   "expense.filterGroup": "Solo Gruppo",
   "expense.createdBy": "da",
+  "expense.delete": "Elimina Spesa",
+  "expense.deleteConfirmTitle": "Eliminare la spesa?",
+  "expense.deleteConfirmMessage":
+    "Questa azione non può essere annullata. La spesa verrà eliminata dal tuo account.",
+  "expense.deleteButton": "Elimina",
+  "expense.deleteCancel": "Annulla",
+  "expense.deleting": "Eliminazione...",
 
   // Common
   "common.loading": "Caricamento...",
