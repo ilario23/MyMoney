@@ -45,7 +45,18 @@ class StatsService {
       })
       .toArray();
 
-    const stats = this.processTransactions(transactions, periodKey);
+    // Load categories for id->name mapping
+    const userCategories = await db.categories
+      .where("user_id")
+      .equals(userId)
+      .toArray();
+    const categoryIdMap = new Map(userCategories.map((c) => [c.id, c.name]));
+
+    const stats = this.processTransactions(
+      transactions,
+      periodKey,
+      categoryIdMap
+    );
 
     // Update cache
     await this.updateCache(userId, stats);
@@ -55,19 +66,24 @@ class StatsService {
 
   private processTransactions(
     transactions: TransactionDocType[],
-    period: string
+    period: string,
+    categoryIdMap: Map<string, string>
   ): StatsData {
-    let totalTransactions = 0;
+    // Only consider expenses (amount > 0, type === 'expense') for stats
+    const expenses = transactions.filter(
+      (trx) => trx.amount > 0 && trx.type === "expense"
+    );
+    let totalExpenses = 0;
     const categoryMap = new Map();
 
-    for (const transaction of transactions) {
-      totalTransactions += transaction.amount;
+    for (const transaction of expenses) {
+      totalExpenses += transaction.amount;
 
       const catId = transaction.category_id || "uncategorized";
       const existing = categoryMap.get(catId) || {
         count: 0,
         amount: 0,
-        name: "Uncategorized",
+        name: categoryIdMap.get(catId) || "Sconosciuta",
       };
       existing.count++;
       existing.amount += transaction.amount;
@@ -85,15 +101,15 @@ class StatsService {
       .slice(0, 5);
 
     const daysInPeriod = 30; // Approximate
-    const dailyAverage = totalTransactions / daysInPeriod;
+    const dailyAverage = totalExpenses / daysInPeriod;
 
     return {
       period,
-      totalTransactions,
-      transactionCount: transactions.length,
+      totalTransactions: totalExpenses,
+      transactionCount: expenses.length,
       topCategories,
       dailyAverage,
-      monthlyAverage: totalTransactions,
+      monthlyAverage: totalExpenses,
     };
   }
 
